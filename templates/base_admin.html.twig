@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Admin Dashboard
+{% endblock %}
+
+{% block javascripts %}{% endblock %}
+
+{% block body %}
+    <div id="db-wrapper">
+        <!-- Sidebar -->
+        {% include 'admin/Partials/sidebar.html.twig' %}
+        <!-- Page Content -->
+        <main id="page-content">
+            <div class="header">
+                <!-- navbar -->
+                {% include 'admin/Partials/navbar.html.twig' %}
+            </div>
+
+            <!-- Modifiable Content -->
+            <section class="container-fluid p-4">
+                {% block admin_content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+    
+{% endblock %}

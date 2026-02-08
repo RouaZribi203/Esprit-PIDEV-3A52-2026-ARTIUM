@@ -1,0 +1,883 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+		<title>{% block title %}{% endblock %}</title>
+        <!-- Required meta tags front -->
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+	    <meta name="author" content="Webestica.com">
+	    <meta name="description" content="Bootstrap 5 based Social Media Network and Community Theme">
+
+        <!-- Favicon icon front-->
+	    <link rel="shortcut icon" href="assets/images/favicon.ico">
+
+        <!-- Dark mode JS front-->
+	    <script>
+		const storedTheme = localStorage.getItem('theme')
+ 
+		const getPreferredTheme = () => {
+			if (storedTheme) {
+				return storedTheme
+			}
+			return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'light'
+		}
+
+		const setTheme = function (theme) {
+			if (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+				document.documentElement.setAttribute('data-bs-theme', 'dark')
+			} else {
+				document.documentElement.setAttribute('data-bs-theme', theme)
+			}
+		}
+
+		setTheme(getPreferredTheme())
+
+		window.addEventListener('DOMContentLoaded', () => {
+		    var el = document.querySelector('.theme-icon-active');
+			if(el != 'undefined' && el != null) {
+				const showActiveTheme = theme => {
+				const activeThemeIcon = document.querySelector('.theme-icon-active use')
+				const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
+				const svgOfActiveBtn = btnToActive.querySelector('.mode-switch use').getAttribute('href')
+
+				document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
+					element.classList.remove('active')
+				})
+
+				btnToActive.classList.add('active')
+				activeThemeIcon.setAttribute('href', svgOfActiveBtn)
+			}
+
+			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+				if (storedTheme !== 'light' || storedTheme !== 'dark') {
+					setTheme(getPreferredTheme())
+				}
+			})
+
+			showActiveTheme(getPreferredTheme())
+
+			document.querySelectorAll('[data-bs-theme-value]')
+				.forEach(toggle => {
+					toggle.addEventListener('click', () => {
+						const theme = toggle.getAttribute('data-bs-theme-value')
+						localStorage.setItem('theme', theme)
+						setTheme(theme)
+						showActiveTheme(theme)
+					})
+				})
+
+			}
+		})
+		
+        </script>
+
+        <!-- Google Font front -->
+	    <link rel="preconnect" href="https://fonts.googleapis.com/">
+	    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap">
+
+        {% block stylesheets %}
+            <!-- Frontoffice Template Css -->
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/font-awesome/css/all.min.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/bootstrap-icons/bootstrap-icons.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/OverlayScrollbars-master/css/OverlayScrollbars.min.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/tiny-slider/dist/tiny-slider.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/choices.js/public/assets/styles/choices.min.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/glightbox-master/dist/css/glightbox.min.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/dropzone/dist/dropzone.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/flatpickr/dist/flatpickr.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/plyr/plyr.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/vendor/zuck.js/dist/zuck.min.css') }}">
+
+            <link rel="stylesheet" type="text/css" href="{{ asset('assetsfront/css/style.css') }}">
+
+            <!-- Global site tag (gtag.js) - Google Analytics -->
+            <script async src="https://www.googletagmanager.com/gtag/js?id=G-GMKQ4P9YMZ"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+
+                gtag('config', 'G-GMKQ4P9YMZ');
+            </script>
+
+        {% endblock %}
+
+    </head>
+
+    <body>
+		<header class="navbar-light fixed-top header-static bg-mode">
+		{% include 'Front Office/feed/Partials/navbarfront.html.twig' %}
+	</header>
+	
+	<!-- **************** MAIN CONTENT START **************** -->
+	<main>
+
+		<!-- Container START -->
+		<div class="container">
+			<div
+				class="row g-4">
+
+				<!-- Sidenav START -->
+				<div
+					class="col-lg-3">
+
+					<!-- Advanced filter responsive toggler START -->
+					<div class="d-flex align-items-center d-lg-none">
+						<button class="border-0 bg-transparent" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSideNavbar" aria-controls="offcanvasSideNavbar">
+							<span class="btn btn-primary">
+								<i class="fa-solid fa-sliders-h"></i>
+							</span>
+							<span class="h6 mb-0 fw-bold d-lg-none ms-2">My profile</span>
+						</button>
+					</div>
+					<!-- Advanced filter responsive toggler END -->
+
+					<!-- Navbar START-->
+					<nav class="navbar navbar-expand-lg mx-0">
+						<div
+							class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSideNavbar">
+							<!-- Offcanvas header -->
+							<div class="offcanvas-header">
+								<button type="button" class="btn-close text-reset ms-auto" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+							</div>
+
+							<!-- Offcanvas body -->
+							<div
+								class="offcanvas-body d-block px-2 px-lg-0">
+								<!-- Card START -->
+								<div
+									class="card overflow-hidden">
+									<!-- Cover image -->
+									<div class="h-50px" style="background-image:url(assets/images/bg/01.jpg); background-position: center; background-size: cover; background-repeat: no-repeat;"></div>
+									<!-- Card body START -->
+									<div class="card-body pt-0">
+										<div
+											class="text-center">
+											<!-- Avatar -->
+											<div class="avatar avatar-lg mt-n5 mb-3">
+												<a href="#!"><img class="avatar-img rounded border border-white border-3" src="assets/images/avatar/07.jpg" alt=""></a>
+											</div>
+											<!-- Info -->
+											<h5 class="mb-0">
+												<a href="#!">Sam Lanson
+												</a>
+											</h5>
+											<small>Web Developer at Webestica</small>
+											<p class="mt-3">I'd love to change the world, but they won’t give me the source code.</p>
+
+											<!-- User stat START -->
+											<div
+												class="hstack gap-2 gap-xl-3 justify-content-center">
+												<!-- User stat item -->
+												<div>
+													<h6 class="mb-0">256</h6>
+													<small>Post</small>
+												</div>
+												<!-- Divider -->
+												<div class="vr"></div>
+												<!-- User stat item -->
+												<div>
+													<h6 class="mb-0">2.5K</h6>
+													<small>Followers</small>
+												</div>
+												<!-- Divider -->
+												<div class="vr"></div>
+												<!-- User stat item -->
+												<div>
+													<h6 class="mb-0">365</h6>
+													<small>Following</small>
+												</div>
+											</div>
+											<!-- User stat END -->
+										</div>
+
+										<!-- Divider -->
+										<hr>
+
+										<!-- Side Nav START -->
+										<ul class="nav nav-link-secondary flex-column fw-bold gap-2">
+											<li class="nav-item">
+												<a class="nav-link" href="my-profile.html">
+													<img class="me-2 h-20px fa-fw" src="assets/images/icon/home-outline-filled.svg" alt=""><span>Feed
+													</span>
+												</a>
+											</li>
+											<li class="nav-item">
+												<a class="nav-link" href="my-profile-connections.html">
+													<img class="me-2 h-20px fa-fw" src="assets/images/icon/person-outline-filled.svg" alt=""><span>Connections
+													</span>
+												</a>
+											</li>
+											<li class="nav-item">
+												<a class="nav-link" href="blog.html">
+													<img class="me-2 h-20px fa-fw" src="assets/images/icon/earth-outline-filled.svg" alt=""><span>Latest News
+													</span>
+												</a>
+											</li>
+											<li class="nav-item">
+												<a class="nav-link" href="events.html">
+													<img class="me-2 h-20px fa-fw" src="assets/images/icon/calendar-outline-filled.svg" alt=""><span>Events
+													</span>
+												</a>
+											</li>
+											<li class="nav-item">
+												<a class="nav-link" href="groups.html">
+													<img class="me-2 h-20px fa-fw" src="assets/images/icon/chat-outline-filled.svg" alt=""><span>Groups
+													</span>
+												</a>
+											</li>
+											<li class="nav-item">
+												<a class="nav-link" href="notifications.html">
+													<img class="me-2 h-20px fa-fw" src="assets/images/icon/notification-outlined-filled.svg" alt=""><span>Notifications
+													</span>
+												</a>
+											</li>
+											<li class="nav-item">
+												<a class="nav-link" href="settings.html">
+													<img class="me-2 h-20px fa-fw" src="assets/images/icon/cog-outline-filled.svg" alt=""><span>Settings
+													</span>
+												</a>
+											</li>
+										</ul>
+										<!-- Side Nav END -->
+									</div>
+									<!-- Card body END -->
+									<!-- Card footer -->
+									<div class="card-footer text-center py-2">
+										<a class="btn btn-link btn-sm" href="my-profile.html">View Profile
+										</a>
+									</div>
+								</div>
+								<!-- Card END -->
+
+								<!-- Helper link START -->
+								<ul class="nav small mt-4 justify-content-center lh-1">
+									<li class="nav-item">
+										<a class="nav-link" href="my-profile-about.html">About</a>
+									</li>
+									<li class="nav-item">
+										<a class="nav-link" href="settings.html">Settings</a>
+									</li>
+									<li class="nav-item">
+										<a class="nav-link" target="_blank" href="https://support.webestica.com/login">Support
+										</a>
+									</li>
+									<li class="nav-item">
+										<a class="nav-link" target="_blank" href="docs/index.html">Docs
+										</a>
+									</li>
+									<li class="nav-item">
+										<a class="nav-link" href="help.html">Help</a>
+									</li>
+									<li class="nav-item">
+										<a class="nav-link" href="privacy-and-terms.html">Privacy & terms</a>
+									</li>
+								</ul>
+								<!-- Helper link END -->
+								<!-- Copyright -->
+								<p class="small text-center mt-1">©2024
+									<a class="text-reset" target="_blank" href="https://www.webestica.com/">
+										Webestica
+									</a>
+								</p>
+							</div>
+						</div>
+					</nav>
+					<!-- Navbar END-->
+				</div>
+				<!-- Sidenav END -->
+
+				<!-- Main content START -->
+				<div class="col-md-8 col-lg-6 vstack gap-4">
+
+
+					<!-- Story START -->
+					<div>
+						<h6 class="mb-3">Suggested stories
+						</h6>
+						<div class="tiny-slider arrow-hover overflow-hidden">
+							<div
+								class="tiny-slider-inner ms-n4" data-arrow="true" data-dots="true" data-loop="false" data-autoplay="false" data-items-xl="4" data-items-lg="3" data-items-md="3" data-items-sm="3" data-items-xs="2" data-gutter="12" data-edge="24">
+
+								<!-- Slider items -->
+								<div>
+									<!-- Card START -->
+									<div class="card card-overlay-bottom border-0 position-relative h-150px" style="background-image:url(assets/images/post/1by1/02.jpg); background-position: center left; background-size: cover;">
+										<div class="card-img-overlay d-flex align-items-center p-2">
+											<div
+												class="w-100 mt-auto">
+												<!-- Name -->
+												<a href="#!" class="stretched-link text-white small">Judy Nguyen</a>
+											</div>
+										</div>
+									</div>
+									<!-- Card END -->
+								</div>
+
+								<!-- Slider items -->
+								<div>
+									<!-- Card START -->
+									<div class="card card-overlay-bottom border-0 position-relative h-150px" style="background-image:url(assets/images/post/1by1/03.jpg); background-position: center left; background-size: cover;">
+										<div class="card-img-overlay d-flex align-items-center p-2">
+											<div
+												class="w-100 mt-auto">
+												<!-- Name -->
+												<a href="#!" class="stretched-link text-white small">Samuel Bishop</a>
+											</div>
+										</div>
+									</div>
+									<!-- Card END -->
+								</div>
+
+								<!-- Slider items -->
+								<div>
+									<!-- Card START -->
+									<div class="card card-overlay-bottom border-0 position-relative h-150px" style="background-image:url(assets/images/post/1by1/04.jpg); background-position: center left; background-size: cover;">
+										<div class="card-img-overlay d-flex align-items-center p-2">
+											<div
+												class="w-100 mt-auto">
+												<!-- Name -->
+												<a href="#!" class="stretched-link text-white small">Carolyn Ortiz</a>
+											</div>
+										</div>
+									</div>
+									<!-- Card END -->
+								</div>
+
+								<!-- Slider items -->
+								<div>
+									<!-- Card START -->
+									<div class="card card-overlay-bottom border-0 position-relative h-150px" style="background-image:url(assets/images/post/1by1/05.jpg); background-position: center left; background-size: cover;">
+										<div class="card-img-overlay d-flex align-items-center p-2">
+											<div
+												class="w-100 mt-auto">
+												<!-- Name -->
+												<a href="#!" class="stretched-link text-white small">Amanda Reed</a>
+											</div>
+										</div>
+									</div>
+									<!-- Card END -->
+								</div>
+
+								<!-- Slider items -->
+								<div>
+									<!-- Card START -->
+									<div class="card card-overlay-bottom border-0 position-relative h-150px" style="background-image:url(assets/images/post/1by1/01.jpg); background-position: center left; background-size: cover;">
+										<div class="card-img-overlay d-flex align-items-center p-2">
+											<div
+												class="w-100 mt-auto">
+												<!-- Name -->
+												<a href="#!" class="stretched-link text-white small">Lori Stevens</a>
+											</div>
+										</div>
+									</div>
+									<!-- Card END -->
+								</div>
+
+								<!-- Slider items -->
+								<div>
+									<!-- Card START -->
+									<div class="card card-overlay-bottom border-0 position-relative h-150px" style="background-image:url(assets/images/post/1by1/06.jpg); background-position: center left; background-size: cover;">
+										<div class="card-img-overlay d-flex align-items-center p-2">
+											<div
+												class="w-100 mt-auto">
+												<!-- Name -->
+												<a href="#!" class="stretched-link text-white small">Joan Wallace</a>
+											</div>
+										</div>
+									</div>
+									<!-- Card END -->
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Story END -->
+
+					<!-- Card feed item START -->
+					<div
+						class="card">
+						<!-- Card header START -->
+						<div class="card-header border-0 pb-0">
+							<div class="d-flex align-items-center justify-content-between">
+								<div
+									class="d-flex align-items-center">
+									<!-- Avatar -->
+									<div class="avatar avatar-story me-2">
+										<a href="#!">
+											<img class="avatar-img rounded-circle" src="assets/images/avatar/12.jpg" alt="">
+										</a>
+									</div>
+									<!-- Info -->
+									<div>
+										<div class="nav nav-divider">
+											<h6 class="nav-item card-title mb-0">
+												<a href="#!">
+													Joan Wallace
+												</a>
+											</h6>
+											<span class="nav-item small">
+												1day</span>
+										</div>
+										<p class="mb-0 small">12 January at 12:00</p>
+									</div>
+								</div>
+								<!-- Card feed action dropdown START -->
+								<div class="dropdown">
+									<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction2" data-bs-toggle="dropdown" aria-expanded="false">
+										<i class="bi bi-three-dots"></i>
+									</a>
+									<!-- Card feed action dropdown menu -->
+									<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction2">
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a>
+										</li>
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson
+											</a>
+										</li>
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a>
+										</li>
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a>
+										</li>
+										<li><hr class="dropdown-divider"></li>
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-flag fa-fw pe-2"></i>Report post</a>
+										</li>
+									</ul>
+								</div>
+								<!-- Card feed action dropdown END -->
+							</div>
+						</div>
+						<!-- Card header END -->
+						<!-- Card body START -->
+						<div class="card-body pb-0">
+							<p>Comfort reached gay perhaps chamber his
+								<a href="#!">#internship</a>
+								<a href="#!">#hiring</a>
+								<a href="#!">#apply</a>
+							</p>
+						</div>
+						<!-- Card img -->
+						<div
+							class="overflow-hidden fullscreen-video w-100">
+
+							<!-- HTML video START -->
+							<div class="player-wrapper overflow-hidden">
+								<video class="player-html" controls crossorigin="anonymous" poster="assets/images/videos/poster.jpg">
+									<source src="assets/images/videos/video-feed.mp4" type="video/mp4">
+								</video>
+							</div>
+							<!-- HTML video END -->
+
+							<!-- Plyr resources and browser polyfills are specified in the pen settings -->
+						</div>
+						<!-- Feed react START -->
+						<div class="card-body pt-0">
+							<ul class="nav nav-stack py-3 small">
+								<li class="nav-item">
+									<a class="nav-link active" href="#!">
+										<i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
+								</li>
+								<li class="nav-item">
+									<a class="nav-link" href="#!">
+										<i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
+								</li>
+								<!-- Card share action START -->
+								<li class="nav-item dropdown ms-sm-auto">
+									<a class="nav-link mb-0" href="#" id="cardShareAction9" data-bs-toggle="dropdown" aria-expanded="false">
+										<i class="bi bi-reply-fill flip-horizontal ps-1"></i>Share (3)
+									</a>
+									<!-- Card share action dropdown menu -->
+									<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction9">
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a>
+										</li>
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark
+											</a>
+										</li>
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a>
+										</li>
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-share fa-fw pe-2"></i>Share post via …</a>
+										</li>
+										<li><hr class="dropdown-divider"></li>
+										<li>
+											<a class="dropdown-item" href="#">
+												<i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a>
+										</li>
+									</ul>
+								</li>
+								<!-- Card share action END -->
+							</ul>
+							<!-- Feed react END -->
+
+							<!-- Add comment -->
+							<div
+								class="d-flex mb-3">
+								<!-- Avatar -->
+								<div class="avatar avatar-xs me-2">
+									<a href="#!">
+										<img class="avatar-img rounded-circle" src="assets/images/avatar/12.jpg" alt="">
+									</a>
+								</div>
+
+								<!-- Comment box  -->
+								<form class="input-group">
+									<textarea data-autoresize class="form-control me-2 bg-light rounded" rows="1" placeholder="Add a comment..."></textarea>
+									<button class="btn btn-primary mb-0 rounded" type="submit">Post</button>
+								</form>
+							</div>
+							<!-- Comment wrap START -->
+							<ul
+								class="comment-wrap list-unstyled mb-0">
+								<!-- Comment item START -->
+								<li class="comment-item">
+									<div
+										class="d-flex">
+										<!-- Avatar -->
+										<div class="avatar avatar-xs">
+											<a href="#!"><img class="avatar-img rounded-circle" src="assets/images/avatar/05.jpg" alt=""></a>
+										</div>
+										<div
+											class="ms-2">
+											<!-- Comment by -->
+											<div class="bg-light rounded-start-top-0 p-3 rounded">
+												<div class="d-flex justify-content-between">
+													<h6 class="mb-1">
+														<a href="#!">
+															Frances Guerrero
+														</a>
+													</h6>
+													<small class="ms-2">5hr</small>
+												</div>
+												<p class="small mb-0">Preference any astonished unreserved Mrs.</p>
+											</div>
+											<!-- Comment react -->
+											<ul class="nav nav-divider py-2 small">
+												<li class="nav-item">
+													<a class="nav-link" href="#!">
+														Like (3)</a>
+												</li>
+												<li class="nav-item">
+													<a class="nav-link" href="#!">
+														Reply</a>
+												</li>
+												<li class="nav-item">
+													<a class="nav-link" href="#!">
+														View 5 replies</a>
+												</li>
+											</ul>
+										</div>
+									</div>
+									<!-- Comment item nested START -->
+									<ul
+										class="comment-item-nested list-unstyled">
+										<!-- Comment item START -->
+										<li class="comment-item">
+											<div
+												class="d-flex">
+												<!-- Avatar -->
+												<div class="avatar avatar-xs">
+													<a href="#!"><img class="avatar-img rounded-circle" src="assets/images/avatar/06.jpg" alt=""></a>
+												</div>
+												<!-- Comment by -->
+												<div class="ms-2">
+													<div class="bg-light p-3 rounded">
+														<div class="d-flex justify-content-between">
+															<h6 class="mb-1">
+																<a href="#!">
+																	Lori Stevens
+																</a>
+															</h6>
+															<small class="ms-2">2hr</small>
+														</div>
+														<p class="small mb-0">Dependent on so extremely delivered by. Yet ﻿no jokes worse her why.</p>
+													</div>
+													<!-- Comment react -->
+													<ul class="nav nav-divider py-2 small">
+														<li class="nav-item">
+															<a class="nav-link" href="#!">
+																Like (5)</a>
+														</li>
+														<li class="nav-item">
+															<a class="nav-link" href="#!">
+																Reply</a>
+														</li>
+													</ul>
+												</div>
+											</div>
+										</li>
+										<!-- Comment item END -->
+									</ul>
+									<!-- Comment item nested END -->
+								</li>
+								<!-- Comment item END -->
+							</ul>
+							<!-- Comment wrap END -->
+						</div>
+						<!-- Card body END -->
+						<!-- Card footer START -->
+						<div
+							class="card-footer border-0 pt-0">
+							<!-- Load more comments -->
+							<a href="#!" role="button" class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center" data-bs-toggle="button" aria-pressed="true">
+								<div class="spinner-dots me-2">
+									<span class="spinner-dot"></span>
+									<span class="spinner-dot"></span>
+									<span class="spinner-dot"></span>
+								</div>
+								Load more comments
+							</a>
+						</div>
+						<!-- Card footer END -->
+					</div>
+					<!-- Card feed item END -->
+
+					<!-- Load more button START -->
+					<a href="#!" role="button" class="btn btn-loader btn-primary-soft" data-bs-toggle="button" aria-pressed="true">
+						<span class="load-text">
+							Load more
+						</span>
+						<div class="load-icon">
+							<div class="spinner-grow spinner-grow-sm" role="status">
+								<span class="visually-hidden">Loading...</span>
+							</div>
+						</div>
+					</a>
+					<!-- Load more button END -->
+
+				</div>
+				<!-- Main content END -->
+
+				<!-- Right sidebar START -->
+				<div class="col-lg-3">
+					<div
+						class="row g-4">
+						<!-- Card follow START -->
+						<div class="col-sm-6 col-lg-12">
+							<div
+								class="card">
+								<!-- Card header START -->
+								<div class="card-header pb-0 border-0">
+									<h5 class="card-title mb-0">Who to follow</h5>
+								</div>
+								<!-- Card header END -->
+								<!-- Card body START -->
+								<div
+									class="card-body">
+									<!-- Connection item START -->
+									<div
+										class="hstack gap-2 mb-3">
+										<!-- Avatar -->
+										<div class="avatar">
+											<a href="#!"><img class="avatar-img rounded-circle" src="assets/images/avatar/04.jpg" alt=""></a>
+										</div>
+										<!-- Title -->
+										<div class="overflow-hidden">
+											<a class="h6 mb-0" href="#!">Judy Nguyen
+											</a>
+											<p class="mb-0 small text-truncate">News anchor</p>
+										</div>
+										<!-- Button -->
+										<a class="btn btn-primary-soft rounded-circle icon-md ms-auto" href="#">
+											<i class="fa-solid fa-plus"></i>
+										</a>
+									</div>
+									<!-- Connection item END -->
+									<!-- Connection item START -->
+									<div
+										class="hstack gap-2 mb-3">
+										<!-- Avatar -->
+										<div class="avatar avatar-story">
+											<a href="#!">
+												<img class="avatar-img rounded-circle" src="assets/images/avatar/05.jpg" alt="">
+											</a>
+										</div>
+										<!-- Title -->
+										<div class="overflow-hidden">
+											<a class="h6 mb-0" href="#!">Amanda Reed
+											</a>
+											<p class="mb-0 small text-truncate">Web Developer</p>
+										</div>
+										<!-- Button -->
+										<a class="btn btn-primary-soft rounded-circle icon-md ms-auto" href="#">
+											<i class="fa-solid fa-plus"></i>
+										</a>
+									</div>
+									<!-- Connection item END -->
+
+									<!-- Connection item START -->
+									<div
+										class="hstack gap-2 mb-3">
+										<!-- Avatar -->
+										<div class="avatar">
+											<a href="#">
+												<img class="avatar-img rounded-circle" src="assets/images/avatar/11.jpg" alt="">
+											</a>
+										</div>
+										<!-- Title -->
+										<div class="overflow-hidden">
+											<a class="h6 mb-0" href="#!">Billy Vasquez
+											</a>
+											<p class="mb-0 small text-truncate">News anchor</p>
+										</div>
+										<!-- Button -->
+										<a class="btn btn-primary rounded-circle icon-md ms-auto" href="#">
+											<i class="bi bi-person-check-fill"></i>
+										</a>
+									</div>
+									<!-- Connection item END -->
+
+									<!-- Connection item START -->
+									<div
+										class="hstack gap-2 mb-3">
+										<!-- Avatar -->
+										<div class="avatar">
+											<a href="#">
+												<img class="avatar-img rounded-circle" src="assets/images/avatar/01.jpg" alt="">
+											</a>
+										</div>
+										<!-- Title -->
+										<div class="overflow-hidden">
+											<a class="h6 mb-0" href="#!">Lori Ferguson
+											</a>
+											<p class="mb-0 small text-truncate">Web Developer at Webestica</p>
+										</div>
+										<!-- Button -->
+										<a class="btn btn-primary-soft rounded-circle icon-md ms-auto" href="#">
+											<i class="fa-solid fa-plus"></i>
+										</a>
+									</div>
+									<!-- Connection item END -->
+
+									<!-- Connection item START -->
+									<div
+										class="hstack gap-2 mb-3">
+										<!-- Avatar -->
+										<div class="avatar">
+											<a href="#">
+												<img class="avatar-img rounded-circle" src="assets/images/avatar/placeholder.jpg" alt="">
+											</a>
+										</div>
+										<!-- Title -->
+										<div class="overflow-hidden">
+											<a class="h6 mb-0" href="#!">Carolyn Ortiz
+											</a>
+											<p class="mb-0 small text-truncate">News anchor</p>
+										</div>
+										<!-- Button -->
+										<a class="btn btn-primary-soft rounded-circle icon-md ms-auto" href="#">
+											<i class="fa-solid fa-plus"></i>
+										</a>
+									</div>
+									<!-- Connection item END -->
+
+									<!-- View more button -->
+									<div class="d-grid mt-3">
+										<a class="btn btn-sm btn-primary-soft" href="#!">View more</a>
+									</div>
+								</div>
+								<!-- Card body END -->
+							</div>
+						</div>
+						<!-- Card follow START -->
+
+						<!-- Card News START -->
+						<div class="col-sm-6 col-lg-12">
+							<div
+								class="card">
+								<!-- Card header START -->
+								<div class="card-header pb-0 border-0">
+									<h5 class="card-title mb-0">Today’s news</h5>
+								</div>
+								<!-- Card header END -->
+								<!-- Card body START -->
+								<div
+									class="card-body">
+									<!-- News item -->
+									<div class="mb-3">
+										<h6 class="mb-0">
+											<a href="blog-details.html">Ten questions you should answer truthfully</a>
+										</h6>
+										<small>2hr</small>
+									</div>
+									<!-- News item -->
+									<div class="mb-3">
+										<h6 class="mb-0">
+											<a href="blog-details.html">Five unbelievable facts about money</a>
+										</h6>
+										<small>3hr</small>
+									</div>
+									<!-- News item -->
+									<div class="mb-3">
+										<h6 class="mb-0">
+											<a href="blog-details.html">Best Pinterest Boards for learning about business</a>
+										</h6>
+										<small>4hr</small>
+									</div>
+									<!-- News item -->
+									<div class="mb-3">
+										<h6 class="mb-0">
+											<a href="blog-details.html">Skills that you can learn from business</a>
+										</h6>
+										<small>6hr</small>
+									</div>
+									<!-- Load more comments -->
+									<a href="#!" role="button" class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center" data-bs-toggle="button" aria-pressed="true">
+										<div class="spinner-dots me-2">
+											<span class="spinner-dot"></span>
+											<span class="spinner-dot"></span>
+											<span class="spinner-dot"></span>
+										</div>
+										View all latest news
+									</a>
+								</div>
+								<!-- Card body END -->
+							</div>
+						</div>
+						<!-- Card News END -->
+					</div>
+				</div>
+				<!-- Right sidebar END -->
+
+			</div>
+			<!-- Row END -->
+		</div>
+		<!-- Container END -->
+
+	{% block amateur_content %}{% endblock %}
+	</main>
+	<!-- **************** MAIN CONTENT END **************** -->
+        
+
+        <!-- Frontoffice Template Scripts -->
+        <script src="{{ asset('assetsfront/vendor/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+
+        <script src="{{ asset('assetsfront/vendor/tiny-slider/dist/tiny-slider.js') }}"></script>
+        <script src="{{ asset('assetsfront/vendor/OverlayScrollbars-master/js/OverlayScrollbars.min.js') }}"></script>
+        <script src="{{ asset('assetsfront/vendor/choices.js/public/assets/scripts/choices.min.js') }}"></script>
+        <script src="{{ asset('assetsfront/vendor/glightbox-master/dist/js/glightbox.min.js') }}"></script>
+        <script src="{{ asset('assetsfront/vendor/flatpickr/dist/flatpickr.min.js') }}"></script>
+        <script src="{{ asset('assetsfront/vendor/plyr/plyr.js') }}"></script>
+        <script src="{{ asset('assetsfront/vendor/dropzone/dist/min/dropzone.min.js') }}"></script>
+        <script src="{{ asset('assetsfront/vendor/zuck.js/dist/zuck.min.js') }}"></script>
+        <script src="{{ asset('assetsfront/js/zuck-stories.js') }}"></script>
+
+        <script src="{{ asset('assetsfront/js/functions.js') }}"></script>
+        
+    </body>
+</html>

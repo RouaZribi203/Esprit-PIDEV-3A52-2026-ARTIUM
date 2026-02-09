@@ -24,4 +24,6 @@ final class UserController extends AbstractController
             'type' => 'rtiste',
         ]);
     }
+
+    
 }

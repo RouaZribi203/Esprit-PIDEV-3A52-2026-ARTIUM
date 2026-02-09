@@ -111,7 +111,7 @@
 
 <body>
 	<header class="navbar-light fixed-top header-static bg-mode">
-		{% include 'Front Office/feed/Partials/navbarfront.html.twig' %}
+		{% include 'Front Office/feed/Partials/navbarartiste.html.twig' %}
 	</header>
 
 	<main>
@@ -120,13 +120,13 @@
 				
 				<!-- Main content START -->
 				<div class="col-lg-8 vstack gap-4">
-				{% include 'profile_artiste.html.twig' %}
+				{% include 'oeuvre_front/Partials/profile_artiste.html.twig' %}
 				
 				{% block artiste_content %}{% endblock %}
 				</div>
 				<!-- Right sidebar START -->
 				<div class="col-lg-4">
-                {% include 'sidebar_artiste.html.twig' %}
+                {% include 'oeuvre_front/Partials/sidebar_artiste.html.twig' %}
 				</div>
 				
 			  

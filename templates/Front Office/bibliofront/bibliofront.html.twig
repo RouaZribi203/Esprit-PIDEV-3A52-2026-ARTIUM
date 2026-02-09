@@ -3,11 +3,11 @@
 {% block title %}{{ 'Bibliothèque'|trans }}{% endblock %}
 
 {% block amateur_content %}
-    <div class="card h-100">
+    <div class="card h-100" data-library-root>
       <div class="card-header d-sm-flex align-items-center text-center justify-content-sm-between border-0 pb-0">
         <div>
-          <h1 class="h4 card-title mb-1">Bibliotheque</h1>
-          <p class="small text-muted mb-0">Browse the collection and open a book to see details and rent it.</p>
+          <h1 class="h4 card-title mb-1">Bibliotheque numerique</h1>
+          <p class="small text-muted mb-0">Explore, view details, and rent ebooks instantly.</p>
         </div>
         <form class="d-flex mt-3 mt-sm-0" role="search">
           <input class="form-control form-control-sm" type="search" placeholder="Search title, author" aria-label="Search">
@@ -15,53 +15,103 @@
         </form>
       </div>
       <div class="card-body">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+          <span class="badge bg-primary-subtle text-primary">Ebooks</span>
+          <span class="badge bg-info-subtle text-info">Instant access</span>
+          <span class="badge bg-success-subtle text-success">Rent & read</span>
+        </div>
         <div class="row g-4">
           <div class="col-sm-6 col-xl-4">
-            <div class="card h-100">
-              <div class="position-relative">
-                <a href="{{ path('app_bookdetails') }}#book-1">
-                  <img class="img-fluid rounded-top" src="assets/images/events/01.jpg" alt="The Silent Library cover">
-                </a>
-                <span class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">Available</span>
+            <div
+              class="card h-100 library-card"
+              data-book-card
+              data-book-id="book-1"
+              data-title="The Silent Library"
+              data-author="Lina Kacem"
+              data-pages="320"
+              data-category="Fiction"
+              data-price="6.50"
+              data-duration-days="7"
+              data-pdf-url="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+              data-initial-status="available"
+            >
+              <div class="position-relative library-cover">
+                <img class="img-fluid rounded-top" src="{{ asset('assetsfront/images/events/01.jpg') }}" alt="The Silent Library cover">
+                <span class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0" data-book-status>Available</span>
               </div>
-              <div class="card-body">
-                <h6 class="mt-2 mb-1">
-                  <a href="{{ path('app_bookdetails') }}#book-1">The Silent Library</a>
-                </h6>
+              <div class="card-body d-flex flex-column">
+                <h6 class="mt-2 mb-1">The Silent Library</h6>
                 <p class="small text-muted mb-2">by Lina Kacem</p>
-                <ul class="list-inline small text-muted mb-2">
-                  <li class="list-inline-item"><i class="bi bi-book"></i> Fiction</li>
-                  <li class="list-inline-item"><i class="bi bi-translate"></i> French</li>
-                  <li class="list-inline-item"><i class="bi bi-hash"></i> 320 pages</li>
-                </ul>
-                <p class="small mb-3">A quiet town hides a secret archive where every book changes its reader.</p>
-                <div class="d-flex align-items-center justify-content-between">
-                  <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#book-1-modal">View details</button>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <span class="badge bg-light text-dark">Fiction</span>
+                  <span class="badge bg-light text-dark">320 pages</span>
+                  <span class="badge bg-light text-dark">7 days</span>
+                </div>
+                <p class="library-description mb-3">A quiet town hides a secret archive where every book changes its reader.</p>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <div>
+                    <small class="text-muted d-block">Rental price</small>
+                    <span class="fw-semibold">$6.50</span>
+                  </div>
+                  <div class="text-end">
+                    <small class="text-muted d-block">Access</small>
+                    <span class="fw-semibold">Instant</span>
+                  </div>
+                </div>
+                <div class="mt-auto d-flex align-items-center justify-content-between">
+                  <small class="text-muted library-remaining" data-book-remaining hidden></small>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-rent-quick>Rent</button>
+                    <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#book-1-modal">View Details</button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
           <div class="col-sm-6 col-xl-4">
-            <div class="card h-100">
-              <div class="position-relative">
-                <a href="{{ path('app_bookdetails') }}#book-2">
-                  <img class="img-fluid rounded-top" src="assets/images/events/02.jpg" alt="Atlas of Light cover">
-                </a>
-                <span class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">Available</span>
+            <div
+              class="card h-100 library-card"
+              data-book-card
+              data-book-id="book-2"
+              data-title="Atlas of Light"
+              data-author="Omar Benali"
+              data-pages="412"
+              data-category="History"
+              data-price="7.80"
+              data-duration-days="10"
+              data-pdf-url="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+              data-initial-status="rented"
+              data-initial-start-offset="2"
+            >
+              <div class="position-relative library-cover">
+                <img class="img-fluid rounded-top" src="{{ asset('assetsfront/images/events/02.jpg') }}" alt="Atlas of Light cover">
+                <span class="badge bg-warning text-dark mt-2 me-2 position-absolute top-0 end-0" data-book-status>Rented</span>
               </div>
-              <div class="card-body">
-                <h6 class="mt-2 mb-1">
-                  <a href="{{ path('app_bookdetails') }}#book-2">Atlas of Light</a>
-                </h6>
+              <div class="card-body d-flex flex-column">
+                <h6 class="mt-2 mb-1">Atlas of Light</h6>
                 <p class="small text-muted mb-2">by Omar Benali</p>
-                <ul class="list-inline small text-muted mb-2">
-                  <li class="list-inline-item"><i class="bi bi-book"></i> History</li>
-                  <li class="list-inline-item"><i class="bi bi-translate"></i> Arabic</li>
-                  <li class="list-inline-item"><i class="bi bi-hash"></i> 412 pages</li>
-                </ul>
-                <p class="small mb-3">A journey through coastal cities and the artists who shaped them.</p>
-                <div class="d-flex align-items-center justify-content-between">
-                  <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#book-2-modal">View details</button>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <span class="badge bg-light text-dark">History</span>
+                  <span class="badge bg-light text-dark">412 pages</span>
+                  <span class="badge bg-light text-dark">10 days</span>
+                </div>
+                <p class="library-description mb-3">A journey through coastal cities and the artists who shaped them.</p>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <div>
+                    <small class="text-muted d-block">Rental price</small>
+                    <span class="fw-semibold">$7.80</span>
+                  </div>
+                  <div class="text-end">
+                    <small class="text-muted d-block">Access</small>
+                    <span class="fw-semibold">Limited</span>
+                  </div>
+                </div>
+                <div class="mt-auto d-flex align-items-center justify-content-between">
+                  <small class="text-muted library-remaining" data-book-remaining>Available for 8 days left</small>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-rent-quick>Rent</button>
+                    <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#book-2-modal">View Details</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -70,33 +120,87 @@
       </div>
     </div>
 
-    <div class="modal fade" id="book-1-modal" tabindex="-1" aria-labelledby="book-1-modal-label" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="book-1-modal" tabindex="-1" aria-labelledby="book-1-modal-label" aria-hidden="true" data-book-modal data-book-id="book-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="book-1-modal-label">The Silent Library</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <img class="img-fluid rounded mb-3" src="assets/images/events/01.jpg" alt="The Silent Library cover">
-            <p class="small text-muted mb-2">Author introduction</p>
-            <p class="mb-0">In this quiet-town tale, Lina Kacem invites readers into a hidden archive where every shelf whispers a truth. The story follows a young curator who learns that books can be mirrors, and that the courage to read is the courage to change.</p>
+            <div class="row g-4">
+              <div class="col-md-4">
+                <img class="img-fluid rounded" src="{{ asset('assetsfront/images/events/01.jpg') }}" alt="The Silent Library cover">
+              </div>
+              <div class="col-md-8">
+                <p class="small text-muted mb-2">Author introduction</p>
+                <p>In this quiet-town tale, Lina Kacem invites readers into a hidden archive where every shelf whispers a truth. The story follows a young curator who learns that books can be mirrors, and that the courage to read is the courage to change.</p>
+                <div class="library-details">
+                  <div><span class="fw-semibold">Author:</span> Lina Kacem</div>
+                  <div><span class="fw-semibold">Pages:</span> 320</div>
+                  <div><span class="fw-semibold">Category:</span> Fiction</div>
+                  <div><span class="fw-semibold">Rental price:</span> $6.50</div>
+                  <div><span class="fw-semibold">Rental duration:</span> 7 days</div>
+                  <div><span class="fw-semibold">Rental start date:</span> <span data-book-field="start">Not rented</span></div>
+                  <div><span class="fw-semibold">Rental expiration date:</span> <span data-book-field="expiration">Not rented</span></div>
+                  <div><span class="fw-semibold">Current status:</span> <span data-book-field="status">Available</span></div>
+                  <div><span class="fw-semibold">Remaining time:</span> <span data-book-field="remaining">-</span></div>
+                </div>
+                <div class="alert alert-warning small mt-3 mb-0" data-book-expired-message hidden>Rental expired. The book is available again.</div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                <button class="btn btn-primary" type="button" data-rent-button>Rent Book</button>
+                <span class="text-muted small" data-book-lock-message hidden>Rent this book to access the content.</span>
+              </div>
+              <div class="library-pdf mt-3" data-book-pdf-container hidden>
+                <iframe title="The Silent Library PDF" class="library-pdf-frame" data-book-pdf></iframe>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="modal fade" id="book-2-modal" tabindex="-1" aria-labelledby="book-2-modal-label" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="book-2-modal" tabindex="-1" aria-labelledby="book-2-modal-label" aria-hidden="true" data-book-modal data-book-id="book-2">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="book-2-modal-label">Atlas of Light</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <img class="img-fluid rounded mb-3" src="assets/images/events/02.jpg" alt="Atlas of Light cover">
-            <p class="small text-muted mb-2">Author introduction</p>
-            <p class="mb-0">Omar Benali blends travel notes with archival sketches to trace the artists who shaped luminous coastal cities. This resume is an invitation to follow light itself through history, memory, and the maps we carry within.</p>
+            <div class="row g-4">
+              <div class="col-md-4">
+                <img class="img-fluid rounded" src="{{ asset('assetsfront/images/events/02.jpg') }}" alt="Atlas of Light cover">
+              </div>
+              <div class="col-md-8">
+                <p class="small text-muted mb-2">Author introduction</p>
+                <p>Omar Benali blends travel notes with archival sketches to trace the artists who shaped luminous coastal cities. This resume is an invitation to follow light itself through history, memory, and the maps we carry within.</p>
+                <div class="library-details">
+                  <div><span class="fw-semibold">Author:</span> Omar Benali</div>
+                  <div><span class="fw-semibold">Pages:</span> 412</div>
+                  <div><span class="fw-semibold">Category:</span> History</div>
+                  <div><span class="fw-semibold">Rental price:</span> $7.80</div>
+                  <div><span class="fw-semibold">Rental duration:</span> 10 days</div>
+                  <div><span class="fw-semibold">Rental start date:</span> <span data-book-field="start">Not rented</span></div>
+                  <div><span class="fw-semibold">Rental expiration date:</span> <span data-book-field="expiration">Not rented</span></div>
+                  <div><span class="fw-semibold">Current status:</span> <span data-book-field="status">Rented</span></div>
+                  <div><span class="fw-semibold">Remaining time:</span> <span data-book-field="remaining">-</span></div>
+                </div>
+                <div class="alert alert-warning small mt-3 mb-0" data-book-expired-message hidden>Rental expired. The book is available again.</div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                <button class="btn btn-primary" type="button" data-rent-button>Rent Book</button>
+                <span class="text-muted small" data-book-lock-message hidden>Rent this book to access the content.</span>
+              </div>
+              <div class="library-pdf mt-3" data-book-pdf-container hidden>
+                <iframe title="Atlas of Light PDF" class="library-pdf-frame" data-book-pdf></iframe>
+              </div>
+            </div>
           </div>
         </div>
       </div>

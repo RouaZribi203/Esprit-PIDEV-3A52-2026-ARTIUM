@@ -117,11 +117,19 @@
 	<main>
 		<div class="container">
 			<div class="row g-4">
-				{% include 'Front Office/feed/Partials/sidebarfront.html.twig' %}
+				
 				<!-- Main content START -->
-				<div class="col-md-8 col-lg-6 vstack gap-4">
-					{% block amateur_content %}{% endblock %}
+				<div class="col-lg-8 vstack gap-4">
+				{% include 'profile_artiste.html.twig' %}
+				
+				{% block artiste_content %}{% endblock %}
 				</div>
+				<!-- Right sidebar START -->
+				<div class="col-lg-4">
+                {% include 'sidebar_artiste.html.twig' %}
+				</div>
+				
+			  
 			</div>
 		</div>
 	</main>

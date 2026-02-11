@@ -7,4 +7,5 @@ enum Role: string
     case ADMIN = 'Admin';
     case ARTISTE = 'Artiste';
     case AMATEUR = 'Amateur';
+    case ARTIST = 'Artist';
 }

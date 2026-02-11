@@ -1,0 +1,196 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Reclamation;
+use App\Entity\Reponse;
+use App\Entity\User;
+use App\Enum\StatutReclamation;
+use App\Form\Reclamation1Type;
+use App\Form\ReponseType;
+use App\Repository\ReclamationRepository;
+use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+
+final class ReclamationController extends AbstractController
+{
+    #[Route('/user-reclamation', name: 'app_reclamationfront', methods: ['GET'])]
+    public function index(Request $request, ReclamationRepository $reclamationRepository, UserRepository $userRepository): Response
+    {
+        $user = $this->getUser();
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        
+        if (!$user instanceof User) {
+            $user = $userRepository->find(1);
+        }
+
+        $search = trim((string) $request->query->get('q', ''));
+        $statutValue = $request->query->get('statut');
+        $statut = null;
+        if (is_string($statutValue) && $statutValue !== '') {
+            $statut = StatutReclamation::tryFrom($statutValue);
+        }
+
+        // Admin voit toutes les reclamations, user voit seulement les siennes
+        if ($isAdmin) {
+            if ($search !== '' || $statut !== null) {
+                $qb = $reclamationRepository->createQueryBuilder('r')
+                    ->orderBy('r.date_creation', 'DESC');
+                    
+                if ($search !== '') {
+                    $qb->andWhere('r.texte LIKE :search')
+                        ->setParameter('search', '%' . $search . '%');
+                }
+                
+                if ($statut !== null) {
+                    $qb->andWhere('r.statut = :statut')
+                        ->setParameter('statut', $statut);
+                }
+                
+                $reclamations = $qb->getQuery()->getResult();
+            } else {
+                $reclamations = $reclamationRepository->findBy([], ['date_creation' => 'DESC']);
+            }
+        } else {
+            $reclamations = [];
+            if ($user instanceof User) {
+                $reclamations = $reclamationRepository->findByUserFilters(
+                    $user,
+                    $search !== '' ? $search : null,
+                    $statut
+                );
+            }
+        }
+
+        $editForms = [];
+        $form = null;
+        $responseCreateForms = [];
+        $responseEditForms = [];
+        
+        if ($isAdmin) {
+            // Admin: formulaires pour répondre aux réclamations
+            foreach ($reclamations as $reclamation) {
+                $reponse = new Reponse();
+                $reponse->setReclamation($reclamation);
+                $createForm = $this->createForm(ReponseType::class, $reponse);
+                $createForm->remove('reclamation');
+                $createForm->remove('user_admin');
+                $createForm->remove('date_reponse');
+                $responseCreateForms[$reclamation->getId()] = $createForm->createView();
+
+                foreach ($reclamation->getReponses() as $existingReponse) {
+                    $editForm = $this->createForm(ReponseType::class, $existingReponse);
+                    $editForm->remove('reclamation');
+                    $editForm->remove('user_admin');
+                    $editForm->remove('date_reponse');
+                    $responseEditForms[$existingReponse->getId()] = $editForm->createView();
+                }
+            }
+        } else {
+            // User: formulaire pour créer et éditer ses réclamations
+            $form = $this->createForm(Reclamation1Type::class, new Reclamation(), [
+                'action' => $this->generateUrl('app_reclamation_new'),
+                'method' => 'POST',
+            ]);
+            
+            foreach ($reclamations as $reclamation) {
+                $editForms[$reclamation->getId()] = $this->createForm(Reclamation1Type::class, $reclamation, [
+                    'action' => $this->generateUrl('app_reclamation_edit', ['id' => $reclamation->getId()]),
+                    'method' => 'POST',
+                ])->createView();
+            }
+        }
+
+        // Sélection du template selon le rôle
+        $template = $isAdmin ? 'reclam/reclams.html.twig' : 'Front Office/reclamationfront/reclamationfront.html.twig';
+        
+        return $this->render($template, [
+            'reclamations' => $reclamations,
+            'form' => $form?->createView(),
+            'edit_forms' => $editForms,
+            'responseCreateForms' => $responseCreateForms,
+            'responseEditForms' => $responseEditForms,
+            'search_query' => $search ?? '',
+            'selected_statut' => $statut?->value ?? '',
+        ]);
+    }
+
+    #[Route('/reclamation/new', name: 'app_reclamation_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
+    {
+        $reclamation = new Reclamation();
+        $form = $this->createForm(Reclamation1Type::class, $reclamation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                $user = $userRepository->find(1);
+                if (!$user instanceof User) {
+                    throw $this->createNotFoundException('Utilisateur par defaut introuvable.');
+                }
+            }
+
+            $reclamation->setUser($user);
+
+            if (null === $reclamation->getDateCreation()) {
+                $reclamation->setDateCreation(new \DateTime());
+            }
+
+            if (null === $reclamation->getStatut()) {
+                $reclamation->setStatut(StatutReclamation::NON_TRAITEE);
+            }
+
+            $entityManager->persist($reclamation);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('app_reclamationfront', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('reclamation/new.html.twig', [
+            'reclamation' => $reclamation,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/reclamation/{id}', name: 'app_reclamation_show', methods: ['GET'])]
+    public function show(Reclamation $reclamation): Response
+    {
+        return $this->render('reclamation/show.html.twig', [
+            'reclamation' => $reclamation,
+        ]);
+    }
+
+    #[Route('/reclamation/{id}/edit', name: 'app_reclamation_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(Reclamation1Type::class, $reclamation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+
+            return $this->redirectToRoute('app_reclamationfront', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('reclamation/edit.html.twig', [
+            'reclamation' => $reclamation,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/reclamation/{id}/delete', name: 'app_reclamation_delete', methods: ['POST'])]
+    public function delete(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$reclamation->getId(), $request->getPayload()->getString('_token'))) {
+            $entityManager->remove($reclamation);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_reclamationfront', [], Response::HTTP_SEE_OTHER);
+    }
+}

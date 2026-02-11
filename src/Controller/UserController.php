@@ -56,26 +56,36 @@ final class UserController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
         $user = new User();
+        // Initialiser la date d'inscription à aujourd'hui (00:00:00)
+        $today = new \DateTime('today');
+        $user->setDateInscription($today);
         $form = $this->createForm(UserType::class, $user, ['is_edit' => false]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-
             // Hash the password
-            $plainPassword = $form->get('mdp')->getData();
+            $plainPassword = $user->getPlainPassword();
             if ($plainPassword) {
                 $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
                 $user->setMdp($hashedPassword);
             }
 
-            // Set registration date
-            $user->setDateInscription(new \DateTime());
+            // Nettoyer les champs conditionnels
+            if ($user->getRole() === Role::AMATEUR) {
+                $user->setSpecialite(null);
+            } elseif ($user->getRole() === Role::ARTISTE) {
+                $user->setCentreInteret(null);
+            } elseif ($user->getRole() === Role::ADMIN) {
+                $user->setSpecialite(null);
+                $user->setCentreInteret(null);
+            }
 
             $entityManager->persist($user);
             $entityManager->flush();
 
             $this->addFlash('success', 'Utilisateur créé avec succès !');
 
+            // Redirection vers la liste pour voir l'utilisateur ajouté
             return $this->redirectToRoute('app_user_index');
         }
 

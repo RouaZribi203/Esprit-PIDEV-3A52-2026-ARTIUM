@@ -36,6 +36,16 @@ class UserType extends AbstractType
                 'required' => true,
                 'constraints' => [
                     new NotBlank(['message' => 'Le nom est obligatoire']),
+                    new Length([
+                        'min' => 2,
+                        'max' => 255,
+                        'minMessage' => 'Le nom doit contenir au moins {{ limit }} caractères',
+                        'maxMessage' => 'Le nom ne peut pas dépasser {{ limit }} caractères'
+                    ]),
+                    new \Symfony\Component\Validator\Constraints\Regex([
+                        'pattern' => '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
+                        'message' => 'Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets'
+                    ])
                 ],
                 'attr' => [
                     'class' => 'form-control',
@@ -47,6 +57,16 @@ class UserType extends AbstractType
                 'required' => true,
                 'constraints' => [
                     new NotBlank(['message' => 'Le prénom est obligatoire']),
+                    new Length([
+                        'min' => 2,
+                        'max' => 255,
+                        'minMessage' => 'Le prénom doit contenir au moins {{ limit }} caractères',
+                        'maxMessage' => 'Le prénom ne peut pas dépasser {{ limit }} caractères'
+                    ]),
+                    new \Symfony\Component\Validator\Constraints\Regex([
+                        'pattern' => '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
+                        'message' => 'Le prénom ne doit contenir que des lettres, espaces, apostrophes et tirets'
+                    ])
                 ],
                 'attr' => [
                     'class' => 'form-control',
@@ -59,6 +79,10 @@ class UserType extends AbstractType
                 'constraints' => [
                     new NotBlank(['message' => 'L\'email est obligatoire']),
                     new Email(['message' => 'L\'email n\'est pas valide']),
+                    new Length([
+                        'max' => 255,
+                        'maxMessage' => 'L\'email ne peut pas dépasser {{ limit }} caractères'
+                    ])
                 ],
                 'attr' => [
                     'class' => 'form-control',
@@ -68,14 +92,32 @@ class UserType extends AbstractType
             ->add('dateNaissance', DateType::class, [
                 'label' => 'Date de naissance',
                 'widget' => 'single_text',
-                'required' => false,
+                'required' => true,
+                'constraints' => [
+                    new NotBlank(['message' => 'La date de naissance ne peut pas être vide']),
+                    new \Symfony\Component\Validator\Constraints\LessThan([
+                        'value' => 'today',
+                        'message' => 'La date de naissance doit être dans le passé'
+                    ]),
+                    new \Symfony\Component\Validator\Constraints\GreaterThan([
+                        'value' => '-120 years',
+                        'message' => 'La date de naissance n\'est pas valide'
+                    ])
+                ],
                 'attr' => [
                     'class' => 'form-control'
                 ]
             ])
             ->add('numTel', TelType::class, [
                 'label' => 'Numéro de téléphone',
-                'required' => false,
+                'required' => true,
+                'constraints' => [
+                    new NotBlank(['message' => 'Le numéro de téléphone ne peut pas être vide']),
+                    new \Symfony\Component\Validator\Constraints\Regex([
+                        'pattern' => '/^[2459]\d{7}$/',
+                        'message' => 'Le numéro de téléphone doit contenir 8 chiffres et commencer par 2, 4, 5 ou 9'
+                    ])
+                ],
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => '+216 XX XXX XXX'
@@ -83,7 +125,16 @@ class UserType extends AbstractType
             ])
             ->add('ville', TextType::class, [
                 'label' => 'Ville',
-                'required' => false,
+                'required' => true,
+                'constraints' => [
+                    new NotBlank(['message' => 'La ville ne peut pas être vide']),
+                    new Length([
+                        'min' => 2,
+                        'max' => 255,
+                        'minMessage' => 'La ville doit contenir au moins {{ limit }} caractères',
+                        'maxMessage' => 'La ville ne peut pas dépasser {{ limit }} caractères'
+                    ])
+                ],
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Entrez la ville'
@@ -144,17 +195,9 @@ class UserType extends AbstractType
         
         // Ajouter le champ mot de passe uniquement lors de la création
         if (!$isEdit) {
-            $builder->add('mdp', PasswordType::class, [
+            $builder->add('plainPassword', PasswordType::class, [
                 'label' => 'Mot de passe',
-                'mapped' => false,
                 'required' => true,
-                'constraints' => [
-                    new NotBlank(['message' => 'Le mot de passe est obligatoire']),
-                    new Length([
-                        'min' => 6,
-                        'minMessage' => 'Le mot de passe doit contenir au moins {{ limit }} caractères',
-                    ]),
-                ],
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Entrez le mot de passe'
@@ -162,8 +205,6 @@ class UserType extends AbstractType
             ]);
         }
 
-        // Les champs specialite et centreInteret sont toujours présents dans buildForm()
-        // Le JavaScript dans le template _form.html.twig gère leur affichage selon le rôle sélectionné
 
         // Événement POST_SUBMIT : Nettoyer les champs conditionnels après soumission
         $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {

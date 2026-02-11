@@ -512,7 +512,9 @@ fieldset {
   margin: 0;
   border: 0;
 }
-
+oeuvre {
+  margin-right: 0px;
+}
 legend {
   float: left;
   width: 100%;
@@ -3561,6 +3563,14 @@ textarea.form-control-lg {
   --bs-btn-disabled-border-color: #3a39c5;
   --bs-gradient: none;
 }
+[data-bs-theme=dark] .btn-outline-primary {
+  --bs-btn-color: #fffffb;
+  --bs-btn-border-color: #b1f005;
+  --bs-btn-hover-color: #262626;
+  --bs-btn-hover-bg: #b1f005;
+  --bs-btn-hover-border-color: #b1f005;
+
+}
 
 .btn-outline-secondary {
   --bs-btn-color: #14191e;
@@ -4017,6 +4027,14 @@ textarea.form-control-lg {
   overflow: hidden;
   border-top: 1px solid var(--bs-dropdown-divider-bg);
   opacity: 1;
+}
+.dropdown-dividerr {
+  height: 0;
+  margin: var(--bs-dropdown-divider-margin-y) 0;
+  overflow: hidden;
+  border-top: 1px solid var(--bs-dropdown-divider-bg);
+  opacity: 1;
+  margin-top: 15px;
 }
 
 .dropdown-item {
@@ -17902,8 +17920,16 @@ a.badge:hover {
 .modeswitch-item .btn-modeswitch.active {
   background: var(--bs-primary);
 }
+
+[data-bs-theme=dark] .modeswitch-item .btn-modeswitch.active {
+  background: #b1f005;
+}
+
 .modeswitch-item .btn-modeswitch.active svg {
   fill: var(--bs-white);
+}
+[data-bs-theme=dark] .modeswitch-item .btn-modeswitch.active svg {
+  fill: #262626;
 }
 
 .dark-mode-item {
@@ -17915,6 +17941,11 @@ a.badge:hover {
 }
 [data-bs-theme=dark] .light-mode-item {
   display: none !important;
+}
+
+.navbar-vertical-compact .simplebar-content-wrapper,
+.navbar-vertical-compact .simplebar-mask {
+    overflow: visible !important
 }
 
 /*User CSS*/

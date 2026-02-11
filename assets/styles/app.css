@@ -1,3 +1,78 @@
-body {
-    background-color: skyblue;
+.profile-nav .nav-link {
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.profile-nav .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: #0d6efd;
+    transform: translateX(-30%) scaleX(0);
+    transform-origin: left center;
+    opacity: 0;
+    transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.profile-nav .nav-link.active::after {
+    transform: translateX(0) scaleX(1);
+    opacity: 1;
+    animation: profile-nav-slide 260ms ease-out;
+}
+
+.profile-nav .nav-link:hover::after {
+    transform: translateX(0) scaleX(1);
+    opacity: 0.6;
+}
+
+@keyframes profile-nav-slide {
+    from {
+        transform: translateX(-30%) scaleX(0.2);
+        opacity: 0.2;
+    }
+    to {
+        transform: translateX(0) scaleX(1);
+        opacity: 1;
+    }
+}
+
+.navbar .oeuvres-toggle::after {
+    margin-left: 0;
+}
+
+.navbar .oeuvres-toggle {
+    padding-right: 0;
+    padding-left: 0;
+}
+
+.navbar .oeuvres-toggle.dropdown-toggle-split {
+    padding-left: 0;
+}
+
+.navbar .oeuvres-group {
+    gap: 0;
+}
+
+.navbar .oeuvres-group .nav-link:first-child {
+    padding-right: 0;
+}
+
+.offcanvas-backdrop {
+    z-index: 3000 !important;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+.offcanvas {
+    z-index: 3010 !important;
+    position: fixed;
+}
+
+header.fixed-top {
+    z-index: 1020;
 }

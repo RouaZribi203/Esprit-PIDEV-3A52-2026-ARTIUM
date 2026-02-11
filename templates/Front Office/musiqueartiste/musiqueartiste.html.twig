@@ -91,7 +91,17 @@
                       <i class="bi bi-three-dots"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ musique.id }}">
-                      <li><a class="dropdown-item" href="#"> <i class="bi bi-pencil pe-2"></i>Edit</a></li>
+                      <li>
+                        <a class="dropdown-item edit-music-btn" href="#" 
+                           data-music-id="{{ musique.id }}"
+                           data-music-title="{{ musique.titre }}"
+                           data-music-description="{{ musique.description }}"
+                           data-music-genre="{{ musique.genre }}"
+                           data-bs-toggle="offcanvas" 
+                           data-bs-target="#offcanvasEditMusic">
+                          <i class="bi bi-pencil pe-2"></i>Edit
+                        </a>
+                      </li>
                       <li>
                         <form method="post" action="{{ path('app_musiqueartiste_delete', {'id': musique.id}) }}" 
                               style="display: inline;">
@@ -221,6 +231,68 @@
   </div>
 </div>
 <!-- Offcanvas Add Music Form END -->
+
+<!-- Offcanvas Edit Music Form START -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditMusic" style="width: 600px">
+  <div class="offcanvas-body" data-simplebar>
+    <div class="offcanvas-header px-2 pt-0">
+      <h3 class="offcanvas-title">Edit Music</h3>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <!-- Form body -->
+    <div class="container">
+      <form method="post" id="editMusicForm" enctype="multipart/form-data" class="row needs-validation" novalidate>
+        <input type="hidden" id="editMusicId" name="musicId">
+        
+        <!-- Title -->
+        <div class="mb-3 col-12">
+          <label for="editTitre" class="form-label">Title</label>
+          <span class="text-danger">*</span>
+          <input type="text" class="form-control" id="editTitre" name="titre" required>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3 col-12">
+          <label for="editDescription" class="form-label">Description</label>
+          <span class="text-danger">*</span>
+          <textarea class="form-control" id="editDescription" name="description" rows="3" required></textarea>
+        </div>
+
+        <!-- Genre -->
+        <div class="mb-3 col-12">
+          <label for="editGenre" class="form-label">Genre</label>
+          <span class="text-danger">*</span>
+          <select class="form-select" id="editGenre" name="genre" required>
+            <option value="">Select genre</option>
+            <option value="Rock">Rock</option>
+            <option value="Jazz">Jazz</option>
+            <option value="Classique">Classique</option>
+            <option value="Pop">Pop</option>
+          </select>
+        </div>
+
+        <!-- Cover Image -->
+        <div class="mb-3 col-12">
+          <h5 class="mb-3">Update Cover Image (optional)</h5>
+          <div class="icon-shape icon-xxl border rounded position-relative">
+            <span class="position-absolute"><i class="bi bi-image fs-3"></i></span>
+            <input type="file" class="form-control border-0 opacity-0" name="imageFile" accept="image/*">
+          </div>
+          <small class="text-muted">Leave empty to keep current image. Max 5MB (JPEG, PNG)</small>
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-12">
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-check-circle pe-2"></i>Update Music
+          </button>
+          <button type="button" class="btn btn-outline-primary ms-2" data-bs-dismiss="offcanvas" aria-label="Close">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Offcanvas Edit Music Form END -->
 
 <!-- Audio element for playback -->
 <audio id="audioPlayer" style="display: none;"></audio>
@@ -452,5 +524,29 @@
     MusicPlayer.init();
   }
 })();
+
+// Edit Music Form Handler
+document.addEventListener('click', function(e) {
+  const editBtn = e.target.closest('.edit-music-btn');
+  if (editBtn) {
+    e.preventDefault();
+    
+    // Get music data from button attributes
+    const musicId = editBtn.dataset.musicId;
+    const title = editBtn.dataset.musicTitle;
+    const description = editBtn.dataset.musicDescription;
+    const genre = editBtn.dataset.musicGenre;
+    
+    // Populate form fields
+    document.getElementById('editMusicId').value = musicId;
+    document.getElementById('editTitre').value = title;
+    document.getElementById('editDescription').value = description;
+    document.getElementById('editGenre').value = genre;
+    
+    // Update form action
+    const form = document.getElementById('editMusicForm');
+    form.action = '{{ path('app_musiqueartiste_edit', {'id': '__ID__'}) }}'.replace('__ID__', musicId);
+  }
+});
 </script>
 {% endblock %}

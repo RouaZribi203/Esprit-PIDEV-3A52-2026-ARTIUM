@@ -25,7 +25,7 @@
                 <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-rock"> Rock </a> </li>
                 <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-jazz"> Jazz </a> </li>
                 <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-classical"> Classique </a> </li>
-                <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-rap"> Rap </a> </li>
+                <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-pop"> Pop </a> </li>
             </ul>
 
             <!-- Tab content START -->
@@ -33,415 +33,245 @@
                 
                 <!-- All genres tab START -->
                 <div class="tab-pane fade show active" id="tab-all">
-                    <div class="row g-4">
-                        <!-- Music item 1 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Rock
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-primary mt-n3" href="#">Rock Music</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Bohemian Rhapsody </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Queen</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:55 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-primary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
+                    {% if musiques is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique disponible</h5>
+                            <p class="text-muted">Aucune chanson n'a été trouvée pour le moment.</p>
                         </div>
-                        <!-- Music item 1 END -->
-
-                        <!-- Music item 2 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-danger text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Jazz
+                    {% else %}
+                        <div class="row g-4">
+                            {% for musique in musiques %}
+                                <!-- Music item START -->
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">
+                                                {{ musique.genre.value }}
+                                            </div>
+                                        </div>
+                                        <!-- Card body START -->
+                                        <div class="card-body position-relative pt-0">
+                                            <!-- Genre tag -->
+                                            <a class="btn btn-xs btn-primary mt-n2 mb-2" href="#">{{ musique.genre.value }}</a>
+                                            <!-- Music title -->
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <!-- Description -->
+                                            <p class="mb-2 small text-muted">
+                                                {{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}
+                                            </p>
+                                            <!-- Date -->
+                                            <p class="small"> 
+                                                <i class="bi bi-calendar pe-1"></i> 
+                                                {{ musique.dateCreation|date('M d, Y') }} 
+                                            </p>
+                                            <!-- Player controls -->
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-primary flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" title="Add to favorites">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" title="Add to playlist">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <!-- Progress bar -->
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                        <!-- Card body END -->
                                     </div>
                                 </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-danger mt-n3" href="#">Jazz</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Autumn Leaves </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Bill Evans</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 4:32 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-danger flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-danger music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
+                                <!-- Music item END -->
+                            {% endfor %}
                         </div>
-                        <!-- Music item 2 END -->
-
-                        <!-- Music item 3 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Classique
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-success mt-n3" href="#">Classique</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Clair de Lune </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Claude Debussy</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 4:43 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-success flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-success music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
-                        </div>
-                        <!-- Music item 3 END -->
-
-                        <!-- Music item 4 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-info text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Rock
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-info mt-n3" href="#">Rock Music</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Stairway to Heaven </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Led Zeppelin</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 8:02 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-info flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-info music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
-                        </div>
-                        <!-- Music item 4 END -->
-
-                        <!-- Music item 5 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-warning text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Jazz
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-warning mt-n3" href="#">Jazz</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Take Five </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Dave Brubeck</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:24 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-warning flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-warning">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-warning music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
-                        </div>
-                        <!-- Music item 5 END -->
-
-                        <!-- Music item 6 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-secondary text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Rap
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-secondary mt-n3" href="#">Rap</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Lose Yourself </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Eminem</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:26 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-secondary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-secondary music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
-                        </div>
-                        <!-- Music item 6 END -->
-                    </div>
+                    {% endif %}
                 </div>
                 <!-- All genres tab END -->
 
                 <!-- Rock tab START -->
                 <div class="tab-pane fade" id="tab-rock">
-                    <div class="row g-4">
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">Rock</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-primary mt-n3" href="#">Rock Music</a>
-                                    <h6 class="mt-3"> <a href="#"> Bohemian Rhapsody </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Queen</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:55 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-primary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                    {% set rockMusiques = musiques|filter(m => m.genre.value == 'Rock') %}
+                    {% if rockMusiques is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique Rock</h5>
                         </div>
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">Rock</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-primary mt-n3" href="#">Rock Music</a>
-                                    <h6 class="mt-3"> <a href="#"> Stairway to Heaven </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Led Zeppelin</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 8:02 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-primary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
+                    {% else %}
+                        <div class="row g-4">
+                            {% for musique in rockMusiques %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">Rock</div>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <a class="btn btn-xs btn-primary mt-n2 mb-2" href="#">Rock</a>
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-primary flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
                                 </div>
-                            </div>
+                            {% endfor %}
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
                 <!-- Rock tab END -->
 
                 <!-- Jazz tab START -->
                 <div class="tab-pane fade" id="tab-jazz">
-                    <div class="row g-4">
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-danger text-white mt-2 me-2 position-absolute top-0 end-0">Jazz</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-danger mt-n3" href="#">Jazz</a>
-                                    <h6 class="mt-3"> <a href="#"> Autumn Leaves </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Bill Evans</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 4:32 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-danger flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-danger music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                    {% set jazzMusiques = musiques|filter(m => m.genre.value == 'Jazz') %}
+                    {% if jazzMusiques is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique Jazz</h5>
                         </div>
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-danger text-white mt-2 me-2 position-absolute top-0 end-0">Jazz</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-danger mt-n3" href="#">Jazz</a>
-                                    <h6 class="mt-3"> <a href="#"> Take Five </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Dave Brubeck</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:24 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-danger flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
+                    {% else %}
+                        <div class="row g-4">
+                            {% for musique in jazzMusiques %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-danger text-white mt-2 me-2 position-absolute top-0 end-0">Jazz</div>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <a class="btn btn-xs btn-danger mt-n2 mb-2" href="#">Jazz</a>
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-danger flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-danger music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-danger music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
                                 </div>
-                            </div>
+                            {% endfor %}
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
                 <!-- Jazz tab END -->
 
                 <!-- Classical tab START -->
                 <div class="tab-pane fade" id="tab-classical">
-                    <div class="row g-4">
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">Classique</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-success mt-n3" href="#">Classique</a>
-                                    <h6 class="mt-3"> <a href="#"> Clair de Lune </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Claude Debussy</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 4:43 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-success flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-success music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                    {% set classicalMusiques = musiques|filter(m => m.genre.value == 'Classique') %}
+                    {% if classicalMusiques is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique Classique</h5>
                         </div>
-                    </div>
+                    {% else %}
+                        <div class="row g-4">
+                            {% for musique in classicalMusiques %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">Classique</div>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <a class="btn btn-xs btn-success mt-n2 mb-2" href="#">Classique</a>
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-success flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-success">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-success">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-success music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
                 <!-- Classical tab END -->
 
-                <!-- Rap tab START -->
-                <div class="tab-pane fade" id="tab-rap">
-                    <div class="row g-4">
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-secondary text-white mt-2 me-2 position-absolute top-0 end-0">Rap</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-secondary mt-n3" href="#">Rap</a>
-                                    <h6 class="mt-3"> <a href="#"> Lose Yourself </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Eminem</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:26 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-secondary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-secondary music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                <!-- Pop tab START -->
+                <div class="tab-pane fade" id="tab-pop">
+                    {% set popMusiques = musiques|filter(m => m.genre.value == 'Pop') %}
+                    {% if popMusiques is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique Pop</h5>
                         </div>
-                    </div>
+                    {% else %}
+                        <div class="row g-4">
+                            {% for musique in popMusiques %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-secondary text-white mt-2 me-2 position-absolute top-0 end-0">Pop</div>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <a class="btn btn-xs btn-secondary mt-n2 mb-2" href="#">Pop</a>
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-secondary flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-secondary music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
-                <!-- Rap tab END -->
+                <!-- Pop tab END -->
             </div>
             <!-- Tab content END -->
         </div>
@@ -455,6 +285,17 @@
     <script>
         const audioPlayer = document.getElementById('audioPlayer');
         let currentPlayingButton = null;
+
+        // Bind click handlers to all play buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const playButtons = document.querySelectorAll('.play-btn');
+            playButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    playPauseMusic(this);
+                });
+            });
+        });
 
         function playPauseMusic(button) {
             // If another button is currently playing, stop it
@@ -474,8 +315,10 @@
             const icon = button.querySelector('i');
             
             if (audioPlayer.paused || audioPlayer.src === '') {
-                // Play music
-                audioPlayer.src = 'assets/sample-music.mp3'; // You can change this to actual music file
+                // Play music - get audio source from card data attribute
+                const card = button.closest('.card');
+                const audioSrc = card.getAttribute('data-audio-src');
+                audioPlayer.src = audioSrc;
                 audioPlayer.play();
                 icon.className = 'bi bi-pause-fill pe-1';
                 button.textContent = ' Pause';

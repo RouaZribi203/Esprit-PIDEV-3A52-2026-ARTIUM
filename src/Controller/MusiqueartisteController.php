@@ -202,8 +202,12 @@ final class MusiqueartisteController extends AbstractController
             throw $this->createNotFoundException('Audio not found');
         }
 
-        // Detect MIME type from the binary data
-        $audioData = stream_get_contents($musique->getAudio());
+        // Get audio binary data from BLOB
+        $audioData = $musique->getAudio();
+        if (is_resource($audioData)) {
+            $audioData = stream_get_contents($audioData);
+        }
+        
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mimeType = $finfo->buffer($audioData) ?: 'audio/mpeg';
 
@@ -212,7 +216,7 @@ final class MusiqueartisteController extends AbstractController
             200,
             [
                 'Content-Type' => $mimeType,
-                'Content-Disposition' => 'inline; filename="' . $musique->getTitre() . '"'
+                'Content-Disposition' => 'inline; filename="' . $musique->getTitre() . '.mp3"'
             ]
         );
     }
@@ -226,8 +230,14 @@ final class MusiqueartisteController extends AbstractController
             throw $this->createNotFoundException('Image not found');
         }
 
+        // Get image binary data from BLOB
+        $imageData = $musique->getImage();
+        if (is_resource($imageData)) {
+            $imageData = stream_get_contents($imageData);
+        }
+
         return new Response(
-            stream_get_contents($musique->getImage()),
+            $imageData,
             200,
             ['Content-Type' => 'image/jpeg']
         );

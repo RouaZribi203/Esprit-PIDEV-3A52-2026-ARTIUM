@@ -8,11 +8,13 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MusiqueRepository::class)]
 class Musique extends Oeuvre
 {
     #[ORM\Column(enumType: GenreMusique::class)]
+    #[Assert\NotBlank(message: 'Genre is required')]
     private ?GenreMusique $genre = null;
 
     #[ORM\Column(type: Types::BLOB)]

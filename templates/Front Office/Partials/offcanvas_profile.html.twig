@@ -1,0 +1,84 @@
+{% set offcanvas_id = offcanvas_id|default('offcanvasProfile') %}
+{% set title = title|default('Modifier profil') %}
+{% set subtitle = subtitle|default('Mettez a jour vos informations personnelles') %}
+{% set profile_form_action = profile_form_action|default('#') %}
+{% set password_form_action = password_form_action|default('#') %}
+{% set show_password_form = show_password_form|default(true) %}
+
+{% embed 'Front Office/Partials/offcanvas_base.html.twig' with {
+	offcanvas_id: offcanvas_id,
+	title: title,
+	subtitle: subtitle
+} %}
+	{% block offcanvas_body %}
+		<div class="card shadow-sm border-0">
+			<div class="card-body">
+				<form class="row g-3" action="{{ profile_form_action }}" method="post" enctype="multipart/form-data">
+					<div class="col-12">
+						<div class="d-flex align-items-center gap-3">
+							<div class="avatar avatar-xl">
+								<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt="">
+							</div>
+							<div>
+								<label class="form-label mb-1" for="profileAvatar">Photo de profil</label>
+								<input class="form-control" type="file" id="profileAvatar" name="profileAvatar">
+							</div>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<label class="form-label" for="profileName">Nom complet</label>
+						<input class="form-control" type="text" id="profileName" name="profileName" placeholder="Votre nom">
+					</div>
+					<div class="col-md-6">
+						<label class="form-label" for="profileEmail">Email</label>
+						<input class="form-control" type="email" id="profileEmail" name="profileEmail" placeholder="nom@email.com">
+					</div>
+					<div class="col-md-6">
+						<label class="form-label" for="profilePhone">Telephone</label>
+						<input class="form-control" type="tel" id="profilePhone" name="profilePhone" placeholder="+216">
+					</div>
+					<div class="col-md-6">
+						<label class="form-label" for="profileCity">Ville</label>
+						<input class="form-control" type="text" id="profileCity" name="profileCity" placeholder="Ville">
+					</div>
+					<div class="col-md-6">
+						<label class="form-label" for="profileBirth">Date de naissance</label>
+						<input class="form-control" type="date" id="profileBirth" name="profileBirth">
+					</div>
+					<div class="col-12">
+						<label class="form-label" for="profileBio">Bio</label>
+						<textarea class="form-control" id="profileBio" name="profileBio" rows="3" placeholder="Parlez un peu de vous..."></textarea>
+					</div>
+					<div class="col-12 d-flex justify-content-end">
+						<button class="btn btn-primary" type="submit">Enregistrer</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		{% if show_password_form %}
+			<div class="card shadow-sm border-0 mt-4">
+				<div class="card-body">
+					<h5 class="mb-3">Modifier le mot de passe</h5>
+					<form class="row g-3" action="{{ password_form_action }}" method="post">
+						<div class="col-12">
+							<label class="form-label" for="currentPassword">Mot de passe actuel</label>
+							<input class="form-control" type="password" id="currentPassword" name="currentPassword" placeholder="********">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label" for="newPassword">Nouveau mot de passe</label>
+							<input class="form-control" type="password" id="newPassword" name="newPassword" placeholder="********">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label" for="confirmPassword">Confirmer</label>
+							<input class="form-control" type="password" id="confirmPassword" name="confirmPassword" placeholder="********">
+						</div>
+						<div class="col-12 d-flex justify-content-end">
+							<button class="btn btn-outline-primary" type="submit">Mettre a jour</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		{% endif %}
+	{% endblock %}
+{% endembed %}

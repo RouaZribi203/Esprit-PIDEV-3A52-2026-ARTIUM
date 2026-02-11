@@ -1,14 +1,14 @@
 <div
 	class="card">
 	<!-- Cover image -->
-	<div class="h-200px rounded-top" style="background-image:url(assets/images/bg/05.jpg); background-position: center; background-size: cover; background-repeat: no-repeat;"></div>
+	<div class="h-200px rounded-top" style="background-image:url(assetsfront/images/bg/05.jpg); background-position: center; background-size: cover; background-repeat: no-repeat;"></div>
 	<!-- Card body START -->
 	<div class="card-body py-0">
 		<div class="d-sm-flex align-items-start text-center text-sm-start">
 			<div>
 				<!-- Avatar -->
 				<div class="avatar avatar-xxl mt-n5 mb-3">
-					<img class="avatar-img rounded-circle border border-white border-3" src="assets/images/avatar/07.jpg" alt="">
+					<img class="avatar-img rounded-circle border border-white border-3" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt="">
 				</div>
 			</div>
 			<div
@@ -71,39 +71,34 @@
 	<div
 		class="card-footer mt-3 pt-2 pb-0">
 		<!-- Nav profile pages -->
-		<ul class="nav nav-bottom-line align-items-center justify-content-center justify-content-md-start mb-0 border-0">
+		{% set current_route = app.request.attributes.get('_route') %}
+		<ul class="nav nav-bottom-line align-items-center justify-content-center justify-content-md-start mb-0 border-0 profile-nav">
 			<li class="nav-item">
-				<a class="nav-link active" href="my-profile.html">
-					Posts
+				<a class="nav-link {{ current_route == 'app_oeuvre_front' ? 'active' : '' }}" href="{{ path('app_oeuvre_front') }}">
+					Mes Oeuvres
 				</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="my-profile-about.html">
-					About
+				<a class="nav-link {{ current_route == 'app_collections_front' ? 'active' : '' }}" href="{{ path('app_collections_front') }}">
+					Collections
 				</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="my-profile-connections.html">
-					Connections
-					<span class="badge bg-success bg-opacity-10 text-success small">
-						230</span>
+				<a class="nav-link {{ current_route == 'app_musiqueartiste' ? 'active' : '' }}" href="{{ path('app_musiqueartiste') }}">
+					Musiques
 				</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="my-profile-media.html">
-					Media</a>
+				<a class="nav-link {{ current_route == 'app_bibliothequeartiste' ? 'active' : '' }}" href="{{ path('app_bibliothequeartiste') }}">
+					Biobliothèque</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="my-profile-videos.html">
-					Videos</a>
+				<a class="nav-link {{ current_route == 'app_eventsartiste' ? 'active' : '' }}" href="{{ path('app_eventsartiste') }}">
+					Evenements</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="my-profile-events.html">
-					Events</a>
-			</li>
-			<li class="nav-item">
-				<a class="nav-link" href="my-profile-activity.html">
-					Activity</a>
+				<a class="nav-link {{ current_route == 'app_reclamationsartiste' ? 'active' : '' }}" href="{{ path('app_reclamationsartiste') }}">
+					Réclamations</a>
 			</li>
 		</ul>
 	</div>

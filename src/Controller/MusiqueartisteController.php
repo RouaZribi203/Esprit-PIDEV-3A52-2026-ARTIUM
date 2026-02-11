@@ -318,6 +318,31 @@ final class MusiqueartisteController extends AbstractController
                     throw new \Exception('Invalid image format. Please upload JPEG or PNG.');
                 }
                 
+                // Validate image dimensions
+                $imageInfo = @getimagesize($imageFile->getRealPath());
+                if ($imageInfo === false) {
+                    throw new \Exception('Unable to read image dimensions. File may be corrupted.');
+                }
+                
+                $width = $imageInfo[0];
+                $height = $imageInfo[1];
+                
+                if ($width < 300 || $height < 300) {
+                    throw new \Exception(sprintf(
+                        'Image dimensions (%dx%dpx) are too small. Minimum: 300x300px',
+                        $width,
+                        $height
+                    ));
+                }
+                
+                if ($width > 5000 || $height > 5000) {
+                    throw new \Exception(sprintf(
+                        'Image dimensions (%dx%dpx) are too large. Maximum: 5000x5000px',
+                        $width,
+                        $height
+                    ));
+                }
+                
                 $imageContent = file_get_contents($imageFile->getPathname());
                 if ($imageContent === false) {
                     throw new \Exception('Failed to read image file');
@@ -348,10 +373,16 @@ final class MusiqueartisteController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
+        // Check if this is an AJAX request
+        $isAjax = $request->headers->get('X-Requested-With') === 'XMLHttpRequest';
+        
         // Validate deletion confirmation
         $confirmDelete = $request->request->get('confirm_delete');
         
         if (!$confirmDelete || $confirmDelete !== '1') {
+            if ($isAjax) {
+                return $this->json(['success' => false, 'message' => 'Delete action must be confirmed.'], 400);
+            }
             $this->addFlash('error', 'Delete action must be confirmed.');
             return $this->redirectToRoute('app_musiqueartiste');
         }
@@ -359,6 +390,9 @@ final class MusiqueartisteController extends AbstractController
         $musique = $musiqueRepository->find($id);
         
         if (!$musique) {
+            if ($isAjax) {
+                return $this->json(['success' => false, 'message' => 'Music not found.'], 404);
+            }
             $this->addFlash('error', 'Music not found.');
             return $this->redirectToRoute('app_musiqueartiste');
         }
@@ -370,8 +404,21 @@ final class MusiqueartisteController extends AbstractController
             $entityManager->remove($musique);
             $entityManager->flush();
             
+            if ($isAjax) {
+                return $this->json([
+                    'success' => true, 
+                    'message' => "Music '{$musicTitle}' deleted successfully!"
+                ], 200);
+            }
+            
             $this->addFlash('success', "Music '{$musicTitle}' deleted successfully!");
         } catch (\Exception $e) {
+            if ($isAjax) {
+                return $this->json([
+                    'success' => false, 
+                    'message' => 'Error deleting music: ' . $e->getMessage()
+                ], 500);
+            }
             $this->addFlash('error', 'Error deleting music: ' . $e->getMessage());
         }
 

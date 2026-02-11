@@ -3,6 +3,44 @@
 {%block title %}{{ 'Music Management'|trans }}{% endblock %}
 
 {% block admin_content %}
+<!-- Custom styles for ID badges -->
+<style>
+  .music-id-badge {
+    transition: all 0.3s ease !important;
+    z-index: 10;
+  }
+  
+  .music-id-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25) !important;
+    background-color: #495057 !important;
+  }
+  
+  .music-id-copy-badge {
+    transition: all 0.3s ease !important;
+  }
+  
+  .music-id-copy-badge:hover {
+    background-color: #e2e3e5 !important;
+    transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  
+  .music-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .music-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+  
+  /* Make the image container not clip the badges */
+  .music-card .position-relative {
+    overflow: visible;
+  }
+</style>
+
 <div class="card">
   <div class="card-header d-sm-flex align-items-center text-center justify-content-sm-between border-0 pb-0">
     <h1 class="h4 card-title">All Music</h1>
@@ -80,36 +118,52 @@
             <div class="card h-100 music-card" 
                  data-music-id="{{ musique.id }}" 
                  data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
-              <!-- Image with genre badge -->
-              <div class="position-relative">
+              <!-- Image with ID and genre badges -->
+              <div class="position-relative" style="overflow: visible;">
                 <img class="img-fluid rounded-top" 
                      src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" 
                      alt="{{ musique.titre }}"
                      style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
-                <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">
+                <!-- ID Badge - Modern style with copy button -->
+                <span class="badge bg-secondary text-white position-absolute top-0 start-0 music-id-badge" 
+                      data-music-id="{{ musique.id }}"
+                      title="Click to copy ID"
+                      style="cursor: pointer; padding: 0.6rem 0.85rem; font-size: 0.9rem; font-weight: 600; box-shadow: 0 3px 12px rgba(0,0,0,0.25); margin: 10px; z-index: 10;">
+                  <i class="bi bi-hash pe-1"></i>{{ musique.id }}
+                </span>
+                <!-- Genre Badge -->
+                <div class="badge bg-primary text-white position-absolute top-0 end-0" 
+                     style="padding: 0.6rem 0.85rem; font-size: 0.9rem; font-weight: 600; box-shadow: 0 3px 12px rgba(0,0,0,0.25); margin: 10px;">
                   {{ musique.genre }}
                 </div>
               </div>
               
               <!-- Card body START -->
               <div class="card-body position-relative pt-0">
+                <!-- ID - Prominent display at top -->
+                <div class="mb-2">
+                  <span class="badge bg-dark text-white" style="font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px; padding: 0.6rem 1rem;">
+                    <i class="bi bi-hash"></i> ID: {{ musique.id }}
+                  </span>
+                </div>
+                
                 <!-- Genre tag -->
-                <a class="btn btn-xs btn-primary mt-n3" href="#">{{ musique.genre }}</a>
+                <a class="btn btn-xs btn-primary mt-2 mb-2" href="#">{{ musique.genre }}</a>
                 
                 <!-- Music title -->
-                <h6 class="mt-3"> 
+                <h6 class="mt-2"> 
                   <a href="#!"> {{ musique.titre }} </a> 
                 </h6>
+                
+                <!-- Date -->
+                <p class="small mb-2"> 
+                  <i class="bi bi-calendar pe-1"></i> 
+                  {{ musique.date_creation|date('M d, Y') }}
+                </p>
                 
                 <!-- Description -->
                 <p class="mb-2 small text-muted">
                   {{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}
-                </p>
-                
-                <!-- Date -->
-                <p class="small"> 
-                  <i class="bi bi-calendar pe-1"></i> 
-                  {{ musique.date_creation|date('Y-m-d') }} 
                 </p>
                 
                 <!-- Like and action buttons -->
@@ -166,6 +220,94 @@
 </div>
 
 <script>
+// Copy to clipboard functionality for ID badges
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle ID badge clicks for copying
+  document.addEventListener('click', function(e) {
+    const idBadge = e.target.closest('.music-id-badge');
+    if (idBadge) {
+      const musicId = idBadge.dataset.musicId;
+      copyToClipboard(musicId, idBadge);
+    }
+    
+    const idCopyBadge = e.target.closest('.music-id-copy-badge');
+    if (idCopyBadge) {
+      const musicId = idCopyBadge.dataset.musicId;
+      copyToClipboard(musicId, idCopyBadge);
+    }
+  });
+});
+
+function copyToClipboard(text, element) {
+  // Create a temporary textarea
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  
+  // Select and copy
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    
+    // Show visual feedback
+    const originalText = element.innerHTML;
+    const wasHovering = element.classList.contains('bg-secondary') || element.classList.contains('bg-light');
+    
+    // Change appearance
+    if (element.classList.contains('music-id-badge')) {
+      element.classList.remove('bg-secondary');
+      element.classList.add('bg-success');
+      element.innerHTML = '<i class="bi bi-check-lg pe-1"></i>Copied!';
+    } else {
+      element.classList.remove('bg-light');
+      element.classList.add('bg-success');
+      element.style.color = 'white';
+      element.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
+    }
+    
+    // Revert after 2 seconds
+    setTimeout(() => {
+      if (element.classList.contains('music-id-badge')) {
+        element.classList.remove('bg-success');
+        element.classList.add('bg-secondary');
+      } else {
+        element.classList.remove('bg-success');
+        element.classList.add('bg-light');
+        element.style.color = '';
+      }
+      element.innerHTML = originalText;
+    }, 2000);
+    
+    // Show toast notification
+    showToastNotification(`ID ${text} copied to clipboard!`);
+  } catch (err) {
+    console.error('Failed to copy:', err);
+  }
+  
+  // Remove temporary textarea
+  document.body.removeChild(textarea);
+}
+
+function showToastNotification(message) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed bottom-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="alert alert-success alert-dismissible fade show mb-0" role="alert" style="box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <i class="bi bi-check-circle pe-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
 (function() {
   // Global audio player object
   const MusicPlayer = {

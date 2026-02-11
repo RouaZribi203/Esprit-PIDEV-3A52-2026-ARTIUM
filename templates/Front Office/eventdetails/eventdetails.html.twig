@@ -1,230 +1,158 @@
 {% extends 'base_amateur.html.twig' %}
 
-{% block title %}{{ 'Détails'|trans }}{% endblock %}
+{% block title %}{{ evenement.titre }} - {{ 'Détails'|trans }}{% endblock %}
 
 {% block amateur_content %}
-    <div class="card card-body">  
-          <!-- Card body START -->
-          <div class="row g-4">
-            <!-- info -->
-            <div class="col-12">
-              <p class="mb-0">He moonlights difficult engrossed it, sportsmen. Interested has all Devonshire difficulty gay assistance joy. Unaffected at ye of compliment alteration to. Place voice no arises along to. Parlors waiting so against me no.</p>
-            </div>
-            <div class="col-sm-6 col-lg-4">
-              <!-- Timings -->
-              <h5>Timings</h5>
-              <p class="small mb-0">09:00 AM - 05:00 PM (Business)</p>
-              <p class="small mb-0"> 09:00 AM - 03:00 PM (Business)</p>
-            </div>
-            <!-- Entry Fees -->
-            <div class="col-sm-6 col-lg-4">
-              <h5>Entry fees</h5>
-              <p class="small mb-0"> <a href="#!"> Free Ticket </a>For photography professionals check official website</p>
-            </div>
-            <!-- Category & Type -->
-            <div class="col-sm-6 col-lg-4">
-              <h5>Category & type</h5>
-              <p class="small mb-0">Trade Show</p>
-              <p class="small mb-0"> Photography & Prewedding</p>
-            </div>
-            <!-- Estimated Turnout -->
-            <div class="col-sm-6 col-lg-4">
-              <h5>Estimated turnout</h5>
-              <p class="small mb-0">140000 Visitors</p>
-              <p class="small mb-0"> 1800 Exhibitors</p>
-              <span class="badge bg-danger text-danger bg-opacity-10 small">Estimated Count</span>
-            </div>
-            <div class="col-sm-6 col-lg-4">
-              <!-- Rating -->
-              <ul class="d-flex list-unstyled mb-1">
-                <li class="me-2">4.5</li>
-                <li><i class="fa-solid fa-star text-warning"></i></li>
-                <li><i class="fa-solid fa-star text-warning"></i></li>
-                <li><i class="fa-solid fa-star text-warning"></i></li>
-                <li><i class="fa-solid fa-star text-warning"></i></li>
-                <li><i class="fa-solid fa-star-half-stroke text-warning"></i></li>
-                <li class="ms-1 small">132 Ratings</li>
-              </ul>
-              <p class="mb-0 small"> <strong> #2 of 3506</strong> Events in Photography & Prewedding</p>
-            </div>
-            <div class="col-sm-6 col-lg-4">
-              <!-- Interested -->
-              <div class="d-flex">
-                <h6> <i class="bi bi-hand-thumbs-up-fill text-success"></i> 50</h6>
-                <p class="small">People have shown interest recently</p>
-              </div>
-              <button class="btn btn-success-soft btn-sm">Interested?</button>
-            </div>
-            </div>
-            <hr class="mt-4">
-            <div class="row align-items-center">
-              <div class="col-lg-6">
-                <h5>Attendees</h5>
-                <!-- Avatar group START -->
-                <ul class="avatar-group list-unstyled align-items-center">
-                  <li class="avatar avatar-xs">
-                    <img class="avatar-img rounded-circle" src="assets/images/avatar/01.jpg" alt="avatar">
-                  </li>
-                  <li class="avatar avatar-xs">
-                    <img class="avatar-img rounded-circle" src="assets/images/avatar/03.jpg" alt="avatar">
-                  </li>
-                  <li class="avatar avatar-xs">
-                    <img class="avatar-img rounded-circle" src="assets/images/avatar/04.jpg" alt="avatar">
-                  </li>
-                  <li class="avatar avatar-xs">
-                    <img class="avatar-img rounded-circle" src="assets/images/avatar/05.jpg" alt="avatar">
-                  </li>
-                  <li class="avatar avatar-xs">
-                    <img class="avatar-img rounded-circle" src="assets/images/avatar/06.jpg" alt="avatar">
-                  </li>
-                  <li class="ms-4">
-                    <small> 148.9K people responded</small>
-                  </li>
-                </ul>
-              </div>
-              <div class="col-lg-6">
-                <!-- Avatar group END -->
-                <div class="row g-2">
-                  <div class="col-sm-4">
-                    <!-- Visitors -->
-                    <div class="d-flex">
-                      <i class="bi bi-globe fs-4"></i>
-                      <div class="ms-3">
-                        <h5 class="mb-0">125</h5>
-                        <p class="mb-0">Visitors</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-sm-4">
-                    <!-- Registred -->
-                    <div class="d-flex">
-                      <i class="bi bi-person-plus fs-4"></i>
-                      <div class="ms-3">
-                        <h5 class="mb-0">356</h5>
-                        <p class="mb-0">Registred</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-sm-4">
-                    <!-- Attendance -->
-                    <div class="d-flex">
-                      <i class="bi bi-people fs-4"></i>
-                      <div class="ms-3">
-                        <h5 class="mb-0">350</h5>
-                        <p class="mb-0">Attendance</p>
-                      </div>
-                    </div>
-                  </div>
+    <div class="card card-body">
+        <!-- Image de couverture -->
+        <div class="mb-4">
+            {% if image %}
+                <img class="img-fluid rounded" src="{{ image }}" alt="{{ evenement.titre }}" style="max-height: 400px; width: 100%; object-fit: cover;">
+            {% else %}
+                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <i class="bi bi-image text-muted fs-1"></i>
                 </div>
-              </div>
-            </div>
+            {% endif %}
         </div>
-        <!-- Card About END -->
 
-        <!-- Related events START -->
-        <div class="row g-4">
-          <div class="col-lg-6">
-             <!-- Card START -->
-             <div class="card">
-              <div class="card-header border-0">
-                <h5 class="card-title">Related events</h5>
-                <!-- Button modal -->
-              </div>
-              <!-- Card body START -->
-              <div class="card-body pt-0">
-                <!-- Related events item -->
-                <div class="d-sm-flex flex-wrap align-items-center mb-3"> 
-                  <!-- Avatar -->
-                  <div class="avatar avatar-md">
-                    <img class="avatar-img rounded-circle border border-white border-3" src="assets/images/logo/01.svg" alt="">
-                  </div>
-                  <!-- info -->
-                  <div class="ms-sm-2 my-2 my-sm-0">
-                    <h6 class="mb-0">Bone thugs-n-harmony</h6>
-                    <p class="small mb-0"> <i class="bi bi-geo-alt pe-1"></i>San francisco </p>
-                  </div>
-                  <!-- Button -->
-                  <div class="ms-sm-auto mt-2 mt-sm-0">
-                    <!-- Interested button -->
-                    <input type="checkbox" class="btn-check" id="Interested1">
-                    <label class="btn btn-sm btn-outline-success" for="Interested1"><i class="fa-solid fa-thumbs-up me-1"></i> Interested</label>
-                  </div>
+        <!-- Titre et description -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h2 class="mb-2">{{ evenement.titre }}</h2>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-{{ evenement.statut.value == 'A_VENIR' ? 'success' : 'secondary' }}">
+                            {{ evenement.statut.value == 'A_VENIR' ? 'À venir' : 'Terminé' }}
+                        </span>
+                        <span class="badge bg-primary">{{ evenement.type ? evenement.type.value : '' }}</span>
+                    </div>
                 </div>
-                <!-- Related events item -->
-                <div class="d-sm-flex flex-wrap align-items-center mb-3"> 
-                  <!-- Avatar -->
-                  <div class="avatar avatar-md">
-                    <img class="avatar-img rounded-circle border border-white border-3" src="assets/images/logo/02.svg" alt="">
-                  </div>
-                  <!-- info -->
-                  <div class="ms-sm-2 my-2 my-sm-0">
-                    <h6 class="mb-0">Decibel magazine</h6>
-                    <p class="small mb-0"> <i class="bi bi-geo-alt pe-1"></i>London </p>
-                  </div>
-                  <!-- Button -->
-                  <div class="ms-sm-auto mt-2 mt-sm-0">
-                    <!-- Interested button -->
-                    <input type="checkbox" class="btn-check" id="Interested2">
-                    <label class="btn btn-sm btn-outline-success" for="Interested2"><i class="fa-solid fa-thumbs-up me-1"></i> Interested</label>
-                  </div>
-                </div>
-                <!-- Related events item -->
-                <div class="d-sm-flex flex-wrap align-items-center mb-3"> 
-                  <!-- Avatar -->
-                  <div class="avatar avatar-md">
-                    <img class="avatar-img rounded-circle border border-white border-3" src="assets/images/logo/06.svg" alt="">
-                  </div>
-                  <!-- info -->
-                  <div class="ms-sm-2 my-2 my-sm-0">
-                    <h6 class="mb-0">Illenium: fallen embers</h6>
-                    <p class="small mb-0"> <i class="bi bi-geo-alt pe-1"></i>Mumbai </p>
-                  </div>
-                  <!-- Button -->
-                  <div class="ms-sm-auto mt-2 mt-sm-0">
-                    <!-- Interested button -->
-                    <input type="checkbox" class="btn-check" id="Interested3" checked>
-                    <label class="btn btn-sm btn-outline-success" for="Interested3"><i class="fa-solid fa-thumbs-up me-1"></i> Interested</label>
-                  </div>
-                </div>
-                <!-- Related events item -->
-                <div class="d-sm-flex flex-wrap align-items-center"> 
-                  <!-- Avatar -->
-                  <div class="avatar avatar-md">
-                    <img class="avatar-img rounded-circle border border-white border-3" src="assets/images/logo/04.svg" alt="">
-                  </div>
-                  <!-- info -->
-                  <div class="ms-sm-2 my-2 my-sm-0">
-                    <h6 class="mb-0">Comedy on the green</h6>
-                    <p class="small mb-0"> <i class="bi bi-geo-alt pe-1"></i>Miami </p>
-                  </div>
-                  <!-- Button -->
-                  <div class="ms-sm-auto mt-2 mt-sm-0">
-                    <!-- Interested button -->
-                    <input type="checkbox" class="btn-check" id="Interested4">
-                    <label class="btn btn-sm btn-outline-success" for="Interested4"><i class="fa-solid fa-thumbs-up me-1"></i> Interested</label>
-                  </div>
-                </div>
-              </div>
-              <!-- Card body END -->
+                <form method="post" action="{{ path('app_eventdetails', { id: evenement.id }) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('buy_ticket_' ~ evenement.id) }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-ticket-perforated me-2"></i>Acheter ticket
+                    </button>
+                </form>
             </div>
-            <!-- Card END -->
-          </div>
-          <div class="col-lg-6">
-            <!-- Card START -->
-            <div class="card">
-              <div class="card-header border-0 pb-0">
-                <h5 class="card-title mb-0">Event location</h5>
-                <p class="small"> <i class="bi bi-geo-alt pe-1"></i>750 Sing Sing Rd, Horseheads, NY, 14845 </p>
-                <!-- Button modal -->
-              </div>
-              <!-- Card body START -->
-              <div class="card-body pt-0">
-                <!-- Google map -->
-                <iframe class="w-100 d-block rounded-bottom grayscale" height="230" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.9663095343008!2d-74.00425878428698!3d40.74076684379132!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259bf5c1654f3%3A0xc80f9cfce5383d5d!2sGoogle!5e0!3m2!1sen!2sin!4v1586000412513!5m2!1sen!2sin"  style="border:0;" aria-hidden="false" tabindex="0"></iframe>
-              </div>
-              <!-- Card body END -->
-            </div>
-            <!-- Card END -->
-          </div>
+            <p class="text-muted">{{ evenement.description }}</p>
         </div>
+
+        <hr class="my-4">
+
+        <!-- Informations principales en grille -->
+        <div class="row g-4 mb-4 justify-content-center text-center">
+            <!-- Timings -->
+            <div class="col-sm-6 col-lg-3">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-clock fs-3 text-primary me-3"></i>
+                    <div>
+                        <h6 class="mb-2">Horaires</h6>
+                        <p class="small mb-1"><strong>Date début:</strong> {{ evenement.dateDebut ? evenement.dateDebut|date('d/m/Y') : '-' }}</p>
+                        <p class="small mb-1"><strong>Heure début:</strong> {{ evenement.dateDebut ? evenement.dateDebut|date('H:i') : '-' }}</p>
+                        <p class="small mb-1"><strong>Date fin:</strong> {{ evenement.dateFin ? evenement.dateFin|date('d/m/Y') : '-' }}</p>
+                        <p class="small mb-0"><strong>Heure fin:</strong> {{ evenement.dateFin ? evenement.dateFin|date('H:i') : '-' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prix -->
+            <div class="col-sm-6 col-lg-3">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-currency-euro fs-3 text-success me-3"></i>
+                    <div>
+                        <h6 class="mb-2">Prix d'entrée</h6>
+                        <p class="h4 mb-0 text-success">{{ evenement.prixTicket }} DT</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Capacité -->
+            <div class="col-sm-6 col-lg-3">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-people fs-3 text-info me-3"></i>
+                    <div>
+                        <h6 class="mb-2">Capacité</h6>
+                        <p class="small mb-0"><strong>{{ evenement.capaciteMax }} Personnes</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Galerie -->
+            <div class="col-sm-6 col-lg-3">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-building fs-3 text-warning me-3"></i>
+                    <div>
+                        <h6 class="mb-2">Galerie</h6>
+                        {% if evenement.galerie %}
+                            <p class="small mb-0"><strong>{{ evenement.galerie.nom }}</strong></p>
+                        {% else %}
+                            <p class="small mb-0">Non spécifié</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if tickets is defined and tickets is not empty %}
+    <div class="card card-body mt-4">
+        <h5 class="mb-3">
+            <i class="bi bi-ticket-perforated me-2"></i>Vos tickets
+        </h5>
+        <div class="list-group">
+            {% for ticket in tickets %}
+                <div class="list-group-item d-flex flex-wrap align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-semibold">Ticket #{{ ticket.id }}</div>
+                        <div class="small text-muted">Acheté le {{ ticket.dateAchat ? ticket.dateAchat|date('d M Y') : '-' }}</div>
+                    </div>
+                    <div class="text-muted small">
+                        {{ evenement.titre }} · {{ evenement.prixTicket }} DT
+                    </div>
+                    <div>
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_ticket_qr', { id: ticket.id }) }}" target="_blank" rel="noopener">
+                            <i class="bi bi-qr-code"></i>
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Section Localisation (pleine largeur) -->
+    {% if evenement.galerie %}
+    <div class="card card-body mt-4">
+        <h5 class="mb-4">
+            <i class="bi bi-geo-alt me-2"></i>Localisation de l'événement
+        </h5>
+        <div class="row">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <h6 class="mb-3">{{ evenement.galerie.nom }}</h6>
+                <dl class="mb-0">
+                    <dt class="text-muted mb-2"><i class="bi bi-map me-2"></i>Adresse</dt>
+                    <dd class="mb-3">{{ evenement.galerie.adresse }}</dd>
+                    
+                    <dt class="text-muted mb-2"><i class="bi bi-geo-alt me-2"></i>Ville</dt>
+                    <dd class="mb-3">{{ evenement.galerie.localisation }}</dd>
+                    
+                    <dt class="text-muted mb-2"><i class="bi bi-people me-2"></i>Capacité de la galerie</dt>
+                    <dd class="mb-3">{{ evenement.galerie.capaciteMax }} personnes</dd>
+                    
+                    {% if evenement.galerie.description %}
+                    <dt class="text-muted mb-2"><i class="bi bi-info-circle me-2"></i>Description</dt>
+                    <dd class="mb-0">{{ evenement.galerie.description }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+            <div class="col-md-8">
+                <iframe class="w-100 rounded" height="300" 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.9663095343008!2d-74.00425878428698!3d40.74076684379132!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259bf5c1654f3%3A0xc80f9cfce5383d5d!2sGoogle!5e0!3m2!1sen!2sin!4v1586000412513!5m2!1sen!2sin" 
+                    style="border:0;" 
+                    aria-hidden="false" 
+                    tabindex="0"></iframe>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 {% endblock %}

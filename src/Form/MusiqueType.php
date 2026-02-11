@@ -11,25 +11,33 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\File;
-use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class MusiqueType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         // Detect if we're editing an existing entity
-        $isEdit = $options['data']->getId() !== null;
+        $isEdit = $options['data']?->getId() !== null;
         
         $builder
             ->add('titre', TextType::class, [
                 'label' => 'Title',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Enter music title'
+                    'placeholder' => 'Enter music title',
+                    'minlength' => 3,
+                    'maxlength' => 255,
+                    'required' => 'required'
                 ],
                 'constraints' => [
-                    new NotBlank(['message' => 'Please enter a title'])
+                    new Assert\NotBlank(['message' => 'Title is required']),
+                    new Assert\Length([
+                        'min' => 3,
+                        'minMessage' => 'Title must be at least 3 characters long',
+                        'max' => 255,
+                        'maxMessage' => 'Title cannot exceed 255 characters'
+                    ])
                 ]
             ])
             ->add('description', TextareaType::class, [
@@ -37,19 +45,31 @@ class MusiqueType extends AbstractType
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Enter music description',
-                    'rows' => 3
+                    'rows' => 3,
+                    'minlength' => 10,
+                    'maxlength' => 5000,
+                    'required' => 'required'
                 ],
                 'constraints' => [
-                    new NotBlank(['message' => 'Please enter a description'])
+                    new Assert\NotBlank(['message' => 'Description is required']),
+                    new Assert\Length([
+                        'min' => 10,
+                        'minMessage' => 'Description must be at least 10 characters long',
+                        'max' => 5000,
+                        'maxMessage' => 'Description cannot exceed 5000 characters'
+                    ])
                 ]
             ])
             ->add('genre', EnumType::class, [
                 'class' => GenreMusique::class,
                 'label' => 'Genre',
-                'attr' => ['class' => 'form-select'],
-                'placeholder' => 'Select genre',
+                'attr' => [
+                    'class' => 'form-select',
+                    'required' => 'required'
+                ],
+                'placeholder' => 'Select a genre',
                 'constraints' => [
-                    new NotBlank(['message' => 'Please select a genre'])
+                    new Assert\NotBlank(['message' => 'Genre is required'])
                 ]
             ])
             ->add('imageFile', FileType::class, [
@@ -58,33 +78,36 @@ class MusiqueType extends AbstractType
                 'required' => false,
                 'attr' => [
                     'class' => 'form-control',
-                    'accept' => 'image/*'
+                    'accept' => 'image/jpeg,image/png,image/jpg'
                 ],
+                'help' => 'Max 5MB (JPEG, PNG)',
                 'constraints' => [
-                    new File([
-                        'maxSize' => '5M',
+                    new Assert\File([
+                        'maxSize' => '5242880', // 5MB in bytes
                         'mimeTypes' => [
                             'image/jpeg',
                             'image/png',
                             'image/jpg',
                         ],
-                        'mimeTypesMessage' => 'Please upload a valid image (JPEG, PNG)',
+                        'mimeTypesMessage' => 'Please upload a valid image file (JPEG or PNG)',
+                        'maxSizeMessage' => 'Image file is too large (max 5MB)',
                     ])
                 ]
             ])
             ->add('audioFile', FileType::class, [
                 'label' => 'Audio File',
                 'mapped' => false,
-                'required' => !$isEdit, // Required only when creating new music
+                'required' => !$isEdit,
                 'attr' => [
                     'class' => 'form-control',
-                    'accept' => 'audio/*'
+                    'accept' => 'audio/*',
+                    'data-max-size' => '20971520' // 20MB for JS validation
                 ],
+                'help' => !$isEdit ? 'Required. Max 20MB (MP3, WAV, AAC, etc.)' : 'Optional. Leave blank to keep current. Max 20MB',
                 'constraints' => array_filter([
-                    // Only add NotBlank constraint when creating (not editing)
-                    !$isEdit ? new NotBlank(['message' => 'Please upload an audio file']) : null,
-                    new File([
-                        'maxSize' => '20M',
+                    !$isEdit ? new Assert\NotBlank(['message' => 'Audio file is required']) : null,
+                    new Assert\File([
+                        'maxSize' => '20971520', // 20MB in bytes
                         'mimeTypes' => [
                             'audio/mpeg',
                             'audio/mp3',
@@ -99,7 +122,8 @@ class MusiqueType extends AbstractType
                             'audio/x-m4a',
                             'audio/mp4',
                         ],
-                        'mimeTypesMessage' => 'Please upload a valid audio file (MP3, WAV, AAC, OPUS, OGG, FLAC, M4A)',
+                        'mimeTypesMessage' => 'Please upload a valid audio file format',
+                        'maxSizeMessage' => 'Audio file is too large (max 20MB)',
                     ])
                 ])
             ]);
@@ -109,6 +133,10 @@ class MusiqueType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Musique::class,
+            'attr' => [
+                'class' => 'needs-validation',
+                'novalidate' => true
+            ]
         ]);
     }
 }

@@ -157,8 +157,11 @@
                       </li>
                       <li>
                         <form method="post" action="{{ path('app_musiqueartiste_delete', {'id': musique.id}) }}" 
+                              class="delete-music-form" 
+                              data-music-title="{{ musique.titre }}"
                               style="display: inline;">
-                          <button type="submit" class="dropdown-item text-danger" style="border: none; background: none; cursor: pointer; width: 100%; text-align: left;">
+                          <input type="hidden" name="confirm_delete" value="1">
+                          <button type="submit" class="dropdown-item text-danger delete-music-submit" style="border: none; background: none; cursor: pointer; width: 100%; text-align: left;">
                             <i class="bi bi-trash pe-2"></i>Delete
                           </button>
                         </form>
@@ -208,36 +211,51 @@
     </div>
     <!-- Form body -->
     <div class="container">
-      {{ form_start(form, {'attr': {'class': 'row needs-validation', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
+      {{ form_start(form, {'attr': {'class': 'row needs-validation', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data', 'id': 'addMusicForm'}}) }}
         
         <!-- Display form errors at the top -->
-        {% if form.vars.errors|length > 0 %}
-          <div class="col-12 mb-3">
-            <div class="alert alert-danger">
-              <strong>Please fix the following errors:</strong>
-              <ul class="mb-0 mt-2">
-                {% for error in form.vars.errors %}
-                  <li>{{ error.message }}</li>
-                {% endfor %}
-              </ul>
-            </div>
-          </div>
-        {% endif %}
+        {% for label, messages in app.flashes %}
+          {% if label == 'error' %}
+            {% for message in messages %}
+              <div class="col-12 mb-3">
+                <div class="alert alert-danger alert-dismissible fade show">
+                  <strong><i class="bi bi-exclamation-circle pe-2"></i>Error:</strong>
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
 
         <!-- Title -->
         <div class="mb-3 col-12">
           {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label'}}) }}
           <span class="text-danger">*</span>
           {{ form_widget(form.titre) }}
-          {{ form_errors(form.titre) }}
+          {% if form.titre.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.titre.vars.errors %}
+                {{ error.message }}
+              {% endfor %}
+            </div>
+          {% endif %}
+          <small class="form-text text-muted d-block mt-1">3-255 characters</small>
         </div>
 
         <!-- Description -->
         <div class="mb-3 col-12">
           {{ form_label(form.description, null, {'label_attr': {'class': 'form-label'}}) }}
           <span class="text-danger">*</span>
-          {{ form_widget(form.description) }}
-          {{ form_errors(form.description) }}
+          {{ form_widget(form.description, {'attr': {'data-counter': 'descriptionCounter'}}) }}
+          {% if form.description.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.description.vars.errors %}
+                {{ error.message }}
+              {% endfor %}
+            </div>
+          {% endif %}
+          <small class="form-text text-muted d-block mt-1">10-5000 characters <span id="descriptionCounter">(0/5000)</span></small>
         </div>
 
         <!-- Genre -->
@@ -245,7 +263,13 @@
           {{ form_label(form.genre, null, {'label_attr': {'class': 'form-label'}}) }}
           <span class="text-danger">*</span>
           {{ form_widget(form.genre) }}
-          {{ form_errors(form.genre) }}
+          {% if form.genre.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.genre.vars.errors %}
+                {{ error.message }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
 
         <!-- Cover Image -->
@@ -253,10 +277,17 @@
           <h5 class="mb-3">{{ form_label(form.imageFile, null, {'label_attr': {'class': 'form-label'}}) }}</h5>
           <div class="icon-shape icon-xxl border rounded position-relative">
             <span class="position-absolute"><i class="bi bi-image fs-3"></i></span>
-            {{ form_widget(form.imageFile, {'attr': {'class': 'form-control border-0 opacity-0'}}) }}
+            {{ form_widget(form.imageFile, {'attr': {'class': 'form-control border-0 opacity-0', 'id': 'imageFileInput'}}) }}
           </div>
-          {{ form_errors(form.imageFile) }}
-          <small class="text-muted">Max 5MB (JPEG, PNG)</small>
+          <div id="imageFileName" class="text-muted small mt-2"></div>
+          {% if form.imageFile.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.imageFile.vars.errors %}
+                {{ error.message }}
+              {% endfor %}
+            </div>
+          {% endif %}
+          <small class="text-muted d-block mt-2">Optional • Max 5MB • Formats: JPEG, PNG</small>
         </div>
 
         <!-- Audio File -->
@@ -265,16 +296,23 @@
           <span class="text-danger">*</span>
           <div class="icon-shape icon-xxl border rounded position-relative">
             <span class="position-absolute"><i class="bi bi-music-note-beamed fs-3"></i></span>
-            {{ form_widget(form.audioFile, {'attr': {'class': 'form-control border-0 opacity-0'}}) }}
+            {{ form_widget(form.audioFile, {'attr': {'class': 'form-control border-0 opacity-0', 'id': 'audioFileInput'}}) }}
           </div>
-          {{ form_errors(form.audioFile) }}
-          <small class="text-muted">Max 20MB (MP3, WAV, AAC, OPUS, OGG, FLAC, M4A)</small>
+          <div id="audioFileName" class="text-muted small mt-2"></div>
+          {% if form.audioFile.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.audioFile.vars.errors %}
+                {{ error.message }}
+              {% endfor %}
+            </div>
+          {% endif %}
+          <small class="text-muted d-block mt-2">Required • Max 20MB • Audio formats supported</small>
         </div>
 
         <!-- Buttons -->
         <div class="col-12">
-          <button class="btn btn-primary" type="submit">
-            <i class="bi bi-upload pe-2"></i>Upload Music
+          <button class="btn btn-primary" type="submit" id="submitBtn">
+            <i class="bi bi-upload pe-2"></i><span id="submitBtnText">Upload Music</span>
           </button>
           <button type="button" class="btn btn-outline-primary ms-2" data-bs-dismiss="offcanvas" aria-label="Close">Cancel</button>
         </div>
@@ -301,14 +339,20 @@
         <div class="mb-3 col-12">
           <label for="editTitre" class="form-label">Title</label>
           <span class="text-danger">*</span>
-          <input type="text" class="form-control" id="editTitre" name="titre" required>
+          <input type="text" class="form-control" id="editTitre" name="titre" 
+                 required minlength="3" maxlength="255">
+          <div class="invalid-feedback">Title must be 3-255 characters.</div>
+          <small class="form-text text-muted d-block mt-1">3-255 characters</small>
         </div>
 
         <!-- Description -->
         <div class="mb-3 col-12">
           <label for="editDescription" class="form-label">Description</label>
           <span class="text-danger">*</span>
-          <textarea class="form-control" id="editDescription" name="description" rows="3" required></textarea>
+          <textarea class="form-control" id="editDescription" name="description" rows="3" 
+                    required minlength="10" maxlength="5000" data-counter="editDescriptionCounter"></textarea>
+          <div class="invalid-feedback">Description must be 10-5000 characters.</div>
+          <small class="form-text text-muted d-block mt-1">10-5000 characters <span id="editDescriptionCounter">(0/5000)</span></small>
         </div>
 
         <!-- Genre -->
@@ -322,6 +366,7 @@
             <option value="Classique">Classique</option>
             <option value="Pop">Pop</option>
           </select>
+          <div class="invalid-feedback">Please select a genre.</div>
         </div>
 
         <!-- Cover Image -->
@@ -329,9 +374,10 @@
           <h5 class="mb-3">Update Cover Image (optional)</h5>
           <div class="icon-shape icon-xxl border rounded position-relative">
             <span class="position-absolute"><i class="bi bi-image fs-3"></i></span>
-            <input type="file" class="form-control border-0 opacity-0" name="imageFile" accept="image/*">
+            <input type="file" class="form-control border-0 opacity-0" id="editImageFileInput" name="imageFile" accept="image/jpeg,image/png,image/jpg">
           </div>
-          <small class="text-muted">Leave empty to keep current image. Max 5MB (JPEG, PNG)</small>
+          <div id="editImageFileName" class="text-muted small mt-2"></div>
+          <small class="text-muted d-block mt-2">Optional • Leave empty to keep current • Max 5MB • JPEG, PNG</small>
         </div>
 
         <!-- Buttons -->
@@ -707,5 +753,405 @@ function toggleSortOrder(form) {
   document.getElementById('sortOrderInput').value = newOrder;
   form.submit();
 }
+
+// ===== FORM VALIDATION (Contrôle de Saisie) =====
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('addMusicForm');
+  if (!form) return;
+  
+  // File input elements
+  const imageFileInput = document.getElementById('music_imageFile') || document.querySelector('input[name*="imageFile"]');
+  const audioFileInput = document.getElementById('music_audioFile') || document.querySelector('input[name*="audioFile"]');
+  const titleInput = document.querySelector('input[name*="titre"]');
+  const descriptionInput = document.querySelector('textarea[name*="description"]');
+  const genreSelect = document.querySelector('select[name*="genre"]');
+  
+  // Character counter for description
+  if (descriptionInput) {
+    const updateCounter = () => {
+      const counter = document.getElementById('descriptionCounter');
+      if (counter) {
+        counter.textContent = `(${descriptionInput.value.length}/5000)`;
+      }
+    };
+    descriptionInput.addEventListener('input', updateCounter);
+    descriptionInput.addEventListener('change', updateCounter);
+  }
+  
+  // File input change handlers with preview
+  if (imageFileInput) {
+    imageFileInput.addEventListener('change', function(e) {
+      const fileName = document.getElementById('imageFileName');
+      const file = this.files[0];
+      
+      if (file) {
+        // File size validation (5MB = 5242880 bytes)
+        if (file.size > 5242880) {
+          fileName.textContent = `❌ File too large (${(file.size / 1024 / 1024).toFixed(2)}MB > 5MB)`;
+          fileName.classList.remove('text-success');
+          fileName.classList.add('text-danger');
+          this.value = '';
+          return;
+        }
+        
+        // MIME type validation
+        const validMimes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!validMimes.includes(file.type)) {
+          fileName.textContent = `❌ Invalid format (${file.type}). Use JPEG or PNG.`;
+          fileName.classList.remove('text-success');
+          fileName.classList.add('text-danger');
+          this.value = '';
+          return;
+        }
+        
+        fileName.textContent = `✓ ${file.name} (${(file.size / 1024).toFixed(2)}KB)`;
+        fileName.classList.remove('text-danger');
+        fileName.classList.add('text-success');
+      } else {
+        fileName.textContent = '';
+      }
+    });
+  }
+  
+  if (audioFileInput) {
+    audioFileInput.addEventListener('change', function(e) {
+      const fileName = document.getElementById('audioFileName');
+      const file = this.files[0];
+      
+      if (file) {
+        // File size validation (20MB = 20971520 bytes)
+        if (file.size > 20971520) {
+          fileName.textContent = `❌ File too large (${(file.size / 1024 / 1024).toFixed(2)}MB > 20MB)`;
+          fileName.classList.remove('text-success');
+          fileName.classList.add('text-danger');
+          this.value = '';
+          return;
+        }
+        
+        // MIME type validation
+        const validMimes = [
+          'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav',
+          'audio/aac', 'audio/aacp', 'audio/opus', 'audio/ogg',
+          'audio/webm', 'audio/flac', 'audio/x-m4a', 'audio/mp4'
+        ];
+        
+        if (!validMimes.includes(file.type)) {
+          // Allow if file extension looks reasonable
+          const ext = file.name.split('.').pop().toLowerCase();
+          const validExts = ['mp3', 'wav', 'aac', 'opus', 'ogg', 'webm', 'flac', 'm4a', 'mp4'];
+          
+          if (!validExts.includes(ext)) {
+            fileName.textContent = `⚠️ Unusual format (.${ext}). Please verify it's a valid audio file.`;
+            fileName.classList.remove('text-success');
+            fileName.classList.add('text-warning');
+            return;
+          }
+        }
+        
+        fileName.textContent = `✓ ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+        fileName.classList.remove('text-danger', 'text-warning');
+        fileName.classList.add('text-success');
+      } else {
+        fileName.textContent = '';
+      }
+    });
+  }
+  
+  // Form submission validation
+  form.addEventListener('submit', function(e) {
+    // Reset validation classes
+    form.classList.remove('was-validated');
+    
+    let isValid = true;
+    const errors = [];
+    
+    // Title validation
+    if (titleInput) {
+      const value = titleInput.value.trim();
+      if (!value) {
+        errors.push('Title is required');
+        titleInput.classList.add('is-invalid');
+        isValid = false;
+      } else if (value.length < 3) {
+        errors.push('Title must be at least 3 characters');
+        titleInput.classList.add('is-invalid');
+        isValid = false;
+      } else if (value.length > 255) {
+        errors.push('Title cannot exceed 255 characters');
+        titleInput.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        titleInput.classList.remove('is-invalid');
+        titleInput.classList.add('is-valid');
+      }
+    }
+    
+    // Description validation
+    if (descriptionInput) {
+      const value = descriptionInput.value.trim();
+      if (!value) {
+        errors.push('Description is required');
+        descriptionInput.classList.add('is-invalid');
+        isValid = false;
+      } else if (value.length < 10) {
+        errors.push('Description must be at least 10 characters');
+        descriptionInput.classList.add('is-invalid');
+        isValid = false;
+      } else if (value.length > 5000) {
+        errors.push('Description cannot exceed 5000 characters');
+        descriptionInput.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        descriptionInput.classList.remove('is-invalid');
+        descriptionInput.classList.add('is-valid');
+      }
+    }
+    
+    // Genre validation
+    if (genreSelect) {
+      const value = genreSelect.value;
+      if (!value) {
+        errors.push('Genre is required');
+        genreSelect.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        genreSelect.classList.remove('is-invalid');
+        genreSelect.classList.add('is-valid');
+      }
+    }
+    
+    // Audio file validation
+    if (audioFileInput) {
+      const file = audioFileInput.files[0];
+      if (!file) {
+        errors.push('Audio file is required');
+        audioFileInput.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        // Double-check file size
+        if (file.size > 20971520) {
+          errors.push(`Audio file is too large (${(file.size / 1024 / 1024).toFixed(2)}MB > 20MB)`);
+          audioFileInput.classList.add('is-invalid');
+          isValid = false;
+        } else {
+          audioFileInput.classList.remove('is-invalid');
+        }
+      }
+    }
+    
+    // Image file validation (optional but if provided, must be valid)
+    if (imageFileInput && imageFileInput.files.length > 0) {
+      const file = imageFileInput.files[0];
+      if (file.size > 5242880) {
+        errors.push(`Image file is too large (${(file.size / 1024 / 1024).toFixed(2)}MB > 5MB)`);
+        imageFileInput.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        imageFileInput.classList.remove('is-invalid');
+      }
+    }
+    
+    // If validation failed, prevent submission and show errors
+    if (!isValid) {
+      e.preventDefault();
+      form.classList.add('was-validated');
+      
+      // Show error alert
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+      alertDiv.innerHTML = `
+        <strong><i class="bi bi-exclamation-triangle pe-2"></i>Validation Failed:</strong>
+        <ul class="mb-0 mt-2">
+          ${errors.map(err => `<li>${err}</li>`).join('')}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      `;
+      
+      // Insert at the top of the form
+      form.insertBefore(alertDiv, form.firstChild);
+      
+      // Scroll to error
+      setTimeout(() => {
+        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  });
+  
+  // ===== EDIT FORM VALIDATION =====
+  const editForm = document.getElementById('editMusicForm');
+  if (editForm) {
+    const editTitleInput = document.getElementById('editTitre');
+    const editDescriptionInput = document.getElementById('editDescription');
+    const editGenreSelect = document.getElementById('editGenre');
+    const editImageFileInput = document.getElementById('editImageFileInput');
+    
+    // Character counter for edit description
+    if (editDescriptionInput) {
+      const updateEditCounter = () => {
+        const counter = document.getElementById('editDescriptionCounter');
+        if (counter) {
+          counter.textContent = `(${editDescriptionInput.value.length}/5000)`;
+        }
+      };
+      editDescriptionInput.addEventListener('input', updateEditCounter);
+      editDescriptionInput.addEventListener('change', updateEditCounter);
+    }
+    
+    // Edit image file validation
+    if (editImageFileInput) {
+      editImageFileInput.addEventListener('change', function(e) {
+        const fileName = document.getElementById('editImageFileName');
+        const file = this.files[0];
+        
+        if (file) {
+          // File size validation (5MB)
+          if (file.size > 5242880) {
+            fileName.textContent = `❌ File too large (${(file.size / 1024 / 1024).toFixed(2)}MB > 5MB)`;
+            fileName.classList.remove('text-success');
+            fileName.classList.add('text-danger');
+            this.value = '';
+            return;
+          }
+          
+          // MIME type validation
+          const validMimes = ['image/jpeg', 'image/png', 'image/jpg'];
+          if (!validMimes.includes(file.type)) {
+            fileName.textContent = `❌ Invalid format (${file.type}). Use JPEG or PNG.`;
+            fileName.classList.remove('text-success');
+            fileName.classList.add('text-danger');
+            this.value = '';
+            return;
+          }
+          
+          fileName.textContent = `✓ ${file.name} (${(file.size / 1024).toFixed(2)}KB)`;
+          fileName.classList.remove('text-danger');
+          fileName.classList.add('text-success');
+        } else {
+          fileName.textContent = '';
+        }
+      });
+    }
+    
+    // Edit form submission validation
+    editForm.addEventListener('submit', function(e) {
+      editForm.classList.remove('was-validated');
+      
+      let isValid = true;
+      const errors = [];
+      
+      // Title validation
+      if (editTitleInput) {
+        const value = editTitleInput.value.trim();
+        if (!value) {
+          errors.push('Title is required');
+          editTitleInput.classList.add('is-invalid');
+          isValid = false;
+        } else if (value.length < 3) {
+          errors.push('Title must be at least 3 characters');
+          editTitleInput.classList.add('is-invalid');
+          isValid = false;
+        } else if (value.length > 255) {
+          errors.push('Title cannot exceed 255 characters');
+          editTitleInput.classList.add('is-invalid');
+          isValid = false;
+        } else {
+          editTitleInput.classList.remove('is-invalid');
+          editTitleInput.classList.add('is-valid');
+        }
+      }
+      
+      // Description validation
+      if (editDescriptionInput) {
+        const value = editDescriptionInput.value.trim();
+        if (!value) {
+          errors.push('Description is required');
+          editDescriptionInput.classList.add('is-invalid');
+          isValid = false;
+        } else if (value.length < 10) {
+          errors.push('Description must be at least 10 characters');
+          editDescriptionInput.classList.add('is-invalid');
+          isValid = false;
+        } else if (value.length > 5000) {
+          errors.push('Description cannot exceed 5000 characters');
+          editDescriptionInput.classList.add('is-invalid');
+          isValid = false;
+        } else {
+          editDescriptionInput.classList.remove('is-invalid');
+          editDescriptionInput.classList.add('is-valid');
+        }
+      }
+      
+      // Genre validation
+      if (editGenreSelect) {
+        const value = editGenreSelect.value;
+        if (!value) {
+          errors.push('Genre is required');
+          editGenreSelect.classList.add('is-invalid');
+          isValid = false;
+        } else {
+          editGenreSelect.classList.remove('is-invalid');
+          editGenreSelect.classList.add('is-valid');
+        }
+      }
+      
+      // Image file validation (optional but if provided, must be valid)
+      if (editImageFileInput && editImageFileInput.files.length > 0) {
+        const file = editImageFileInput.files[0];
+        if (file.size > 5242880) {
+          errors.push(`Image file is too large (${(file.size / 1024 / 1024).toFixed(2)}MB > 5MB)`);
+          editImageFileInput.classList.add('is-invalid');
+          isValid = false;
+        } else {
+          editImageFileInput.classList.remove('is-invalid');
+        }
+      }
+      
+      // If validation failed, prevent submission and show errors
+      if (!isValid) {
+        e.preventDefault();
+        editForm.classList.add('was-validated');
+        
+        // Show error alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        alertDiv.innerHTML = `
+          <strong><i class="bi bi-exclamation-triangle pe-2"></i>Validation Failed:</strong>
+          <ul class="mb-0 mt-2">
+            ${errors.map(err => `<li>${err}</li>`).join('')}
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Insert at the top of the form
+        editForm.insertBefore(alertDiv, editForm.firstChild);
+        
+        // Scroll to error
+        setTimeout(() => {
+          alertDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    });
+  }
+  
+  // ===== DELETE CONFIRMATION =====
+  document.addEventListener('submit', function(e) {
+    const form = e.target;
+    
+    // Check if this is a delete form
+    if (form.classList.contains('delete-music-form')) {
+      e.preventDefault();
+      
+      const musicTitle = form.dataset.musicTitle || 'this music';
+      
+      // Show confirmation dialog
+      if (confirm(`⚠️ Are you sure you want to delete "${musicTitle}"?\n\nThis action cannot be undone!`)) {
+        // User confirmed, submit the form
+        form.submit();
+      }
+      // Else: User cancelled, do nothing
+    }
+  });
+});
+
 </script>
 {% endblock %}

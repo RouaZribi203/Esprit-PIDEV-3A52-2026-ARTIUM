@@ -419,7 +419,7 @@ function loadMusicResults() {
   if (emptyMsg) emptyMsg.style.display = 'none';
   
   // Fetch results
-  fetch(`{{ path('musiques') }}?${params.toString()}`, {
+  fetch(`{{ path('app_admin_musique') }}?${params.toString()}`, {
     headers: {
       'X-Requested-With': 'XMLHttpRequest'
     }

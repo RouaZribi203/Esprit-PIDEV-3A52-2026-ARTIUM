@@ -25,7 +25,7 @@ class Reponse
     private ?Reclamation $reclamation = null;
 
     #[ORM\ManyToOne(inversedBy: 'reponses')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?User $user_admin = null;
 
     public function getId(): ?int

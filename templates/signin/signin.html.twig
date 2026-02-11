@@ -26,25 +26,31 @@
                   </div>
                 </div>
                 <!-- Form -->
-                <form class="needs-validation" novalidate>
+                <form method="post" action="{{ path('app_signin') }}" class="needs-validation" novalidate>
+                  {% if error %}
+                    <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                      <i class="fe fe-alert-circle me-2"></i>
+                      <div>{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                    </div>
+                  {% endif %}
                   <!-- Username -->
                   <div class="mb-3">
                     <label for="signInEmail" class="form-label">Adresse e-mail</label>
-                    <input type="email" id="signInEmail" class="form-control" name="signInEmail" placeholder="Votre adresse e-mail" />
+                    <input type="email" id="signInEmail" class="form-control" name="email" value="{{ last_username }}" placeholder="Votre adresse e-mail" autocomplete="email" required />
                     <div class="invalid-feedback">Adresse e-mail invalide</div>
                   </div>
                   <!-- Password -->
                   <div class="mb-3">
                     <label for="signInPassword" class="form-label">Mot de passe</label>
-                    <input type="password" id="signInPassword" class="form-control" name="signInPassword" placeholder="**************" required />
+                    <input type="password" id="signInPassword" class="form-control" name="password" placeholder="**************" autocomplete="current-password" required />
                     <div class="invalid-feedback">Mot de passe invalide</div>
                   </div>
                   <!-- Checkbox -->
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
                   <div class="d-lg-flex justify-content-between align-items-center mb-4">
                     <div class="form-check">
-                      <input type="checkbox" class="form-check-input" id="rememberme" required />
+                      <input type="checkbox" class="form-check-input" id="rememberme" />
                       <label class="form-check-label" for="rememberme">Rester connecté</label>
-                      <div class="invalid-feedback">Vous devez accepter les conditions avant de continuer</div>
                     </div>
                     <div>
                       <a href="{{ path('app_forgot_pwd') }}">Mot de passe oublié ?</a>

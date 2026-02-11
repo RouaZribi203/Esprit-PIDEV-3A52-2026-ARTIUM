@@ -12,6 +12,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
@@ -20,7 +21,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
     fields: ['email'],
     message: 'Cet email est déjà utilisé par un autre utilisateur'
 )]
-class User implements PasswordAuthenticatedUserInterface
+class User implements PasswordAuthenticatedUserInterface, UserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -28,152 +29,139 @@ class User implements PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(
-        message: 'Le nom ne peut pas être vide'
-    )]
+    #[Assert\NotBlank(message: 'Le nom est obligatoire')]
     #[Assert\Length(
         min: 2,
         max: 255,
-        minMessage: 'Le nom doit contenir au moins {{ limit }} caractères',
-        maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères'
+        minMessage: 'Le nom doit contenir au moins {{ limit }} caracteres',
+        maxMessage: 'Le nom ne peut pas depasser {{ limit }} caracteres'
     )]
     #[Assert\Regex(
         pattern: '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
         message: 'Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets'
     )]
+    // ...existing code...
     private ?string $nom = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(
-        message: 'Le prénom ne peut pas être vide'
-    )]
+    #[Assert\NotBlank(message: 'Le prenom est obligatoire')]
     #[Assert\Length(
         min: 2,
         max: 255,
-        minMessage: 'Le prénom doit contenir au moins {{ limit }} caractères',
-        maxMessage: 'Le prénom ne peut pas dépasser {{ limit }} caractères'
+        minMessage: 'Le prenom doit contenir au moins {{ limit }} caracteres',
+        maxMessage: 'Le prenom ne peut pas depasser {{ limit }} caracteres'
     )]
     #[Assert\Regex(
         pattern: '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
-        message: 'Le prénom ne doit contenir que des lettres, espaces, apostrophes et tirets'
+        message: 'Le prenom ne doit contenir que des lettres, espaces, apostrophes et tirets'
     )]
+    // ...existing code...
     private ?string $prenom = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Assert\NotBlank(
-        message: 'La date de naissance ne peut pas être vide'
-    )]
+    #[Assert\NotNull(message: 'La date de naissance ne peut pas etre vide')]
     #[Assert\LessThan(
         value: 'today',
-        message: 'La date de naissance doit être dans le passé'
+        message: 'La date de naissance doit etre dans le passe'
     )]
     #[Assert\GreaterThan(
         value: '-120 years',
         message: 'La date de naissance n\'est pas valide'
     )]
-    #[Assert\Expression(
-        expression: 'this.getAge() >= 13',
-        message: 'Vous devez avoir au moins 13 ans pour vous inscrire'
-    )]
+    // ...existing code...
     private ?\DateTime $date_naissance = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(
-        message: 'L\'email ne peut pas être vide'
-    )]
-    #[Assert\Email(
-        message: 'L\'adresse email "{{ value }}" n\'est pas valide'
-    )]
-    #[Assert\Length(
-        max: 255,
-        maxMessage: 'L\'email ne peut pas dépasser {{ limit }} caractères'
-    )]
+    #[Assert\NotBlank(message: "L'email est obligatoire")]
+    #[Assert\Email(message: "L'email n'est pas valide")]
+    #[Assert\Length(max: 255, maxMessage: "L'email ne peut pas depasser {{ limit }} caracteres")]
+    // ...existing code...
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(
-        message: 'Le mot de passe ne peut pas être vide'
-    )]
-    #[Assert\Length(
-        min: 6,
-        max: 255,
-        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères',
-        maxMessage: 'Le mot de passe ne peut pas dépasser {{ limit }} caractères'
-    )]
-    #[Assert\Regex(
-        pattern: '/^(?=.*[A-Za-z])(?=.*\d).+$/',
-        message: 'Le mot de passe doit contenir au moins une lettre et un chiffre'
-    )]
+    // ...existing code...
     private ?string $mdp = null;
 
-    #[ORM\Column(enumType: Role::class)]
-    #[Assert\NotNull(
-        message: 'Le rôle ne peut pas être vide'
+    #[Assert\NotBlank(message: 'Le mot de passe est obligatoire')]
+    #[Assert\Length(
+        min: 6,
+        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caracteres'
     )]
+    private ?string $plainPassword = null;
+
+    #[ORM\Column(enumType: Role::class)]
+    #[Assert\NotNull(message: 'Le role est obligatoire')]
+    // ...existing code...
     private ?Role $role = null;
 
     #[ORM\Column(enumType: Statut::class)]
-    #[Assert\NotNull(
-        message: 'Le statut ne peut pas être vide'
-    )]
+    #[Assert\NotNull(message: 'Le statut est obligatoire')]
+    // ...existing code...
     private ?Statut $statut = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Assert\NotBlank(
-        message: 'La date d\'inscription ne peut pas être vide'
-    )]
+    #[Assert\NotNull(message: 'La date d\'inscription est obligatoire')]
     #[Assert\LessThanOrEqual(
         value: 'today',
-        message: 'La date d\'inscription ne peut pas être dans le futur'
+        message: 'La date d\'inscription ne peut pas etre dans le futur'
     )]
+    // ...existing code...
     private ?\DateTime $date_inscription = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(
-        message: 'Le numéro de téléphone ne peut pas être vide'
-    )]
+    #[Assert\NotBlank(message: 'Le numero de telephone ne peut pas etre vide')]
     #[Assert\Regex(
         pattern: '/^[2459]\d{7}$/',
-        message: 'Le numéro de téléphone doit contenir 8 chiffres et commencer par 2, 4, 5 ou 9'
+        message: 'Le numero de telephone doit contenir 8 chiffres et commencer par 2, 4, 5 ou 9'
     )]
+    #[Assert\Length(
+        min: 8,
+        max: 8,
+        exactMessage: 'Le numero de telephone doit contenir exactement {{ limit }} chiffres'
+    )]
+    // ...existing code...
     private ?string $num_tel = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(
-        message: 'La ville ne peut pas être vide'
-    )]
+    #[Assert\NotBlank(message: 'La ville ne peut pas etre vide')]
     #[Assert\Length(
         min: 2,
         max: 255,
-        minMessage: 'La ville doit contenir au moins {{ limit }} caractères',
-        maxMessage: 'La ville ne peut pas dépasser {{ limit }} caractères'
+        minMessage: 'La ville doit contenir au moins {{ limit }} caracteres',
+        maxMessage: 'La ville ne peut pas depasser {{ limit }} caracteres'
     )]
+    // ...existing code...
     private ?string $ville = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Length(
-        max: 2000,
-        maxMessage: 'La biographie ne peut pas dépasser {{ limit }} caractères'
+        max: 1000,
+        maxMessage: 'La biographie ne peut pas depasser {{ limit }} caracteres'
     )]
+    // ...existing code...
     private ?string $biographie = null;
 
     #[ORM\Column(nullable: true, enumType: Specialite::class)]
-    #[Assert\Expression(
-        expression: 'this.getRole() == null or this.getRole().value != "ARTISTE" or this.getSpecialite() != null',
-        message: 'La spécialité est obligatoire pour les artistes'
-    )]
+    #[Assert\Choice(callback: [self::class, 'getSpecialiteChoices'], message: 'La specialite selectionnee est invalide')]
+    // ...existing code...
     private ?Specialite $specialite = null;
 
     #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true, enumType: CentreInteret::class)]
-    #[Assert\Expression(
-        expression: 'this.getRole() == null or this.getRole().value != "AMATEUR" or this.getCentreInteret() != null',
-        message: 'Au moins un centre d\'intérêt est obligatoire pour les amateurs'
-    )]
-    #[Assert\Count(
-        max: 10,
-        maxMessage: 'Vous ne pouvez pas sélectionner plus de {{ limit }} centres d\'intérêt'
-    )]
+    #[Assert\All([
+        new Assert\Choice(callback: [self::class, 'getCentreInteretChoices'], message: 'Un centre d\'interet selectionne est invalide')
+    ])]
+    // ...existing code...
     private ?array $centre_interet = null;
+
+    public static function getSpecialiteChoices(): array
+    {
+        return array_map(static fn (Specialite $specialite) => $specialite->value, Specialite::cases());
+    }
+
+    public static function getCentreInteretChoices(): array
+    {
+        return array_map(static fn (CentreInteret $centreInteret) => $centreInteret->value, CentreInteret::cases());
+    }
 
     /**
      * @var Collection<int, Collections>
@@ -247,6 +235,7 @@ class User implements PasswordAuthenticatedUserInterface
         $this->tickets = new ArrayCollection();
         $this->locationLivres = new ArrayCollection();
         $this->likes = new ArrayCollection();
+        $this->statut = Statut::ACTIVE;
     }
 
     public function getId(): ?int
@@ -325,6 +314,18 @@ class User implements PasswordAuthenticatedUserInterface
     public function setMdp(string $mdp): static
     {
         $this->mdp = $mdp;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
@@ -719,5 +720,36 @@ class User implements PasswordAuthenticatedUserInterface
     public function getPassword(): string
     {
         return $this->mdp ?? '';
+    }
+
+    /**
+     * Identifiant unique pour l'authentification
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    /**
+     * Rôles de l'utilisateur
+     */
+    public function getRoles(): array
+    {
+        $roles = ['ROLE_USER'];
+
+        if ($this->role === Role::ADMIN) {
+            $roles[] = 'ROLE_ADMIN';
+        } elseif ($this->role === Role::ARTISTE) {
+            $roles[] = 'ROLE_ARTISTE';
+        } elseif ($this->role === Role::AMATEUR) {
+            $roles[] = 'ROLE_AMATEUR';
+        }
+
+        return array_unique($roles);
+    }
+
+    public function eraseCredentials(): void
+    {
+        $this->plainPassword = null;
     }
 }

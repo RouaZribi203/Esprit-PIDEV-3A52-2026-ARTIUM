@@ -40,4 +40,31 @@ class MusiqueRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    /**
+     * Find all music IDs and basic info only, without BLOBs
+     * Returns lightweight data for listing pages
+     * Use find($id) to get full entity with blobs when needed
+     * 
+     * @return array Array of objects with id, titre, description, date_creation, genre
+     */
+    public function findAllLightweight(): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        
+        $sql = '
+            SELECT 
+                m.id, 
+                o.titre, 
+                o.description, 
+                o.date_creation,
+                m.genre
+            FROM musique m
+            INNER JOIN oeuvre o ON m.id = o.id
+            ORDER BY o.date_creation DESC
+        ';
+        
+        $stmt = $conn->executeQuery($sql);
+        return $stmt->fetchAllAssociative();
+    }
 }

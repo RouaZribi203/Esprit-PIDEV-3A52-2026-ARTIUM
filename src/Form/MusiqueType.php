@@ -3,8 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Musique;
-use App\Enum\GenreMusique;
-use Symfony\Component\Form\AbstractType;
+use App\Enum\GenreMusique;use App\Validator\ImageDimensions;use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -80,7 +79,7 @@ class MusiqueType extends AbstractType
                     'class' => 'form-control',
                     'accept' => 'image/jpeg,image/png,image/jpg'
                 ],
-                'help' => 'Max 5MB (JPEG, PNG)',
+                'help' => 'Max 5MB (JPEG, PNG) • Recommended: min 300x300px',
                 'constraints' => [
                     new Assert\File([
                         'maxSize' => '5242880', // 5MB in bytes
@@ -91,6 +90,12 @@ class MusiqueType extends AbstractType
                         ],
                         'mimeTypesMessage' => 'Please upload a valid image file (JPEG or PNG)',
                         'maxSizeMessage' => 'Image file is too large (max 5MB)',
+                    ]),
+                    new ImageDimensions([
+                        'minWidth' => 300,
+                        'minHeight' => 300,
+                        'maxWidth' => 5000,
+                        'maxHeight' => 5000,
                     ])
                 ]
             ])

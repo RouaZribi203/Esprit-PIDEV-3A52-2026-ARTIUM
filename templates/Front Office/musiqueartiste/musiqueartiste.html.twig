@@ -28,17 +28,70 @@
   </div>
   <!-- Card body START -->
   <div class="card-body">
+    <!-- Search and Filter Bar START -->
+    <div class="row mb-4 g-2 align-items-end">
+      <div class="col-md-6">
+        <div class="d-flex gap-2">
+          <div class="flex-grow-1">
+            <label for="searchInput" class="form-label small mb-2">Search by name or description</label>
+            <input type="text" class="form-control" id="searchInput" placeholder="Search songs..." value="{{ searchTerm }}">
+          </div>
+          <button type="button" class="btn btn-outline-primary align-self-end" id="searchBtn">
+            <i class="bi bi-search"></i> Search
+          </button>
+          {% if searchTerm %}
+            <button type="button" class="btn btn-outline-secondary align-self-end" id="clearSearchBtn">
+              <i class="bi bi-x-circle"></i> Clear
+            </button>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="d-flex gap-2">
+          <div class="flex-grow-1">
+            <label for="sortBy" class="form-label small mb-2">Sort by</label>
+            <select class="form-select" id="sortBy">
+              <option value="date" {% if sortBy == 'date' %}selected{% endif %}>Date Added</option>
+              <option value="titre" {% if sortBy == 'titre' %}selected{% endif %}>Title (A-Z)</option>
+              <option value="genre" {% if sortBy == 'genre' %}selected{% endif %}>Genre</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="form-label small mb-2">&nbsp;</label>
+            <button type="button" class="btn btn-outline-primary w-100" id="toggleSortBtn">
+              <i class="bi {% if sortOrder == 'DESC' %}bi-sort-down{% else %}bi-sort-up{% endif %}"></i>
+              <span id="sortOrderText">{{ sortOrder == 'DESC' ? 'Descending' : 'Ascending' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Search and Filter Bar END -->
+    
+    <!-- Results info START -->
+    <div class="mb-3" id="resultsInfo">
+      {% if searchTerm %}
+        <p class="text-muted small">
+          <i class="bi bi-info-circle"></i> 
+          Found <strong>{{ musiques|length }}</strong> song(s) matching "{{ searchTerm }}"
+          <a href="#" onclick="clearSearch(); return false;" class="ms-2">View all songs</a>
+        </p>
+      {% endif %}
+    </div>
+    <!-- Results info END -->
     {% if musiques is empty %}
       <!-- No music message START -->
-      <div class="text-center py-5">
+      <div class="text-center py-5" id="emptyMessage">
         <i class="bi bi-music-note-beamed display-1 text-muted"></i>
-        <h5 class="mt-3">No music yet</h5>
-        <p class="text-muted">Start by uploading your first music piece!</p>
+        <h5 class="mt-3">No music found</h5>
+        <p class="text-muted">{% if searchTerm %}No songs match your search. Try a different keyword.{% else %}Start by uploading your first music piece!{% endif %}</p>
       </div>
       <!-- No music message END -->
     {% else %}
       <!-- Music grid START -->
-      <div class="row g-4">
+      <div class="row g-4" id="musicGrid">
         {% for musique in musiques %}
           <!-- Music item START -->
           <div class="col-sm-6 col-xl-4">
@@ -47,10 +100,10 @@
                  data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
               <!-- Image with genre badge -->
               <div class="position-relative">
-                <img class="img-fluid rounded-top lazy-image" 
-                     data-src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" 
-                     src="{{ asset('assetsfront/images/avatar/04.jpg') }}" 
-                     alt="{{ musique.titre }}">
+                <img class="img-fluid rounded-top" 
+                     src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" 
+                     alt="{{ musique.titre }}"
+                     style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
                 <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">
                   {{ musique.genre }}
                 </div>
@@ -489,24 +542,9 @@
       });
     },
     
-    // Initialize lazy loading for images
+    // Images load eagerly now, no lazy loading needed
     initLazyLoading() {
-      const imageObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const img = entry.target;
-            if (img.dataset.src) {
-              img.src = img.dataset.src;
-              img.removeAttribute('data-src');
-              imageObserver.unobserve(img);
-            }
-          }
-        });
-      });
-      
-      document.querySelectorAll('.lazy-image').forEach(img => {
-        imageObserver.observe(img);
-      });
+      // Placeholder for future use
     },
     
     // Initialize everything
@@ -519,9 +557,13 @@
   
   // Start the music player when DOM is ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => MusicPlayer.init());
+    document.addEventListener('DOMContentLoaded', () => {
+      MusicPlayer.init();
+      updateSortButton();
+    });
   } else {
     MusicPlayer.init();
+    updateSortButton();
   }
 })();
 
@@ -548,5 +590,122 @@ document.addEventListener('click', function(e) {
     form.action = '{{ path('app_musiqueartiste_edit', {'id': '__ID__'}) }}'.replace('__ID__', musicId);
   }
 });
+
+// AJAX Search and Sort System
+let currentSortOrder = '{{ sortOrder }}';
+
+function loadMusicResults() {
+  const search = document.getElementById('searchInput').value;
+  const sort = document.getElementById('sortBy').value;
+  
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  params.append('sort', sort);
+  params.append('order', currentSortOrder);
+  
+  // Show loading spinner
+  const grid = document.getElementById('musicGrid');
+  const emptyMsg = document.getElementById('emptyMessage');
+  if (grid) grid.innerHTML = '<div class="col-12 text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+  if (emptyMsg) emptyMsg.style.display = 'none';
+  
+  // Fetch results
+  fetch(`{{ path('app_musiqueartiste') }}?${params.toString()}`, {
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.text())
+  .then(html => {
+    // Parse the HTML and extract just the music grid
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Try to get the grid
+    const newGrid = doc.querySelector('#musicGrid');
+    const newEmpty = doc.querySelector('#emptyMessage');
+    const newResults = doc.querySelector('#resultsInfo');
+    
+    // Update grid
+    if (grid && newGrid) {
+      grid.innerHTML = newGrid.innerHTML;
+      emptyMsg.style.display = 'none';
+    } else if (emptyMsg && newEmpty) {
+      grid.style.display = 'none';
+      emptyMsg.innerHTML = newEmpty.innerHTML;
+      emptyMsg.style.display = 'block';
+    }
+    
+    // Update results info
+    if (newResults) {
+      document.getElementById('resultsInfo').innerHTML = newResults.innerHTML;
+    }
+    
+    // Update sort order button icon
+    updateSortButton();
+  })
+  .catch(error => console.error('Error loading results:', error));
+}
+
+function updateSortButton() {
+  const btn = document.getElementById('toggleSortBtn');
+  const icon = btn.querySelector('i');
+  const text = document.getElementById('sortOrderText');
+  
+  if (currentSortOrder === 'DESC') {
+    icon.className = 'bi bi-sort-down';
+    text.textContent = 'Descending';
+  } else {
+    icon.className = 'bi bi-sort-up';
+    text.textContent = 'Ascending';
+  }
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  currentSortOrder = 'DESC';
+  document.getElementById('sortBy').value = 'date';
+  loadMusicResults();
+}
+
+// Event listeners
+document.getElementById('searchBtn').addEventListener('click', () => {
+  currentSortOrder = 'DESC';
+  document.getElementById('sortBy').value = 'date';
+  loadMusicResults();
+});
+
+document.getElementById('searchInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    currentSortOrder = 'DESC';
+    document.getElementById('sortBy').value = 'date';
+    loadMusicResults();
+  }
+});
+
+document.getElementById('sortBy').addEventListener('change', () => {
+  currentSortOrder = 'DESC';
+  loadMusicResults();
+});
+
+document.getElementById('toggleSortBtn').addEventListener('click', () => {
+  currentSortOrder = currentSortOrder === 'DESC' ? 'ASC' : 'DESC';
+  updateSortButton();  // Update button UI immediately
+  loadMusicResults();
+});
+
+// Handle clear button if it exists
+const clearBtn = document.getElementById('clearSearchBtn');
+if (clearBtn) {
+  clearBtn.addEventListener('click', clearSearch);
+}
+
+// Toggle sort order
+function toggleSortOrder(form) {
+  const currentOrder = document.getElementById('sortOrderInput').value;
+  const newOrder = currentOrder === 'DESC' ? 'ASC' : 'DESC';
+  document.getElementById('sortOrderInput').value = newOrder;
+  form.submit();
+}
 </script>
 {% endblock %}

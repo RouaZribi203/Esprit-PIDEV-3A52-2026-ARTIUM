@@ -94,12 +94,29 @@ final class MusiqueartisteController extends AbstractController
         
         // Fetch all music pieces WITHOUT loading BLOB data
         // This prevents "MySQL server has gone away" errors with large audio files
-        $musiques = $musiqueRepository->findAllLightweight();
+        $searchTerm = $request->query->get('search', '');
+        $sortBy = $request->query->get('sort', 'date');
+        $sortOrder = $request->query->get('order', 'DESC');
+        
+        // Validate sort order
+        if (!in_array($sortOrder, ['ASC', 'DESC'])) {
+            $sortOrder = 'DESC';
+        }
+        
+        // Use search/filter method or fallback to all
+        if ($searchTerm) {
+            $musiques = $musiqueRepository->searchAndFilter($searchTerm, $sortBy, $sortOrder);
+        } else {
+            $musiques = $musiqueRepository->searchAndFilter(null, $sortBy, $sortOrder);
+        }
         
         return $this->render('Front Office/musiqueartiste/musiqueartiste.html.twig', [
             'controller_name' => 'MusiqueartisteController',
             'musiques' => $musiques,
             'form' => $form->createView(),
+            'searchTerm' => $searchTerm,
+            'sortBy' => $sortBy,
+            'sortOrder' => $sortOrder,
         ]);
     }
 

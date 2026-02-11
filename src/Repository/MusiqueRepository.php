@@ -67,4 +67,49 @@ class MusiqueRepository extends ServiceEntityRepository
         $stmt = $conn->executeQuery($sql);
         return $stmt->fetchAllAssociative();
     }
+
+    /**
+     * Search and filter music with optional sorting
+     * @param string|null $searchTerm Search in titre and description
+     * @param string|null $sortBy Sort field: 'titre', 'date', 'genre'
+     * @param string $sortOrder ASC or DESC
+     * @return array
+     */
+    public function searchAndFilter(?string $searchTerm = null, ?string $sortBy = 'date', string $sortOrder = 'DESC'): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        
+        $sql = '
+            SELECT 
+                m.id, 
+                o.titre, 
+                o.description, 
+                o.date_creation,
+                m.genre
+            FROM musique m
+            INNER JOIN oeuvre o ON m.id = o.id
+            WHERE 1=1
+        ';
+        
+        $params = [];
+        
+        // Add search filter if provided
+        if ($searchTerm) {
+            $sql .= ' AND (o.titre LIKE :search OR o.description LIKE :search)';
+            $params['search'] = '%' . $searchTerm . '%';
+        }
+        
+        // Add sorting
+        $sortBy = match($sortBy) {
+            'titre' => 'o.titre',
+            'genre' => 'm.genre',
+            'date' => 'o.date_creation',
+            default => 'o.date_creation'
+        };
+        
+        $sql .= ' ORDER BY ' . $sortBy . ' ' . strtoupper($sortOrder);
+        
+        $stmt = $conn->executeQuery($sql, $params);
+        return $stmt->fetchAllAssociative();
+    }
 }

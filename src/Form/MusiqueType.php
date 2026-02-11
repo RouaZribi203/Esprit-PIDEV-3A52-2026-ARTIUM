@@ -18,6 +18,9 @@ class MusiqueType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // Detect if we're editing an existing entity
+        $isEdit = $options['data']->getId() !== null;
+        
         $builder
             ->add('titre', TextType::class, [
                 'label' => 'Title',
@@ -72,13 +75,14 @@ class MusiqueType extends AbstractType
             ->add('audioFile', FileType::class, [
                 'label' => 'Audio File',
                 'mapped' => false,
-                'required' => true,
+                'required' => !$isEdit, // Required only when creating new music
                 'attr' => [
                     'class' => 'form-control',
                     'accept' => 'audio/*'
                 ],
-                'constraints' => [
-                    new NotBlank(['message' => 'Please upload an audio file']),
+                'constraints' => array_filter([
+                    // Only add NotBlank constraint when creating (not editing)
+                    !$isEdit ? new NotBlank(['message' => 'Please upload an audio file']) : null,
                     new File([
                         'maxSize' => '20M',
                         'mimeTypes' => [
@@ -97,7 +101,7 @@ class MusiqueType extends AbstractType
                         ],
                         'mimeTypesMessage' => 'Please upload a valid audio file (MP3, WAV, AAC, OPUS, OGG, FLAC, M4A)',
                     ])
-                ]
+                ])
             ]);
     }
 

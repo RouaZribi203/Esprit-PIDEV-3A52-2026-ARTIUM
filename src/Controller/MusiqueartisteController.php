@@ -143,6 +143,59 @@ final class MusiqueartisteController extends AbstractController
         );
     }
 
+    #[Route('/musiqueartiste/edit/{id}', name: 'app_musiqueartiste_edit', methods: ['POST'])]
+    public function edit(
+        int $id,
+        Request $request,
+        MusiqueRepository $musiqueRepository,
+        EntityManagerInterface $entityManager
+    ): Response
+    {
+        $musique = $musiqueRepository->find($id);
+        
+        if (!$musique) {
+            $this->addFlash('error', 'Music not found.');
+            return $this->redirectToRoute('app_musiqueartiste');
+        }
+
+        // Update basic fields from POST data
+        $titre = $request->request->get('titre');
+        $description = $request->request->get('description');
+        $genre = $request->request->get('genre');
+        
+        if ($titre) {
+            $musique->setTitre($titre);
+        }
+        if ($description) {
+            $musique->setDescription($description);
+        }
+        if ($genre) {
+            // Convert genre string to enum
+            $musique->setGenre(\App\Enum\GenreMusique::from($genre));
+        }
+        
+        // Handle image upload (optional)
+        $imageFile = $request->files->get('imageFile');
+        if ($imageFile) {
+            try {
+                $imageContent = file_get_contents($imageFile->getPathname());
+                $musique->setImage($imageContent);
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Error uploading image: ' . $e->getMessage());
+                return $this->redirectToRoute('app_musiqueartiste');
+            }
+        }
+        
+        try {
+            $entityManager->flush();
+            $this->addFlash('success', 'Music updated successfully!');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'An error occurred: ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_musiqueartiste');
+    }
+
     #[Route('/musiqueartiste/delete/{id}', name: 'app_musiqueartiste_delete', methods: ['POST'])]
     public function delete(int $id, MusiqueRepository $musiqueRepository, EntityManagerInterface $entityManager): Response
     {

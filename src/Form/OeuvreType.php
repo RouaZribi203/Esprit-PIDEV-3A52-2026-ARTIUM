@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Collections;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use App\Entity\Oeuvre;
 use App\Entity\User;
 use App\Enum\TypeOeuvre;
@@ -13,7 +14,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\OptionsResolver\OptionsResolver;
+
 
 class OeuvreType extends AbstractType
 {
@@ -24,18 +25,18 @@ class OeuvreType extends AbstractType
                 'label' => 'Titre de l’œuvre',
             ])
             ->add('type', ChoiceType::class, [
-            'choices' => TypeOeuvre::cases(),
-            'choice_label' => fn(TypeOeuvre $choice) => $choice->value,
-            'choice_value' => fn(?TypeOeuvre $choice) => $choice?->value ?? '',
-            'placeholder' => 'Sélectionnez un type',
-            'required' => true,
-             ])
+    'choices' => [
+        TypeOeuvre::PEINTURE,
+        TypeOeuvre::SCULPTURE,
+        TypeOeuvre::PHOTOGRAPHIE,
+    ],
+
+    'choice_label' => fn(TypeOeuvre $choice) => $choice->value,
+    'choice_value' => fn(?TypeOeuvre $choice) => $choice?->value ?? '',
+    'placeholder' => 'Sélectionnez un type',
+    'required' => true,
+])
             ->add('description')
-            ->add('date_creation', DateType::class, [
-                'widget' => 'single_text',   
-                'html5' => true,
-                'required' => true,
-            ])
             ->add('image', FileType::class, [
             'label' => 'Image',
             'mapped' => false,      
@@ -47,15 +48,23 @@ class OeuvreType extends AbstractType
                 'placeholder' => 'Choisir une collection',
                     'attr' => [
                     'class' => 'form-select',],
-            ])
+            ]);
+            if ($options['include_date']) {
+            $builder->add('date_creation', DateType::class, [
+                'widget' => 'single_text',
+                'html5' => true,
+                'required' => true,
+            ]);
+            }
             
-        ;
+        
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Oeuvre::class,
+            'include_date' => true, 
         ]);
     }
 }

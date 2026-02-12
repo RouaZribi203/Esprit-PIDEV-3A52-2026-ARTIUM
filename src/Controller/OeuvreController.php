@@ -22,9 +22,26 @@ final class OeuvreController extends AbstractController
     #[Route(name: 'oeuvres')]
     public function indexx(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository): Response
     {
+        
+
+        $peintures = $oeuvreRepository->findBy([
+            'type' => TypeOeuvre::PEINTURE
+       ]);
+
+        $sculptures = $oeuvreRepository->findBy([
+           'type' => TypeOeuvre::SCULPTURE
+       ]);
+
+        $photos = $oeuvreRepository->findBy([
+           'type' => TypeOeuvre::PHOTOGRAPHIE
+        ]);
+        $all = array_merge($peintures, $sculptures, $photos);
         return $this->render('oeuvre/oeuvres.html.twig', [
             'controller_name' => 'OeuvreController',
-            'oeuvres' => $oeuvreRepository->findAll(),
+            'oeuvres' => $all,
+            'peintures' => $peintures,
+            'sculptures' => $sculptures,
+            'photos' => $photos,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
         ]);

@@ -120,10 +120,13 @@ final class ReclamationController extends AbstractController
     }
 
     #[Route('/reclamation/new', name: 'app_reclamation_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, UserRepository $userRepository, ReclamationRepository $reclamationRepository): Response
     {
         $reclamation = new Reclamation();
-        $form = $this->createForm(Reclamation1Type::class, $reclamation);
+        $form = $this->createForm(Reclamation1Type::class, $reclamation, [
+            'action' => $this->generateUrl('app_reclamation_new'),
+            'method' => 'POST',
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -151,10 +154,35 @@ final class ReclamationController extends AbstractController
             return $this->redirectToRoute('app_reclamationfront', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('reclamation/new.html.twig', [
-            'reclamation' => $reclamation,
-            'form' => $form,
-        ]);
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                $user = $userRepository->find(1);
+            }
+
+            $reclamations = [];
+            if ($user instanceof User) {
+                $reclamations = $reclamationRepository->findByUserFilters($user, null, null);
+            }
+
+            $editForms = [];
+            foreach ($reclamations as $existingReclamation) {
+                $editForms[$existingReclamation->getId()] = $this->createForm(Reclamation1Type::class, $existingReclamation, [
+                    'action' => $this->generateUrl('app_reclamation_edit', ['id' => $existingReclamation->getId()]),
+                    'method' => 'POST',
+                ])->createView();
+            }
+
+            return $this->render('Front Office/reclamationfront/reclamationfront.html.twig', [
+                'reclamations' => $reclamations,
+                'form' => $form->createView(),
+                'edit_forms' => $editForms,
+                'search_query' => '',
+                'selected_statut' => '',
+            ]);
+        }
+
+        return $this->redirectToRoute('app_reclamationfront', [], Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/reclamation/{id}', name: 'app_reclamation_show', methods: ['GET'])]
@@ -166,9 +194,12 @@ final class ReclamationController extends AbstractController
     }
 
     #[Route('/reclamation/{id}/edit', name: 'app_reclamation_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager, UserRepository $userRepository, ReclamationRepository $reclamationRepository): Response
     {
-        $form = $this->createForm(Reclamation1Type::class, $reclamation);
+        $form = $this->createForm(Reclamation1Type::class, $reclamation, [
+            'action' => $this->generateUrl('app_reclamation_edit', ['id' => $reclamation->getId()]),
+            'method' => 'POST',
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -177,10 +208,45 @@ final class ReclamationController extends AbstractController
             return $this->redirectToRoute('app_reclamationfront', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('reclamation/edit.html.twig', [
-            'reclamation' => $reclamation,
-            'form' => $form,
-        ]);
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                $user = $userRepository->find(1);
+            }
+
+            $reclamations = [];
+            if ($user instanceof User) {
+                $reclamations = $reclamationRepository->findByUserFilters($user, null, null);
+            }
+
+            $editForms = [];
+            foreach ($reclamations as $existingReclamation) {
+                if ($existingReclamation->getId() === $reclamation->getId()) {
+                    $editForms[$existingReclamation->getId()] = $form->createView();
+                    continue;
+                }
+
+                $editForms[$existingReclamation->getId()] = $this->createForm(Reclamation1Type::class, $existingReclamation, [
+                    'action' => $this->generateUrl('app_reclamation_edit', ['id' => $existingReclamation->getId()]),
+                    'method' => 'POST',
+                ])->createView();
+            }
+
+            $createForm = $this->createForm(Reclamation1Type::class, new Reclamation(), [
+                'action' => $this->generateUrl('app_reclamation_new'),
+                'method' => 'POST',
+            ]);
+
+            return $this->render('Front Office/reclamationfront/reclamationfront.html.twig', [
+                'reclamations' => $reclamations,
+                'form' => $createForm->createView(),
+                'edit_forms' => $editForms,
+                'search_query' => '',
+                'selected_statut' => '',
+            ]);
+        }
+
+        return $this->redirectToRoute('app_reclamationfront', [], Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/reclamation/{id}/delete', name: 'app_reclamation_delete', methods: ['POST'])]

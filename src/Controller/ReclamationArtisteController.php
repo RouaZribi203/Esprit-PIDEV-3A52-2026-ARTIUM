@@ -63,10 +63,13 @@ final class ReclamationArtisteController extends AbstractController
     }
 
     #[Route('/artiste-reclamation/new', name: 'app_reclamationartiste_new', methods: ['POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, UserRepository $userRepository, ReclamationRepository $reclamationRepository): Response
     {
         $reclamation = new Reclamation();
-        $form = $this->createForm(Reclamation1Type::class, $reclamation);
+        $form = $this->createForm(Reclamation1Type::class, $reclamation, [
+            'action' => $this->generateUrl('app_reclamationartiste_new'),
+            'method' => 'POST',
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -90,24 +93,97 @@ final class ReclamationArtisteController extends AbstractController
 
             $entityManager->persist($reclamation);
             $entityManager->flush();
+
+            return $this->redirectToRoute('app_reclamationsartiste', [], Response::HTTP_SEE_OTHER);
+        }
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                $user = $userRepository->find(1);
+            }
+
+            $reclamations = [];
+            if ($user instanceof User) {
+                $reclamations = $reclamationRepository->findByUserFilters($user, null, null);
+            }
+
+            $editForms = [];
+            foreach ($reclamations as $existingReclamation) {
+                $editForms[$existingReclamation->getId()] = $this->createForm(Reclamation1Type::class, $existingReclamation, [
+                    'action' => $this->generateUrl('app_reclamationartiste_edit', ['id' => $existingReclamation->getId()]),
+                    'method' => 'POST',
+                ])->createView();
+            }
+
+            return $this->render('Front Office/reclamationsartiste/reclamationsartiste.html.twig', [
+                'reclamations' => $reclamations,
+                'form' => $form->createView(),
+                'edit_forms' => $editForms,
+                'search_query' => '',
+                'selected_statut' => '',
+            ]);
         }
 
         return $this->redirectToRoute('app_reclamationsartiste', [], Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/artiste-reclamation/{id}/edit', name: 'app_reclamationartiste_edit', methods: ['POST'])]
-    public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager, UserRepository $userRepository, ReclamationRepository $reclamationRepository): Response
     {
         $user = $this->getUser();
         if ($user instanceof User && $reclamation->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas modifier cette reclamation.');
         }
 
-        $form = $this->createForm(Reclamation1Type::class, $reclamation);
+        $form = $this->createForm(Reclamation1Type::class, $reclamation, [
+            'action' => $this->generateUrl('app_reclamationartiste_edit', ['id' => $reclamation->getId()]),
+            'method' => 'POST',
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
+
+            return $this->redirectToRoute('app_reclamationsartiste', [], Response::HTTP_SEE_OTHER);
+        }
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                $user = $userRepository->find(1);
+            }
+
+            $reclamations = [];
+            if ($user instanceof User) {
+                $reclamations = $reclamationRepository->findByUserFilters($user, null, null);
+            }
+
+            $editForms = [];
+            foreach ($reclamations as $existingReclamation) {
+                if ($existingReclamation->getId() === $reclamation->getId()) {
+                    $editForms[$existingReclamation->getId()] = $form->createView();
+                    continue;
+                }
+
+                $editForms[$existingReclamation->getId()] = $this->createForm(Reclamation1Type::class, $existingReclamation, [
+                    'action' => $this->generateUrl('app_reclamationartiste_edit', ['id' => $existingReclamation->getId()]),
+                    'method' => 'POST',
+                ])->createView();
+            }
+
+            $createForm = $this->createForm(Reclamation1Type::class, new Reclamation(), [
+                'action' => $this->generateUrl('app_reclamationartiste_new'),
+                'method' => 'POST',
+            ]);
+
+            return $this->render('Front Office/reclamationsartiste/reclamationsartiste.html.twig', [
+                'reclamations' => $reclamations,
+                'form' => $createForm->createView(),
+                'edit_forms' => $editForms,
+                'search_query' => '',
+                'selected_statut' => '',
+            ]);
         }
 
         return $this->redirectToRoute('app_reclamationsartiste', [], Response::HTTP_SEE_OTHER);

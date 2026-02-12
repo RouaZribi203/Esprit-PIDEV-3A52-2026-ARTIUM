@@ -118,7 +118,6 @@ final class ReclamationAdminController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
         return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
     }
 }

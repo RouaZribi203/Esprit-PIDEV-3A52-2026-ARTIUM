@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ReclamationRepository::class)]
 class Reclamation
@@ -23,6 +24,14 @@ class Reclamation
     private ?User $user = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: "Le texte de la reclamation est obligatoire", groups: ['Default'])]
+    #[Assert\Length(
+        min: 10,
+        max: 2000,
+        minMessage: "Le texte doit contenir au minimum {{ limit }} caracteres",
+        maxMessage: "Le texte ne peut pas depasser {{ limit }} caracteres",
+        groups: ['Default', 'edit']
+    )]
     private ?string $texte = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
@@ -32,6 +41,7 @@ class Reclamation
     private ?StatutReclamation $statut = null;
 
     #[ORM\Column(enumType: TypeReclamation::class)]
+    #[Assert\NotBlank(message: "Le type de reclamation est obligatoire", groups: ['Default'])]
     private ?TypeReclamation $type = null;
 
     /**

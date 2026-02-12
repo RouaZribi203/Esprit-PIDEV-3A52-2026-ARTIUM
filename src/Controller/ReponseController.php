@@ -7,6 +7,7 @@ use App\Entity\Reponse;
 use App\Entity\User;
 use App\Enum\StatutReclamation;
 use App\Form\ReponseType;
+use App\Repository\ReclamationRepository;
 use App\Repository\ReponseRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -90,7 +91,7 @@ final class ReponseController extends AbstractController
     }
 
     #[Route('/admin/reclamation/{id}', name: 'app_reponse_admin_create', methods: ['POST'])]
-    public function adminCreate(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
+    public function adminCreate(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager, UserRepository $userRepository, ReclamationRepository $reclamationRepository): Response
     {
         $reponse = new Reponse();
         $reponse->setReclamation($reclamation);
@@ -122,13 +123,51 @@ final class ReponseController extends AbstractController
 
             $entityManager->persist($reponse);
             $entityManager->flush();
+
+            return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+        }
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $reclamations = $reclamationRepository->findBy([], ['date_creation' => 'DESC']);
+
+            $responseCreateForms = [];
+            $responseEditForms = [];
+
+            foreach ($reclamations as $existingReclamation) {
+                if ($existingReclamation->getId() === $reclamation->getId()) {
+                    $responseCreateForms[$existingReclamation->getId()] = $form->createView();
+                } else {
+                    $newReponse = new Reponse();
+                    $newReponse->setReclamation($existingReclamation);
+                    $createForm = $this->createForm(ReponseType::class, $newReponse);
+                    $createForm->remove('reclamation');
+                    $createForm->remove('user_admin');
+                    $createForm->remove('date_reponse');
+                    $responseCreateForms[$existingReclamation->getId()] = $createForm->createView();
+                }
+
+                foreach ($existingReclamation->getReponses() as $existingReponse) {
+                    $editForm = $this->createForm(ReponseType::class, $existingReponse);
+                    $editForm->remove('reclamation');
+                    $editForm->remove('user_admin');
+                    $editForm->remove('date_reponse');
+                    $responseEditForms[$existingReponse->getId()] = $editForm->createView();
+                }
+            }
+
+            return $this->render('reclam/reclams.html.twig', [
+                'reclamations' => $reclamations,
+                'responseCreateForms' => $responseCreateForms,
+                'responseEditForms' => $responseEditForms,
+                'search_query' => '',
+            ]);
         }
 
         return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/admin/{id}/edit', name: 'app_reponse_admin_edit', methods: ['POST'])]
-    public function adminEdit(Request $request, Reponse $reponse, EntityManagerInterface $entityManager): Response
+    public function adminEdit(Request $request, Reponse $reponse, EntityManagerInterface $entityManager, ReclamationRepository $reclamationRepository): Response
     {
         $form = $this->createForm(ReponseType::class, $reponse);
         $form->remove('reclamation');
@@ -138,6 +177,45 @@ final class ReponseController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
+
+            return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+        }
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $reclamations = $reclamationRepository->findBy([], ['date_creation' => 'DESC']);
+
+            $responseCreateForms = [];
+            $responseEditForms = [];
+
+            foreach ($reclamations as $existingReclamation) {
+                $newReponse = new Reponse();
+                $newReponse->setReclamation($existingReclamation);
+                $createForm = $this->createForm(ReponseType::class, $newReponse);
+                $createForm->remove('reclamation');
+                $createForm->remove('user_admin');
+                $createForm->remove('date_reponse');
+                $responseCreateForms[$existingReclamation->getId()] = $createForm->createView();
+
+                foreach ($existingReclamation->getReponses() as $existingReponse) {
+                    if ($existingReponse->getId() === $reponse->getId()) {
+                        $responseEditForms[$existingReponse->getId()] = $form->createView();
+                        continue;
+                    }
+
+                    $editForm = $this->createForm(ReponseType::class, $existingReponse);
+                    $editForm->remove('reclamation');
+                    $editForm->remove('user_admin');
+                    $editForm->remove('date_reponse');
+                    $responseEditForms[$existingReponse->getId()] = $editForm->createView();
+                }
+            }
+
+            return $this->render('reclam/reclams.html.twig', [
+                'reclamations' => $reclamations,
+                'responseCreateForms' => $responseCreateForms,
+                'responseEditForms' => $responseEditForms,
+                'search_query' => '',
+            ]);
         }
 
         return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);

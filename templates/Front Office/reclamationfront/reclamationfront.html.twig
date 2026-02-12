@@ -31,24 +31,33 @@
                         <!-- Title END -->
                         <!-- Form START -->
                         <div class="card-body">
-                            {{ form_start(form, {'attr': {'class': 'row g-3'}}) }}
+                            {{ form_start(form, {'attr': {'class': 'row g-3', 'novalidate': 'novalidate'}}) }}
                                 <div class="col-12">
                                     {{ form_errors(form) }}
                                 </div>
 
                                 <div class="col-12">
-                                    {{ form_row(form.type, {'label': 'Type', 'attr': {'class': 'form-select'}}) }}
+                                    {{ form_label(form.type, 'Type') }}
+                                    {% set type_has_errors = form.type.vars.errors|length > 0 %}
+                                    {{ form_widget(form.type, {'attr': {'class': 'form-select' ~ (type_has_errors ? ' is-invalid' : '')}}) }}
+                                    {% for error in form.type.vars.errors %}
+                                        <div class="invalid-feedback d-block">{{ error.message }}</div>
+                                    {% endfor %}
                                 </div>
 
                                 <div class="col-12">
-                                    {{ form_row(form.texte, {
-                                        'label': 'Description',
+                                    {{ form_label(form.texte, 'Description') }}
+                                    {% set texte_has_errors = form.texte.vars.errors|length > 0 %}
+                                    {{ form_widget(form.texte, {
                                         'attr': {
-                                            'class': 'form-control',
+                                            'class': 'form-control' ~ (texte_has_errors ? ' is-invalid' : ''),
                                             'rows': 5,
                                             'placeholder': 'Decrivez votre probleme en detail...'
                                         }
                                     }) }}
+                                    {% for error in form.texte.vars.errors %}
+                                        <div class="invalid-feedback d-block">{{ error.message }}</div>
+                                    {% endfor %}
                                 </div>
 
 
@@ -81,28 +90,6 @@
                             </div>
                         </form>
                         
-                        <script>
-                            (function() {
-                                const form = document.getElementById('filterForm');
-                                const searchInput = document.getElementById('searchInput');
-                                const statutSelect = document.getElementById('statutSelect');
-                                
-                                // Submit on select change
-                                statutSelect.addEventListener('change', function() {
-                                    form.submit();
-                                });
-                                
-                                // Submit on search input with debounce
-                                let searchTimeout;
-                                searchInput.addEventListener('input', function() {
-                                    clearTimeout(searchTimeout);
-                                    searchTimeout = setTimeout(function() {
-                                        form.submit();
-                                    }, 500);
-                                });
-                            })();
-                        </script>
-
                         <!-- Reclamations List -->
                         <div class="row g-3">
                             {% if reclamations is empty %}
@@ -192,19 +179,28 @@
                                             <div class="container">
                                                 {% set edit_form = edit_forms[reclamation.id] ?? null %}
                                                 {% if edit_form %}
-                                                    {{ form_start(edit_form, { attr: { class: 'row g-3' } }) }}
+                                                    {{ form_start(edit_form, { attr: { class: 'row g-3', 'novalidate': 'novalidate' } }) }}
                                                         <div class="col-12">
-                                                            {{ form_row(edit_form.texte, {
-                                                                'label': 'Description',
+                                                            {{ form_label(edit_form.texte, 'Description') }}
+                                                            {% set edit_texte_has_errors = edit_form.texte.vars.errors|length > 0 %}
+                                                            {{ form_widget(edit_form.texte, {
                                                                 'attr': {
-                                                                    'class': 'form-control',
+                                                                    'class': 'form-control' ~ (edit_texte_has_errors ? ' is-invalid' : ''),
                                                                     'rows': 5,
                                                                     'placeholder': 'Decrivez votre probleme en detail...'
                                                                 }
                                                             }) }}
+                                                            {% for error in edit_form.texte.vars.errors %}
+                                                                <div class="invalid-feedback d-block">{{ error.message }}</div>
+                                                            {% endfor %}
                                                         </div>
                                                         <div class="col-12">
-                                                            {{ form_row(edit_form.type, {'label': 'Type', 'attr': {'class': 'form-select'}}) }}
+                                                            {{ form_label(edit_form.type, 'Type') }}
+                                                            {% set edit_type_has_errors = edit_form.type.vars.errors|length > 0 %}
+                                                            {{ form_widget(edit_form.type, {'attr': {'class': 'form-select' ~ (edit_type_has_errors ? ' is-invalid' : '')}}) }}
+                                                            {% for error in edit_form.type.vars.errors %}
+                                                                <div class="invalid-feedback d-block">{{ error.message }}</div>
+                                                            {% endfor %}
                                                         </div>
                                                         <div class="col-12 d-flex gap-2">
                                                             <button class="btn btn-primary" type="submit">Enregistrer</button>

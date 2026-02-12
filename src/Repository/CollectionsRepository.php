@@ -15,6 +15,21 @@ class CollectionsRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Collections::class);
     }
+    public function findAllWithSearchFirst(?string $search = null): array{
+        $qb = $this->createQueryBuilder('c');
+        if ($search) {
+            // Exact match gets 2, partial match gets 1, no match gets 0
+            $qb->addSelect("(CASE WHEN LOWER(c.titre) = LOWER(:exact) THEN 2 WHEN c.titre LIKE :search THEN 1 ELSE 0 END) AS HIDDEN searchMatch")
+               ->setParameter('exact', $search)
+               ->setParameter('search', '%'.$search.'%')
+               ->orderBy('searchMatch', 'DESC') // exact matches first (2), then partial (1), then rest (0)
+               ->addOrderBy('c.titre', 'ASC'); // then alphabetically
+        } else {
+            $qb->orderBy('c.titre', 'ASC');
+        }
+        return $qb->getQuery()->getResult();
+    }
+
 
 //    /**
 //     * @return Collections[] Returns an array of Collections objects

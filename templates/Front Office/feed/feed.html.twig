@@ -3,276 +3,412 @@
 {% block title %}{{ 'Fil d’actualités'|trans }}{% endblock %}
 
 {% block amateur_content %}
+    <div id="feed-container">
+    {% for oeuvre in oeuvres|slice(0, 3) %}
     <!-- Card feed item START -->
-					<div class="card">
-						<!-- Card header START -->
-						<div class="card-header border-0 pb-0">
-							<div class="d-flex align-items-center justify-content-between">
-								<div class="d-flex align-items-center">
-									<!-- Avatar -->
-									<div class="avatar avatar-story me-2">
-										<a href="#!">
-											<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/12.jpg') }}"
-												alt="">
-										</a>
-									</div>
-									<!-- Info -->
-									<div>
-										<div class="nav nav-divider">
-											<h6 class="nav-item card-title mb-0">
-												<a href="#!">
-													Joan Wallace
-												</a>
-											</h6>
-											<span class="nav-item small">
-												1day</span>
-										</div>
-										<p class="mb-0 small">12 January at 12:00</p>
-									</div>
-								</div>
-								<!-- Card feed action dropdown START -->
-								<div class="dropdown">
-									<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2"
-										id="cardFeedAction2" data-bs-toggle="dropdown" aria-expanded="false">
-										<i class="bi bi-three-dots"></i>
-									</a>
-									<!-- Card feed action dropdown menu -->
-									<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction2">
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a>
-										</li>
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson
-											</a>
-										</li>
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a>
-										</li>
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a>
-										</li>
-										<li>
-											<hr class="dropdown-divider">
-										</li>
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-flag fa-fw pe-2"></i>Report post</a>
-										</li>
-									</ul>
-								</div>
-								<!-- Card feed action dropdown END -->
-							</div>
-						</div>
-						<!-- Card header END -->
-						<!-- Card body START -->
-						<div class="card-body pb-0">
-							<p>Comfort reached gay perhaps chamber his
-								<a href="#!">#internship</a>
-								<a href="#!">#hiring</a>
-								<a href="#!">#apply</a>
-							</p>
-						</div>
-						<!-- Card img -->
-						<div class="overflow-hidden fullscreen-video w-100">
+    <div class="card mb-4">
+        <!-- Card header START -->
+        <div class="card-header border-0 pb-0">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <!-- Avatar -->
+                    <div class="avatar avatar-story me-2">
+                        <a href="#!">
+                            <img class="avatar-img rounded-circle" 
+                                 src="{{ asset('assetsfront/images/avatar/default.jpg') }}" 
+                                 alt="">
+                        </a>
+                    </div>
+                    <!-- Info -->
+                    <div>
+                        <div class="nav nav-divider">
+                            <h6 class="nav-item card-title mb-0">
+                                <a href="#!">
+                                    {{ (oeuvre.collection and oeuvre.collection.artiste) ? (oeuvre.collection.artiste.nom ~ ' ' ~ oeuvre.collection.artiste.prenom) : 'Artiste Inconnu' }}
+                                </a>
+                            </h6>
+                            <span class="nav-item small">{{ oeuvre.dateCreation|date('d M') }}</span>
+                        </div>
+                        <p class="mb-0 small">{{ oeuvre.dateCreation ? oeuvre.dateCreation|date('d F Y à H:i') : '' }}</p>
+                    </div>
+                </div>
+                <!-- Card feed action dropdown START -->
+                <div class="dropdown">
+                    <a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2"
+                       id="cardFeedAction{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-three-dots"></i>
+                    </a>
+                    
+                </div>
+                <!-- Card feed action dropdown END -->
+            </div>
+        </div>
+        <!-- Card header END -->
+        
+        <!-- Card body START -->
+        <div class="card-body pb-0">
+            <h5 class="mb-2">{{ oeuvre.titre }}</h5>
+            <p>{{ oeuvre.description|raw }}
+                {% if oeuvre.type %}
+                    <a href="#!" class="ms-2">#{{ oeuvre.type.value }}</a>
+                {% endif %}
+                {% if oeuvre.collection %}
+                    <a href="#!" class="ms-1">#{{ oeuvre.collection.titre }}</a>
+                {% endif %}
+            </p>
+        </div>
+        
+        <!-- Card img -->
+        {% if oeuvre.image %}
+        <div class="overflow-hidden w-100">
+            <img src="data:{{ processedOeuvres[oeuvre.id].mimeType ?? 'image/jpeg' }};base64,{{ processedOeuvres[oeuvre.id].imageBase64 }}" 
+                 class="img-fluid" 
+                 alt="{{ oeuvre.titre }}"
+                 style="width: 100%; max-height: 600px; object-fit: contain;">
+        </div>
+        {% endif %}
+        
+        <!-- Feed react START -->
+        <div class="card-body pt-0">
+            <ul class="nav nav-stack py-3 small">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#!">
+                        <i class="bi bi-heart pe-1"></i>J'adore ({{ oeuvre.likes ? oeuvre.likes|length : 0 }})</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#!">
+                        <i class="bi bi-chat-fill pe-1"></i>Commentaires ({{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }})</a>
+                </li>
+				<!-- Card share action START -->
+                <li class="nav-item dropdown ms-sm-auto">
+                    <a class="nav-link mb-0" href="#" id="cardShareAction{{ oeuvre.id }}" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <i class="bi bi-star-fill fa-fw pe-2"></i>Ajouter aux Favoris
+                    </a>
+                    
+                </li>
+                
+            </ul>
+            <!-- Feed react END -->
 
-							<!-- HTML video START -->
-							<div class="player-wrapper overflow-hidden">
-								<video class="player-html" controls crossorigin="anonymous"
-									poster="{{ asset('assetsfront/images/videos/poster.jpg') }}">
-									<source src="{{ asset('assetsfront/images/videos/video-feed.mp4') }}" type="video/mp4">
-								</video>
-							</div>
-							<!-- HTML video END -->
+            <!-- Add comment -->
+            <div class="d-flex mb-3">
+                <!-- Avatar -->
+                <div class="avatar avatar-xs me-2">
+                    <a href="#!">
+                        <img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt="">
+                    </a>
+                </div>
 
-							<!-- Plyr resources and browser polyfills are specified in the pen settings -->
-						</div>
-						<!-- Feed react START -->
-						<div class="card-body pt-0">
-							<ul class="nav nav-stack py-3 small">
-								<li class="nav-item">
-									<a class="nav-link active" href="#!">
-										<i class="bi bi-heart pe-1"></i>J'adore (56)</a>
-								</li>
-								<li class="nav-item">
-									<a class="nav-link" href="#!">
-										<i class="bi bi-chat-fill pe-1"></i>Commentaires (12)</a>
-								</li>
-								<!-- Card share action START -->
-								<li class="nav-item dropdown ms-sm-auto">
-									<a class="nav-link mb-0" href="#" id="cardShareAction9" data-bs-toggle="dropdown"
-										aria-expanded="false">
-										<i class="bi bi-reply-fill flip-horizontal ps-1"></i>Partager (3)
-									</a>
-									<!-- Card share action dropdown menu -->
-									<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction9">
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a>
-										</li>
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark
-											</a>
-										</li>
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a>
-										</li>
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-share fa-fw pe-2"></i>Share post via …</a>
-										</li>
-										<li>
-											<hr class="dropdown-divider">
-										</li>
-										<li>
-											<a class="dropdown-item" href="#">
-												<i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a>
-										</li>
-									</ul>
-								</li>
-								<!-- Card share action END -->
-							</ul>
-							<!-- Feed react END -->
+                <!-- Comment box  -->
+                <form class="input-group" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}" method="post">
+    <textarea name="contenu" data-autoresize class="form-control me-2 bg-light rounded" rows="1"
+              placeholder="Ajouter un commentaire..."></textarea>
+    <button class="btn btn-primary mb-0 rounded" type="submit">Publier</button>
+</form>
 
-							<!-- Add comment -->
-							<div class="d-flex mb-3">
-								<!-- Avatar -->
-								<div class="avatar avatar-xs me-2">
-									<a href="#!">
-										<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/12.jpg') }}" alt="">
-									</a>
-								</div>
+            </div>
+            
+            <!-- Comment wrap START -->
+            {% if oeuvre.commentaires and oeuvre.commentaires|length > 0 %}
+            <ul class="comment-wrap list-unstyled mb-0">
+                {% for commentaire in oeuvre.commentaires|slice(0, 3) %}
+                <!-- Comment item START -->
+                <li class="comment-item">
+                    <div class="d-flex">
+                        <!-- Avatar -->
+                        <div class="avatar avatar-xs">
+                            <a href="#!"><img class="avatar-img rounded-circle"
+                                    src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt=""></a>
+                        </div>
+                        <div class="ms-2">
+                            <!-- Comment by -->
+                            <div class="bg-light rounded-start-top-0 p-3 rounded">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">
+                                        <a href="#!">
+                                            {{ commentaire.user ? (commentaire.user.nom ~ ' ' ~ commentaire.user.prenom) : 'Utilisateur' }}
+                                        </a>
+                                    </h6>
+                                    <small class="ms-2">{{ commentaire.dateCommentaire|date('d M') }}</small>
+                                </div>
+                                <p class="small mb-0">{{ commentaire.texte }}</p>
+                            </div>
+                            <!-- Comment react -->
+                            <ul class="nav nav-divider py-2 small">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#!">J'aime</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#!">Répondre</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+                <!-- Comment item END -->
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <!-- Comment wrap END -->
+        </div>
+        <!-- Card body END -->
+        
+        <!-- Card footer START -->
+        {% if oeuvre.commentaires and oeuvre.commentaires|length > 3 %}
+        <div class="card-footer border-0 pt-0">
+            <!-- Load more comments -->
+            <a href="#!" role="button"
+               class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center">
+                <div class="spinner-dots me-2">
+                    <span class="spinner-dot"></span>
+                    <span class="spinner-dot"></span>
+                    <span class="spinner-dot"></span>
+                </div>
+                Voir plus de commentaires
+            </a>
+        </div>
+        {% endif %}
+        <!-- Card footer END -->
+    </div>
+    <!-- Card feed item END -->
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <h5>Aucune œuvre pour le moment</h5>
+                <p class="text-muted">Revenez plus tard pour découvrir de nouvelles créations !</p>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
 
-								<!-- Comment box  -->
-								<form class="input-group">
-									<textarea data-autoresize class="form-control me-2 bg-light rounded" rows="1"
-										placeholder="Add a comment..."></textarea>
-									<button class="btn btn-primary mb-0 rounded" type="submit">Post</button>
-								</form>
-							</div>
-							<!-- Comment wrap START -->
-							<ul class="comment-wrap list-unstyled mb-0">
-								<!-- Comment item START -->
-								<li class="comment-item">
-									<div class="d-flex">
-										<!-- Avatar -->
-										<div class="avatar avatar-xs">
-											<a href="#!"><img class="avatar-img rounded-circle"
-													src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt=""></a>
-										</div>
-										<div class="ms-2">
-											<!-- Comment by -->
-											<div class="bg-light rounded-start-top-0 p-3 rounded">
-												<div class="d-flex justify-content-between">
-													<h6 class="mb-1">
-														<a href="#!">
-															Frances Guerrero
-														</a>
-													</h6>
-													<small class="ms-2">5hr</small>
-												</div>
-												<p class="small mb-0">Preference any astonished unreserved Mrs.</p>
-											</div>
-											<!-- Comment react -->
-											<ul class="nav nav-divider py-2 small">
-												<li class="nav-item">
-													<a class="nav-link" href="#!">
-														Like (3)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!">
-														Reply</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!">
-														View 5 replies</a>
-												</li>
-											</ul>
-										</div>
-									</div>
-									<!-- Comment item nested START -->
-									<ul class="comment-item-nested list-unstyled">
-										<!-- Comment item START -->
-										<li class="comment-item">
-											<div class="d-flex">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs">
-													<a href="#!"><img class="avatar-img rounded-circle"
-															src="{{ asset('assetsfront/images/avatar/06.jpg') }}" alt=""></a>
-												</div>
-												<!-- Comment by -->
-												<div class="ms-2">
-													<div class="bg-light p-3 rounded">
-														<div class="d-flex justify-content-between">
-															<h6 class="mb-1">
-																<a href="#!">
-																	Lori Stevens
-																</a>
-															</h6>
-															<small class="ms-2">2hr</small>
-														</div>
-														<p class="small mb-0">Dependent on so extremely delivered by.
-															Yet no jokes worse her why.</p>
-													</div>
-													<!-- Comment react -->
-													<ul class="nav nav-divider py-2 small">
-														<li class="nav-item">
-															<a class="nav-link" href="#!">
-																Like (5)</a>
-														</li>
-														<li class="nav-item">
-															<a class="nav-link" href="#!">
-																Reply</a>
-														</li>
-													</ul>
-												</div>
-											</div>
-										</li>
-										<!-- Comment item END -->
-									</ul>
-									<!-- Comment item nested END -->
-								</li>
-								<!-- Comment item END -->
-							</ul>
-							<!-- Comment wrap END -->
-						</div>
-						<!-- Card body END -->
-						<!-- Card footer START -->
-						<div class="card-footer border-0 pt-0">
-							<!-- Load more comments -->
-							<a href="#!" role="button"
-								class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center"
-								data-bs-toggle="button" aria-pressed="true">
-								<div class="spinner-dots me-2">
-									<span class="spinner-dot"></span>
-									<span class="spinner-dot"></span>
-									<span class="spinner-dot"></span>
-								</div>
-								Load more comments
-							</a>
-						</div>
-						<!-- Card footer END -->
-					</div>
+    <!-- Hidden oeuvres for load more -->
+    <div id="hidden-oeuvres" style="display: none;">
+    {% for oeuvre in oeuvres|slice(3) %}
+    <!-- Card feed item START -->
+    <div class="card mb-4 hidden-oeuvre">
+        <!-- Card header START -->
+        <div class="card-header border-0 pb-0">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <!-- Avatar -->
+                    <div class="avatar avatar-story me-2">
+                        <a href="#!">
+                            <img class="avatar-img rounded-circle" 
+                                 src="{{ asset('assetsfront/images/avatar/default.jpg') }}" 
+                                 alt="">
+                        </a>
+                    </div>
+                    <!-- Info -->
+                    <div>
+                        <div class="nav nav-divider">
+                            <h6 class="nav-item card-title mb-0">
+                                <a href="#!">
+                                    {{ (oeuvre.collection and oeuvre.collection.artiste) ? (oeuvre.collection.artiste.nom ~ ' ' ~ oeuvre.collection.artiste.prenom) : 'Artiste Inconnu' }}
+                                </a>
+                            </h6>
+                            <span class="nav-item small">{{ oeuvre.dateCreation|date('d M') }}</span>
+                        </div>
+                        <p class="mb-0 small">{{ oeuvre.dateCreation ? oeuvre.dateCreation|date('d F Y à H:i') : '' }}</p>
+                    </div>
 					
+                </div>
+				<!-- Card feed action dropdown START -->
+                <div class="dropdown">
+                    <a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2"
+                       id="cardFeedAction{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-three-dots"></i>
+                    </a>
+                    
+                </div>
+                <!-- Card feed action dropdown END -->
+                
+            </div>
+        </div>
+        <!-- Card header END -->
+        
+        <!-- Card body START -->
+        <div class="card-body pb-0">
+            <h5 class="mb-2">{{ oeuvre.titre }}</h5>
+            <p>{{ oeuvre.description|raw }}
+                {% if oeuvre.type %}
+                    <a href="#!" class="ms-2">#{{ oeuvre.type.value }}</a>
+                {% endif %}
+                {% if oeuvre.collection %}
+                    <a href="#!" class="ms-1">#{{ oeuvre.collection.titre }}</a>
+                {% endif %}
+            </p>
+        </div>
+        
+        <!-- Card img -->
+        {% if oeuvre.image %}
+        <div class="overflow-hidden w-100">
+            <img src="data:{{ processedOeuvres[oeuvre.id].mimeType ?? 'image/jpeg' }};base64,{{ processedOeuvres[oeuvre.id].imageBase64 }}" 
+                 class="img-fluid" 
+                 alt="{{ oeuvre.titre }}"
+                 style="width: 100%; max-height: 600px; object-fit: contain;">
+        </div>
+        {% endif %}
+        
+        <!-- Feed react START -->
+        <div class="card-body pt-0">
+            <ul class="nav nav-stack py-3 small">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#!">
+                        <i class="bi bi-heart pe-1"></i>J'adore ({{ oeuvre.likes ? oeuvre.likes|length : 0 }})</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#!">
+                        <i class="bi bi-chat-fill pe-1"></i>Commentaires ({{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }})</a>
+                </li>
+                <!-- Card share action START -->
+                <li class="nav-item dropdown ms-sm-auto">
+                    <a class="nav-link mb-0" href="#" id="cardShareAction{{ oeuvre.id }}" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <i class="bi bi-star-fill fa-fw pe-2"></i>Ajouter aux Favoris
+                    </a>
+                    
+                </li>
+                <!-- Card share action END -->
+            </ul>
+            <!-- Feed react END -->
 
-					<!-- Card feed item END -->
+            <!-- Add comment -->
+            <div class="d-flex mb-3">
+                <!-- Avatar -->
+                <div class="avatar avatar-xs me-2">
+                    <a href="#!">
+                        <img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt="">
+                    </a>
+                </div>
 
-					<!-- Load more button START -->
-					<a href="#!" role="button" class="btn btn-loader btn-primary-soft" data-bs-toggle="button"
-						aria-pressed="true">
-						<span class="load-text">
-							Afficher Plus
-						</span>
-						<div class="load-icon">
-							<div class="spinner-grow spinner-grow-sm" role="status">
-								<span class="visually-hidden">Loading...</span>
-							</div>
-						</div>
-					</a>
-					<!-- Load more button END -->
+                <!-- Comment box  -->
+                <form class="input-group" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}" method="post">
+    <textarea name="contenu" data-autoresize class="form-control me-2 bg-light rounded" rows="1"
+              placeholder="Ajouter un commentaire..."></textarea>
+    <button class="btn btn-primary mb-0 rounded" type="submit">Publier</button>
+</form>
+
+            </div>
+            
+            <!-- Comment wrap START -->
+            {% if oeuvre.commentaires and oeuvre.commentaires|length > 0 %}
+            <ul class="comment-wrap list-unstyled mb-0">
+                {% for commentaire in oeuvre.commentaires|slice(0, 3) %}
+                <!-- Comment item START -->
+                <li class="comment-item">
+                    <div class="d-flex">
+                        <!-- Avatar -->
+                        <div class="avatar avatar-xs">
+                            <a href="#!"><img class="avatar-img rounded-circle"
+                                    src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt=""></a>
+                        </div>
+                        <div class="ms-2">
+                            <!-- Comment by -->
+                            <div class="bg-light rounded-start-top-0 p-3 rounded">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">
+                                        <a href="#!">
+                                            {{ commentaire.user ? (commentaire.user.nom ~ ' ' ~ commentaire.user.prenom) : 'Utilisateur' }}
+                                        </a>
+                                    </h6>
+                                    <small class="ms-2">{{ commentaire.dateCommentaire|date('d M') }}</small>
+                                </div>
+                                <p class="small mb-0">{{ commentaire.texte }}</p>
+                            </div>
+                            <!-- Comment react -->
+                            <ul class="nav nav-divider py-2 small">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#!">J'aime</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#!">Répondre</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+                <!-- Comment item END -->
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <!-- Comment wrap END -->
+        </div>
+        <!-- Card body END -->
+        
+        <!-- Card footer START -->
+        {% if oeuvre.commentaires and oeuvre.commentaires|length > 3 %}
+        <div class="card-footer border-0 pt-0">
+            <!-- Load more comments -->
+            <a href="#!" role="button"
+               class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center">
+                <div class="spinner-dots me-2">
+                    <span class="spinner-dot"></span>
+                    <span class="spinner-dot"></span>
+                    <span class="spinner-dot"></span>
+                </div>
+                Voir plus de commentaires
+            </a>
+        </div>
+        {% endif %}
+        <!-- Card footer END -->
+    </div>
+    <!-- Card feed item END -->
+    {% endfor %}
+    </div>
+
+    <!-- Load more button START -->
+    {% if oeuvres|length > 3 %}
+    <button id="load-more-btn" class="btn btn-loader btn-primary-soft" type="button">
+        <span class="load-text">Afficher Plus</span>
+        <div class="load-icon" style="display: none;">
+            <div class="spinner-grow spinner-grow-sm" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </button>
+    {% endif %}
+    <!-- Load more button END -->
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        const feedContainer = document.getElementById('feed-container');
+        const hiddenOeuvres = document.querySelectorAll('.hidden-oeuvre');
+        let currentIndex = 0;
+        const itemsPerLoad = 3;
+
+        if (loadMoreBtn && hiddenOeuvres.length > 0) {
+            loadMoreBtn.addEventListener('click', function() {
+                // Show spinner
+                this.querySelector('.load-text').style.display = 'none';
+                this.querySelector('.load-icon').style.display = 'inline-block';
+
+                // Simulate loading delay
+                setTimeout(() => {
+                    // Calculate how many to show
+                    const endIndex = Math.min(currentIndex + itemsPerLoad, hiddenOeuvres.length);
+                    
+                    // Move items from hidden to visible
+                    for (let i = currentIndex; i < endIndex; i++) {
+                        feedContainer.appendChild(hiddenOeuvres[i]);
+                        hiddenOeuvres[i].style.display = 'block';
+                    }
+                    
+                    currentIndex = endIndex;
+
+                    // Hide button if no more items
+                    if (currentIndex >= hiddenOeuvres.length) {
+                        this.style.display = 'none';
+                    }
+
+                    // Reset button state
+                    this.querySelector('.load-text').style.display = 'inline';
+                    this.querySelector('.load-icon').style.display = 'none';
+                }, 500);
+            });
+        }
+    });
+    </script>
+
 {% endblock %}

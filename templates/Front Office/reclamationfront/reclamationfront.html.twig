@@ -85,7 +85,6 @@
                                     <option value="" {% if selected_statut is empty %}selected{% endif %}>Filtrer par statut</option>
                                     <option value="Traitée" {% if selected_statut == 'Traitée' %}selected{% endif %}>Traite</option>
                                     <option value="Non traitée" {% if selected_statut == 'Non traitée' %}selected{% endif %}>Non traitee</option>
-                                    <option value="En cours" {% if selected_statut == 'En cours' %}selected{% endif %}>En cours</option>
                                 </select>
                             </div>
                         </form>
@@ -170,16 +169,30 @@
                                         </div>
                                     </div>
 
-                                    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditReclamation-{{ reclamation.id }}" style="width: 600px">
+                                    {% set edit_form = edit_forms[reclamation.id] ?? null %}
+                                    {% set edit_errors = edit_form is not null and (edit_form.texte.vars.errors|length > 0 or edit_form.type.vars.errors|length > 0) %}
+                                    <div class="offcanvas offcanvas-end{{ edit_errors ? ' show' : '' }}" tabindex="-1" id="offcanvasEditReclamation-{{ reclamation.id }}" style="width: 600px">
                                         <div class="offcanvas-body" data-simplebar>
                                             <div class="offcanvas-header px-2 pt-0">
                                                 <h3 class="offcanvas-title">Editer reclamation</h3>
                                                 <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                                             </div>
                                             <div class="container">
-                                                {% set edit_form = edit_forms[reclamation.id] ?? null %}
                                                 {% if edit_form %}
                                                     {{ form_start(edit_form, { attr: { class: 'row g-3', 'novalidate': 'novalidate' } }) }}
+                                                        <div class="col-12">
+                                                            {{ form_errors(edit_form) }}
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            {{ form_label(edit_form.type, 'Type') }}
+                                                            {% set edit_type_has_errors = edit_form.type.vars.errors|length > 0 %}
+                                                            {{ form_widget(edit_form.type, {'attr': {'class': 'form-select' ~ (edit_type_has_errors ? ' is-invalid' : '')}}) }}
+                                                            {% for error in edit_form.type.vars.errors %}
+                                                                <div class="invalid-feedback d-block">{{ error.message }}</div>
+                                                            {% endfor %}
+                                                        </div>
+
                                                         <div class="col-12">
                                                             {{ form_label(edit_form.texte, 'Description') }}
                                                             {% set edit_texte_has_errors = edit_form.texte.vars.errors|length > 0 %}
@@ -194,14 +207,7 @@
                                                                 <div class="invalid-feedback d-block">{{ error.message }}</div>
                                                             {% endfor %}
                                                         </div>
-                                                        <div class="col-12">
-                                                            {{ form_label(edit_form.type, 'Type') }}
-                                                            {% set edit_type_has_errors = edit_form.type.vars.errors|length > 0 %}
-                                                            {{ form_widget(edit_form.type, {'attr': {'class': 'form-select' ~ (edit_type_has_errors ? ' is-invalid' : '')}}) }}
-                                                            {% for error in edit_form.type.vars.errors %}
-                                                                <div class="invalid-feedback d-block">{{ error.message }}</div>
-                                                            {% endfor %}
-                                                        </div>
+
                                                         <div class="col-12 d-flex gap-2">
                                                             <button class="btn btn-primary" type="submit">Enregistrer</button>
                                                             <button type="button" class="btn btn-outline-primary" data-bs-dismiss="offcanvas" aria-label="Close">Fermer</button>

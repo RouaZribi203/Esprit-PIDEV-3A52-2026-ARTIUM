@@ -8,6 +8,7 @@ use App\Repository\PlaylistRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -18,7 +19,8 @@ final class MusicfrontController extends AbstractController
     public function index(
         Request $request,
         MusiqueRepository $musiqueRepository,
-        PlaylistRepository $playlistRepository
+        PlaylistRepository $playlistRepository,
+        UserRepository $userRepository
     ): Response
     {
         $searchTerm = trim((string) $request->query->get('search', ''));
@@ -76,6 +78,15 @@ final class MusicfrontController extends AbstractController
                 ['user' => $user],
                 ['date_creation' => 'DESC']
             );
+        } else {
+            // For guest users, fetch playlists for user ID 2
+            $guestUser = $userRepository->find(2);
+            if ($guestUser) {
+                $playlists = $playlistRepository->findBy(
+                    ['user' => $guestUser],
+                    ['date_creation' => 'DESC']
+                );
+            }
         }
         
         return $this->render('Front Office/music/musicfront.html.twig', [
@@ -92,6 +103,7 @@ final class MusicfrontController extends AbstractController
     public function createPlaylist(
         Request $request,
         MusiqueRepository $musiqueRepository,
+        PlaylistRepository $playlistRepository,
         EntityManagerInterface $entityManager,
         UserRepository $userRepository
     ): Response {
@@ -101,29 +113,31 @@ final class MusicfrontController extends AbstractController
         }
         if (!$user) {
             $this->addFlash('error', 'Utilisateur par defaut introuvable.');
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Utilisateur par defaut introuvable.'], 400);
+            }
             return $this->redirectToRoute('app_musicfront');
         }
 
         $token = $request->request->get('_token');
         if (!$this->isCsrfTokenValid('create_playlist', $token)) {
             $this->addFlash('error', 'Jeton CSRF invalide. Veuillez reessayer.');
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Jeton CSRF invalide.'], 400);
+            }
             return $this->redirectToRoute('app_musicfront');
         }
 
         $name = trim((string) $request->request->get('playlist_name', ''));
         $description = trim((string) $request->request->get('playlist_description', ''));
-        $ids = $request->request->all('musique_ids');
 
         if ($name === '') {
             $this->addFlash('error', 'Le nom de la playlist est obligatoire.');
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Le nom est obligatoire.'], 400);
+            }
             return $this->redirectToRoute('app_musicfront');
         }
-
-        if (!is_array($ids)) {
-            $ids = [];
-        }
-
-        $musiques = $ids ? $musiqueRepository->findBy(['id' => $ids]) : [];
 
         $playlist = new Playlist();
         $playlist->setNom($name);
@@ -131,12 +145,30 @@ final class MusicfrontController extends AbstractController
         $playlist->setDateCreation(new \DateTime());
         $playlist->setUser($user);
 
-        foreach ($musiques as $musique) {
-            $playlist->addMusique($musique);
+        // Handle image upload
+        $imageFile = $request->files->get('playlist_image');
+        if ($imageFile && $imageFile->isValid()) {
+            try {
+                if ($imageFile->getSize() > 5242880) { // 5MB
+                    throw new \Exception('Image file exceeds maximum size of 5MB');
+                }
+                
+                $imageContent = file_get_contents($imageFile->getPathname());
+                if ($imageContent === false) {
+                    throw new \Exception('Failed to read image file');
+                }
+                $playlist->setImage($imageContent);
+            } catch (\Exception $e) {
+                $this->addFlash('warning', 'Image upload failed: ' . $e->getMessage());
+            }
         }
 
         $entityManager->persist($playlist);
         $entityManager->flush();
+
+        if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return new JsonResponse(['success' => true]);
+        }
 
         $this->addFlash('success', 'Playlist creee avec succes.');
         return $this->redirectToRoute('app_musicfront');
@@ -192,5 +224,71 @@ final class MusicfrontController extends AbstractController
 
         $this->addFlash('success', 'Musique ajoutee a la playlist.');
         return $this->redirectToRoute('app_musicfront');
+    }
+
+    #[Route('/playlist/{id}/songs', name: 'app_playlist_songs', methods: ['GET'])]
+    public function getPlaylistSongs(int $id, PlaylistRepository $playlistRepository): Response
+    {
+        $playlist = $playlistRepository->find($id);
+        
+        if (!$playlist) {
+            throw $this->createNotFoundException('Playlist not found');
+        }
+
+        $songs = [];
+        foreach ($playlist->getMusique() as $musique) {
+            $songs[] = [
+                'id' => $musique->getId(),
+                'titre' => $musique->getTitre(),
+                'audioSrc' => $this->generateUrl('app_musiqueartiste_audio', ['id' => $musique->getId()]),
+            ];
+        }
+
+        return new JsonResponse(['songs' => $songs]);
+    }
+
+    #[Route('/playlist/{playlistId}/remove-song/{musicId}', name: 'app_playlist_remove_song', methods: ['POST'])]
+    public function removeSongFromPlaylist(
+        int $playlistId,
+        int $musicId,
+        PlaylistRepository $playlistRepository,
+        MusiqueRepository $musiqueRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $playlist = $playlistRepository->find($playlistId);
+        $musique = $musiqueRepository->find($musicId);
+
+        if (!$playlist || !$musique) {
+            return new JsonResponse(['error' => 'Playlist or song not found'], 404);
+        }
+
+        if ($playlist->getMusique()->contains($musique)) {
+            $playlist->removeMusique($musique);
+            $entityManager->flush();
+        }
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/playlist/image/{id}', name: 'app_playlist_image')]
+    public function getPlaylistImage(int $id, PlaylistRepository $playlistRepository): Response
+    {
+        $playlist = $playlistRepository->find($id);
+        
+        if (!$playlist || !$playlist->getImage()) {
+            throw $this->createNotFoundException('Playlist image not found');
+        }
+
+        // Get image binary data from BLOB
+        $imageData = $playlist->getImage();
+        if (is_resource($imageData)) {
+            $imageData = stream_get_contents($imageData);
+        }
+
+        return new Response(
+            $imageData,
+            200,
+            ['Content-Type' => 'image/jpeg']
+        );
     }
 }

@@ -419,7 +419,7 @@
                                         <i class="bi bi-plus-lg"></i> Ajouter
                                     </button>
                                     <div class="collapse mt-3" id="createPlaylistCollapse">
-                                        <form method="post" action="{{ path('app_playlist_create') }}">
+                                        <form method="post" action="{{ path('app_playlist_create') }}" enctype="multipart/form-data" id="createPlaylistForm">
                                             <input type="hidden" name="_token" value="{{ csrf_token('create_playlist') }}">
                                             <div class="mb-2">
                                                 <label class="form-label small" for="playlist-name">Nom</label>
@@ -430,24 +430,9 @@
                                                 <textarea id="playlist-description" name="playlist_description" class="form-control form-control-sm" rows="2" placeholder="Optionnel"></textarea>
                                             </div>
                                             <div class="mb-2">
-                                                <label class="form-label small">Musiques (optionnel)</label>
-                                                {% if musiques is empty %}
-                                                    <div class="text-muted small">Aucune musique disponible.</div>
-                                                {% else %}
-                                                    <div class="row">
-                                                        {% for musique in musiques %}
-                                                            <div class="col-12">
-                                                                <div class="form-check mb-1">
-                                                                    <input class="form-check-input" type="checkbox" name="musique_ids[]" value="{{ musique.id }}" id="playlist-musique-{{ musique.id }}">
-                                                                    <label class="form-check-label small" for="playlist-musique-{{ musique.id }}">
-                                                                        {{ musique.titre }}
-                                                                        <span class="text-muted">({{ musique.genre.value }})</span>
-                                                                    </label>
-                                                                </div>
-                                                            </div>
-                                                        {% endfor %}
-                                                    </div>
-                                                {% endif %}
+                                                <label class="form-label small" for="playlist-image">Image (optionnel)</label>
+                                                <input id="playlist-image" name="playlist_image" type="file" class="form-control form-control-sm" accept="image/*">
+                                                <small class="form-text text-muted">Max 5MB</small>
                                             </div>
                                             <button type="submit" class="btn btn-sm btn-primary">Creer</button>
                                         </form>
@@ -456,46 +441,48 @@
                             </div>
                         </div>
 
-                        {% if app.user %}
-                            {% if playlists is empty %}
-                                <div class="col-12">
-                                    <div class="text-center py-5">
-                                        <i class="bi bi-music-note-list display-6 text-muted"></i>
-                                        <h6 class="mt-3">Aucune playlist pour le moment</h6>
-                                        <p class="text-muted small">Creez votre premiere playlist pour commencer.</p>
-                                    </div>
+                        {% if playlists is empty %}
+                            <div class="col-12">
+                                <div class="text-center py-5">
+                                    <i class="bi bi-music-note-list display-6 text-muted"></i>
+                                    <h6 class="mt-3">Aucune playlist pour le moment</h6>
+                                    <p class="text-muted small">Creez votre premiere playlist pour commencer.</p>
                                 </div>
-                            {% else %}
-                                {% for playlist in playlists %}
-                                    <div class="col-sm-6 col-xl-4">
-                                        <div class="card h-100 music-card">
-                                            <div class="position-relative">
+                            </div>
+                        {% else %}
+                            {% for playlist in playlists %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card">
+                                        <div class="position-relative">
+                                            {% if playlist.image %}
+                                                <img class="img-fluid rounded-top" src="{{ path('app_playlist_image', {'id': playlist.id}) }}" alt="{{ playlist.nom }}" style="height: 200px; object-fit: cover;">
+                                            {% else %}
                                                 <div class="rounded-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(135deg, #198754 0%, #75b798 100%);">
                                                     <i class="bi bi-music-note-list text-white" style="font-size: 3rem;"></i>
                                                 </div>
-                                                <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">
-                                                    {{ playlist.musique|length }} titre(s)
-                                                </div>
+                                            {% endif %}
+                                            <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">
+                                                {{ playlist.musique|length }} titre(s)
                                             </div>
-                                            <div class="card-body position-relative pt-0">
-                                                <h6 class="mt-2">{{ playlist.nom }}</h6>
-                                                <p class="mb-2 small text-muted">
-                                                    {{ playlist.description|default('Aucune description')|length > 60 ? playlist.description|slice(0, 60) ~ '...' : playlist.description|default('Aucune description') }}
-                                                </p>
-                                                <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ playlist.dateCreation|date('M d, Y') }} </p>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <h6 class="mt-2">{{ playlist.nom }}</h6>
+                                            <p class="mb-2 small text-muted">
+                                                {{ playlist.description|default('Aucune description')|length > 60 ? playlist.description|slice(0, 60) ~ '...' : playlist.description|default('Aucune description') }}
+                                            </p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ playlist.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex gap-2 mt-2">
+                                                <button class="btn btn-sm btn-outline-primary flex-grow-1" type="button" data-bs-toggle="modal" data-bs-target="#viewPlaylistModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom }}">
+                                                    <i class="bi bi-play-circle"></i> Écouter
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-success flex-grow-1" type="button" data-bs-toggle="modal" data-bs-target="#addSongsModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom }}">
+                                                    <i class="bi bi-plus-circle"></i> Ajouter
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
-                                {% endfor %}
-                            {% endif %}
-                        {% else %}
-                            <div class="col-12">
-                                <div class="text-center py-5">
-                                    <i class="bi bi-person-circle display-6 text-muted"></i>
-                                    <h6 class="mt-3">Connectez-vous pour creer une playlist</h6>
-                                    <p class="text-muted small">Vous pourrez ensuite ajouter des musiques a vos playlists.</p>
                                 </div>
-                            </div>
+                            {% endfor %}
                         {% endif %}
                     </div>
                 </div>
@@ -506,6 +493,49 @@
         <!-- Card body END -->
     </div>
     <!-- Card END -->
+
+    <!-- View Playlist Modal -->
+    <div class="modal fade" id="viewPlaylistModal" tabindex="-1" aria-labelledby="viewPlaylistModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewPlaylistModalLabel">Playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewPlaylistModalBody">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Songs to Playlist Modal -->
+    <div class="modal fade" id="addSongsModal" tabindex="-1" aria-labelledby="addSongsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <input type="hidden" id="csrfTokenAddToPlaylist" value="{{ csrf_token('add_to_playlist') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSongsModalLabel">Ajouter des musiques à la playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="addSongsModalBody">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-success" id="addSelectedSongsBtn">Ajouter les sélectionnées</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Audio element for playback -->
     <audio id="audioPlayer" style="display: none;"></audio>
@@ -636,7 +666,318 @@
                     loadMusicResults();
                 });
             }
+
+            // Handle playlist creation form with AJAX
+            const createPlaylistForm = document.getElementById('createPlaylistForm');
+            if (createPlaylistForm) {
+                createPlaylistForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+
+                    fetch('{{ path("app_playlist_create") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Fetch updated playlists
+                            return fetch('{{ path("app_musicfront") }}', {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                        } else {
+                            throw new Error('Failed to create playlist');
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+
+                        // Get the playlists section from the response
+                        const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                        const currentPlaylistsTab = document.querySelector('#tab-playlists');
+
+                        if (newPlaylistsTab && currentPlaylistsTab) {
+                            currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                        }
+
+                        // Reset form
+                        createPlaylistForm.reset();
+                        
+                        // Close collapse by clicking the toggle button
+                        const collapseElement = document.getElementById('createPlaylistCollapse');
+                        if (collapseElement) {
+                            collapseElement.classList.remove('show');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            }
         });
+
+        let currentPlaylistId = null;
+
+        // Handle View Playlist Modal
+        const viewPlaylistModal = document.getElementById('viewPlaylistModal');
+        if (viewPlaylistModal) {
+            viewPlaylistModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                currentPlaylistId = button.getAttribute('data-playlist-id');
+                const playlistName = button.getAttribute('data-playlist-name');
+                
+                const modalLabel = document.getElementById('viewPlaylistModalLabel');
+                if (modalLabel) {
+                    modalLabel.textContent = `"${playlistName}"`;
+                }
+
+                loadPlaylistSongs();
+            });
+        }
+
+        function loadPlaylistSongs() {
+            const modalBody = document.getElementById('viewPlaylistModalBody');
+
+            fetch('{{ path("app_playlist_songs", {"id": "__PLAYLIST_ID__"}) }}'.replace('__PLAYLIST_ID__', currentPlaylistId), {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const songs = data.songs;
+                
+                // Update the badge showing number of songs
+                const badge = document.querySelector(`button[data-playlist-id="${currentPlaylistId}"]`)?.closest('.card')?.querySelector('.badge');
+                if (badge) {
+                    const count = songs.length;
+                    badge.textContent = `${count} titre${count !== 1 ? 's' : ''}`;
+                }
+                
+                if (songs.length === 0) {
+                    modalBody.innerHTML = '<p class="text-muted text-center py-4">Aucune musique dans cette playlist</p>';
+                    return;
+                }
+
+                let songsHtml = '<div class="list-group">';
+                
+                songs.forEach(song => {
+                    songsHtml += `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>${song.titre}</span>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-primary playlist-play-btn" data-audio-id="${song.id}" data-audio-src="${song.audioSrc}" data-title="${song.titre}">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger playlist-delete-btn" data-music-id="${song.id}" data-title="${song.titre}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                songsHtml += '</div>';
+                modalBody.innerHTML = songsHtml;
+
+                // Bind play buttons
+                const playButtons = modalBody.querySelectorAll('.playlist-play-btn');
+                let currentlyPlaying = null;
+
+                playButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const audioSrc = this.getAttribute('data-audio-src');
+                        const audioId = this.getAttribute('data-audio-id');
+                        const title = this.getAttribute('data-title');
+                        
+                        // If this button's song is already playing, pause it
+                        if (currentlyPlaying === audioId && !audioPlayer.paused) {
+                            audioPlayer.pause();
+                            this.innerHTML = '<i class="bi bi-play-fill"></i>';
+                        } 
+                        // If this button's song is paused, resume it
+                        else if (currentlyPlaying === audioId && audioPlayer.paused) {
+                            audioPlayer.play();
+                            this.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                        } 
+                        // Play a different song
+                        else {
+                            audioPlayer.src = audioSrc;
+                            audioPlayer.play();
+                            
+                            // Reset all buttons to play state
+                            playButtons.forEach(btn => {
+                                btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                            });
+                            this.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                            currentlyPlaying = audioId;
+                        }
+                    });
+                });
+
+                // Bind delete buttons
+                const deleteButtons = modalBody.querySelectorAll('.playlist-delete-btn');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const musicId = this.getAttribute('data-music-id');
+                        const title = this.getAttribute('data-title');
+                        
+                        if (confirm(`Êtes-vous sûr de vouloir supprimer "${title}" de cette playlist?`)) {
+                            fetch('{{ path("app_playlist_remove_song", {"playlistId": "__PLAYLIST_ID__", "musicId": "__MUSIC_ID__"}) }}'.replace('__PLAYLIST_ID__', currentPlaylistId).replace('__MUSIC_ID__', musicId), {
+                                method: 'POST',
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    loadPlaylistSongs();
+                                }
+                            })
+                            .catch(error => console.error('Error:', error));
+                        }
+                    });
+                });
+
+                audioPlayer.onended = function() {
+                    playButtons.forEach(btn => {
+                        btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                    });
+                    currentlyPlaying = null;
+                };
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<p class="text-danger">Erreur lors du chargement de la playlist</p>';
+            });
+        }
+
+        // Handle Add Songs Modal
+        const addSongsModal = document.getElementById('addSongsModal');
+        if (addSongsModal) {
+            addSongsModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                currentPlaylistId = button.getAttribute('data-playlist-id');
+                const playlistName = button.getAttribute('data-playlist-name');
+                
+                const modalLabel = document.getElementById('addSongsModalLabel');
+                if (modalLabel) {
+                    modalLabel.textContent = `Ajouter des musiques à "${playlistName}"`;
+                }
+
+                loadSongsForPlaylist();
+            });
+        }
+
+        function loadSongsForPlaylist() {
+            const modalBody = document.getElementById('addSongsModalBody');
+            
+            fetch('{{ path("app_musicfront") }}', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Extract all musiques from the first tab
+                const allGenresTab = doc.querySelector('#tab-all');
+                const musicCards = allGenresTab ? allGenresTab.querySelectorAll('.music-card[data-music-id]') : [];
+                
+                let songsHtml = '<div class="list-group">';
+                
+                musicCards.forEach(card => {
+                    const musicId = card.getAttribute('data-music-id');
+                    const titleElement = card.querySelector('h6 a');
+                    const title = titleElement ? titleElement.textContent.trim() : 'Unknown';
+                    
+                    songsHtml += `
+                        <label class="list-group-item">
+                            <input class="form-check-input me-2" type="checkbox" name="song_id" value="${musicId}">
+                            <span>${title}</span>
+                        </label>
+                    `;
+                });
+                
+                songsHtml += '</div>';
+                modalBody.innerHTML = songsHtml;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<p class="text-danger">Erreur lors du chargement des musiques</p>';
+            });
+        }
+
+        const addSelectedSongsBtn = document.getElementById('addSelectedSongsBtn');
+        if (addSelectedSongsBtn) {
+            addSelectedSongsBtn.addEventListener('click', function() {
+                const selectedCheckboxes = document.querySelectorAll('#addSongsModalBody input[name="song_id"]:checked');
+                
+                if (selectedCheckboxes.length === 0) {
+                    alert('Veuillez sélectionner au moins une musique');
+                    return;
+                }
+
+                // Add all selected songs
+                let addedCount = 0;
+                let totalCount = selectedCheckboxes.length;
+
+                selectedCheckboxes.forEach((checkbox, index) => {
+                    const musicId = checkbox.value;
+
+                    const formData = new FormData();
+                    const csrfToken = document.getElementById('csrfTokenAddToPlaylist').value;
+                    formData.append('_token', csrfToken);
+                    formData.append('musique_id', musicId);
+                    formData.append('playlist_id', currentPlaylistId);
+
+                    fetch('{{ path("app_playlist_add_song") }}', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            addedCount++;
+                            if (addedCount === totalCount) {
+                                // All songs added, close modal and refresh
+                                const modal = bootstrap.Modal.getInstance(addSongsModal);
+                                if (modal) modal.hide();
+                                
+                                // Reload the playlists section
+                                fetch('{{ path("app_musicfront") }}', {
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                })
+                                .then(response => response.text())
+                                .then(html => {
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+                                    const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                                    const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                                    if (newPlaylistsTab && currentPlaylistsTab) {
+                                        currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                                    }
+                                });
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error adding song:', error));
+                });
+            });
+        }
 
         function playPauseMusic(button) {
             // If another button is currently playing, stop it

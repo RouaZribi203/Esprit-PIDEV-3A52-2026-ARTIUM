@@ -101,11 +101,6 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
     private ?Statut $statut = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Assert\NotNull(message: 'La date d\'inscription est obligatoire')]
-    #[Assert\LessThanOrEqual(
-        value: 'today',
-        message: 'La date d\'inscription ne peut pas etre dans le futur'
-    )]
     // ...existing code...
     private ?\DateTime $date_inscription = null;
 

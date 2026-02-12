@@ -40,7 +40,7 @@ final class OeuvreController extends AbstractController
     }
 
 
-    #[Route('/new', name: 'app_oeuvre_new', methods: ['GET', 'POST'])]
+    /*#[Route('/new', name: 'app_oeuvre_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
     $oeuvre = new Oeuvre();
@@ -49,7 +49,7 @@ final class OeuvreController extends AbstractController
 
     if ($form->isSubmitted() && $form->isValid()) {
         /** @var UploadedFile|null $imageFile */
-        $imageFile = $form->get('image')->getData();
+       /* $imageFile = $form->get('image')->getData();
 
         if ($imageFile) {
             // Read the binary content of the file
@@ -67,7 +67,7 @@ final class OeuvreController extends AbstractController
         'oeuvre' => $oeuvre,
         'form' => $form->createView(),
     ]);
-   }
+   }*/
 
 
     #[Route('/test/{id}', name: 'app_oeuvre_show', methods: ['GET'])]

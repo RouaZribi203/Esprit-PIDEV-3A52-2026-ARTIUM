@@ -1,7 +1,67 @@
-{{ form_start(form, {'attr': {'id': 'offcanvasOeuvreFormFields', 'class': 'offcanvas-form'}}) }}
-    {{ form_widget(form) }}
-    <div class="d-flex gap-2 mt-4">
-        <button type="submit" class="btn btn-primary flex-grow-1">Enregistrer</button>
-        <button type="button" class="btn btn-secondary flex-grow-1" data-bs-dismiss="offcanvas">Fermer</button>
+{{ form_start(form, {
+    'attr': {
+        'id': 'offcanvasOeuvreFormFields',
+        'class': 'offcanvas-form'
+    }
+}) }}
+
+<div class="container-fluid">
+
+    {# Titre #}
+    <div class="mb-3">
+        {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.titre, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.titre) }}
     </div>
+
+    {# Type + Date in same row #}
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.type, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.type, {'attr': {'class': 'form-select'}}) }}
+            {{ form_errors(form.type) }}
+        </div>
+
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.date_creation, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.date_creation, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.date_creation) }}
+        </div>
+    </div>
+
+    {# Description #}
+    <div class="mb-3">
+        {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4}}) }}
+        {{ form_errors(form.description) }}
+    </div>
+
+    {# Image Upload #}
+    <div class="mb-3">
+        {{ form_label(form.image, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.image, {'attr': {'class': 'form-control'}}) }}
+        {{ form_errors(form.image) }}
+        <div class="form-text">Formats acceptés : JPG, PNG</div>
+    </div>
+
+    {# Collection #}
+    <div class="mb-4">
+        {{ form_label(form.collection, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.collection, {'attr': {'class': 'form-select'}}) }}
+        {{ form_errors(form.collection) }}
+    </div>
+
+    {# Buttons #}
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary flex-grow-1">
+            <i class="bi bi-check-lg me-1"></i> Enregistrer
+        </button>
+        <button type="button" class="btn btn-outline-secondary flex-grow-1" data-bs-dismiss="offcanvas">
+            <i class="bi bi-x-lg me-1"></i> Fermer
+        </button>
+    </div>
+
+</div>
+
 {{ form_end(form) }}
+

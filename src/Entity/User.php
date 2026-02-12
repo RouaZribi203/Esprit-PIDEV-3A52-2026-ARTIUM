@@ -11,9 +11,17 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User
+#[UniqueEntity(
+    fields: ['email'],
+    message: 'Cet email est déjà utilisé par un autre utilisateur'
+)]
+class User implements PasswordAuthenticatedUserInterface, UserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -21,43 +29,139 @@ class User
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le nom est obligatoire')]
+    #[Assert\Length(
+        min: 2,
+        max: 255,
+        minMessage: 'Le nom doit contenir au moins {{ limit }} caracteres',
+        maxMessage: 'Le nom ne peut pas depasser {{ limit }} caracteres'
+    )]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
+        message: 'Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets'
+    )]
+    // ...existing code...
     private ?string $nom = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le prenom est obligatoire')]
+    #[Assert\Length(
+        min: 2,
+        max: 255,
+        minMessage: 'Le prenom doit contenir au moins {{ limit }} caracteres',
+        maxMessage: 'Le prenom ne peut pas depasser {{ limit }} caracteres'
+    )]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
+        message: 'Le prenom ne doit contenir que des lettres, espaces, apostrophes et tirets'
+    )]
+    // ...existing code...
     private ?string $prenom = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Assert\NotNull(message: 'La date de naissance ne peut pas etre vide')]
+    #[Assert\LessThan(
+        value: 'today',
+        message: 'La date de naissance doit etre dans le passe'
+    )]
+    #[Assert\GreaterThan(
+        value: '-120 years',
+        message: 'La date de naissance n\'est pas valide'
+    )]
+    // ...existing code...
     private ?\DateTime $date_naissance = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "L'email est obligatoire")]
+    #[Assert\Email(message: "L'email n'est pas valide")]
+    #[Assert\Length(max: 255, maxMessage: "L'email ne peut pas depasser {{ limit }} caracteres")]
+    // ...existing code...
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
+    // ...existing code...
     private ?string $mdp = null;
 
+    #[Assert\NotBlank(message: 'Le mot de passe est obligatoire')]
+    #[Assert\Length(
+        min: 6,
+        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caracteres'
+    )]
+    private ?string $plainPassword = null;
+
     #[ORM\Column(enumType: Role::class)]
+    #[Assert\NotNull(message: 'Le role est obligatoire')]
+    // ...existing code...
     private ?Role $role = null;
 
     #[ORM\Column(enumType: Statut::class)]
+    #[Assert\NotNull(message: 'Le statut est obligatoire')]
+    // ...existing code...
     private ?Statut $statut = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Assert\NotNull(message: 'La date d\'inscription est obligatoire')]
+    #[Assert\LessThanOrEqual(
+        value: 'today',
+        message: 'La date d\'inscription ne peut pas etre dans le futur'
+    )]
+    // ...existing code...
     private ?\DateTime $date_inscription = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le numero de telephone ne peut pas etre vide')]
+    #[Assert\Regex(
+        pattern: '/^[2459]\d{7}$/',
+        message: 'Le numero de telephone doit contenir 8 chiffres et commencer par 2, 4, 5 ou 9'
+    )]
+    #[Assert\Length(
+        min: 8,
+        max: 8,
+        exactMessage: 'Le numero de telephone doit contenir exactement {{ limit }} chiffres'
+    )]
+    
     private ?string $num_tel = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'La ville ne peut pas etre vide')]
+    #[Assert\Length(
+        min: 2,
+        max: 255,
+        minMessage: 'La ville doit contenir au moins {{ limit }} caracteres',
+        maxMessage: 'La ville ne peut pas depasser {{ limit }} caracteres'
+    )]
+    
     private ?string $ville = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(
+        max: 1000,
+        maxMessage: 'La biographie ne peut pas depasser {{ limit }} caracteres'
+    )]
+    
     private ?string $biographie = null;
 
     #[ORM\Column(nullable: true, enumType: Specialite::class)]
+    #[Assert\Choice(callback: [Specialite::class, 'cases'], message: 'La specialite selectionnee est invalide')]
+    
     private ?Specialite $specialite = null;
 
     #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true, enumType: CentreInteret::class)]
+    #[Assert\All([
+        new Assert\Choice(callback: [CentreInteret::class, 'cases'], message: 'Un centre d\'interet selectionne est invalide')
+    ])]
+    
     private ?array $centre_interet = null;
+
+    public static function getSpecialiteChoices(): array
+    {
+        return array_map(static fn (Specialite $specialite) => $specialite->value, Specialite::cases());
+    }
+
+    public static function getCentreInteretChoices(): array
+    {
+        return array_map(static fn (CentreInteret $centreInteret) => $centreInteret->value, CentreInteret::cases());
+    }
 
     /**
      * @var Collection<int, Collections>
@@ -131,6 +235,7 @@ class User
         $this->tickets = new ArrayCollection();
         $this->locationLivres = new ArrayCollection();
         $this->likes = new ArrayCollection();
+        $this->statut = Statut::ACTIVE;
     }
 
     public function getId(): ?int
@@ -174,6 +279,21 @@ class User
         return $this;
     }
 
+    /**
+     * Calcule l'âge de l'utilisateur
+     */
+    public function getAge(): ?int
+    {
+        if ($this->date_naissance === null) {
+            return null;
+        }
+
+        $now = new \DateTime();
+        $interval = $this->date_naissance->diff($now);
+        
+        return $interval->y;
+    }
+
     public function getEmail(): ?string
     {
         return $this->email;
@@ -194,6 +314,18 @@ class User
     public function setMdp(string $mdp): static
     {
         $this->mdp = $mdp;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
@@ -318,7 +450,6 @@ class User
     public function removeCollection(Collections $collection): static
     {
         if ($this->collections->removeElement($collection)) {
-            // set the owning side to null (unless already changed)
             if ($collection->getArtiste() === $this) {
                 $collection->setArtiste(null);
             }
@@ -348,7 +479,6 @@ class User
     public function removeCommentaire(Commentaire $commentaire): static
     {
         if ($this->commentaires->removeElement($commentaire)) {
-            // set the owning side to null (unless already changed)
             if ($commentaire->getUser() === $this) {
                 $commentaire->setUser(null);
             }
@@ -378,7 +508,6 @@ class User
     public function removePlaylist(Playlist $playlist): static
     {
         if ($this->playlists->removeElement($playlist)) {
-            // set the owning side to null (unless already changed)
             if ($playlist->getUser() === $this) {
                 $playlist->setUser(null);
             }
@@ -435,7 +564,6 @@ class User
     public function removeReclamation(Reclamation $reclamation): static
     {
         if ($this->reclamations->removeElement($reclamation)) {
-            // set the owning side to null (unless already changed)
             if ($reclamation->getUser() === $this) {
                 $reclamation->setUser(null);
             }
@@ -465,7 +593,6 @@ class User
     public function removeReponse(Reponse $reponse): static
     {
         if ($this->reponses->removeElement($reponse)) {
-            // set the owning side to null (unless already changed)
             if ($reponse->getUserAdmin() === $this) {
                 $reponse->setUserAdmin(null);
             }
@@ -495,7 +622,6 @@ class User
     public function removeEvenement(Evenement $evenement): static
     {
         if ($this->evenements->removeElement($evenement)) {
-            // set the owning side to null (unless already changed)
             if ($evenement->getArtiste() === $this) {
                 $evenement->setArtiste(null);
             }
@@ -525,7 +651,6 @@ class User
     public function removeTicket(Ticket $ticket): static
     {
         if ($this->tickets->removeElement($ticket)) {
-            // set the owning side to null (unless already changed)
             if ($ticket->getUser() === $this) {
                 $ticket->setUser(null);
             }
@@ -555,7 +680,6 @@ class User
     public function removeLocationLivre(LocationLivre $locationLivre): static
     {
         if ($this->locationLivres->removeElement($locationLivre)) {
-            // set the owning side to null (unless already changed)
             if ($locationLivre->getUser() === $this) {
                 $locationLivre->setUser(null);
             }
@@ -585,12 +709,47 @@ class User
     public function removeLike(Like $like): static
     {
         if ($this->likes->removeElement($like)) {
-            // set the owning side to null (unless already changed)
             if ($like->getUser() === $this) {
                 $like->setUser(null);
             }
         }
 
         return $this;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->mdp ?? '';
+    }
+
+    /**
+     * Identifiant unique pour l'authentification
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    /**
+     * Rôles de l'utilisateur
+     */
+    public function getRoles(): array
+    {
+        $roles = ['ROLE_USER'];
+
+        if ($this->role === Role::ADMIN) {
+            $roles[] = 'ROLE_ADMIN';
+        } elseif ($this->role === Role::ARTISTE) {
+            $roles[] = 'ROLE_ARTISTE';
+        } elseif ($this->role === Role::AMATEUR) {
+            $roles[] = 'ROLE_AMATEUR';
+        }
+
+        return array_unique($roles);
+    }
+
+    public function eraseCredentials(): void
+    {
+        $this->plainPassword = null;
     }
 }

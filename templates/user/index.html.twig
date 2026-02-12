@@ -154,11 +154,42 @@
     </div>
 </div>
 
-<div class="mt-4 d-flex flex-column align-items-center">
-    <div class="mb-2">
-        Page {{ users.currentPageNumber }}/{{ users.pageCount }}
+<div class="mt-4">
+    <div class="card-footer">
+        <nav>
+            <ul class="pagination justify-content-center mb-0">
+                {# Bouton Previous #}
+                <li class="page-item {{ users.currentPageNumber == 1 ? 'disabled' : '' }}">
+                    <a class="page-link mx-1 rounded" 
+                       href="{{ users.currentPageNumber == 1 ? '#' : path('app_user_search', {page: users.currentPageNumber - 1, nom: search_nom|default(''), order: search_order|default('ASC')}) }}" 
+                       aria-label="Previous">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
+                        </svg>
+                    </a>
+                </li>
+                {# Boutons de pages #}
+                {% for p in 1..users.pageCount %}
+                <li class="page-item {{ p == users.currentPageNumber ? 'active' : '' }}">
+                    <a class="page-link mx-1 rounded" 
+                       href="{{ path('app_user_search', {page: p, nom: search_nom|default(''), order: search_order|default('ASC')}) }}">
+                        {{ p }}
+                    </a>
+                </li>
+                {% endfor %}
+                {# Bouton Next #}
+                <li class="page-item {{ users.currentPageNumber == users.pageCount ? 'disabled' : '' }}">
+                    <a class="page-link mx-1 rounded" 
+                       href="{{ users.currentPageNumber == users.pageCount ? '#' : path('app_user_search', {page: users.currentPageNumber + 1, nom: search_nom|default(''), order: search_order|default('ASC')}) }}" 
+                       aria-label="Next">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
-    {{ knp_pagination_render(users) }}
 </div>
         </div>
     </div>

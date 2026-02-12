@@ -4,6 +4,6 @@ namespace App\Enum;
 
 enum Statut: string
 {
-    case ACTIVE = 'activé';
-    case BLOQUE = 'bloqué';
+    case ACTIVE = 'Activé';
+    case BLOQUE = 'Bloqué';
 }

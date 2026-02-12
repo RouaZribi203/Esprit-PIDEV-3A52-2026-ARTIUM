@@ -82,10 +82,11 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
     // ...existing code...
     private ?string $mdp = null;
 
-    #[Assert\NotBlank(message: 'Le mot de passe est obligatoire')]
+    #[Assert\NotBlank(message: 'Le mot de passe est obligatoire', groups: ['create'])]
     #[Assert\Length(
         min: 6,
-        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caracteres'
+        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caracteres',
+        groups: ['create']
     )]
     private ?string $plainPassword = null;
 

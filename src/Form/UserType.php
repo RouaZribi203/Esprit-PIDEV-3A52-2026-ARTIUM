@@ -233,6 +233,13 @@ class UserType extends AbstractType
         $resolver->setDefaults([
             'data_class' => User::class,
             'is_edit' => false,
+            'validation_groups' => function ($form) {
+                $isEdit = false;
+                if (is_object($form) && method_exists($form, 'getConfig')) {
+                    $isEdit = $form->getConfig()->getOption('is_edit', false);
+                }
+                return $isEdit ? ['Default'] : ['Default', 'create'];
+            },
         ]);
     }
 }

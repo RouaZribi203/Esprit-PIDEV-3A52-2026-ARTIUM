@@ -8,12 +8,35 @@
         <!-- Card header START -->
         <div class="card-header d-sm-flex align-items-center text-center justify-content-sm-between border-0 pb-0">
             <h1 class="h4 card-title">Découvrir la Musique</h1>
-            <!-- Search bar -->
-            <form class="d-flex align-items-center gap-2">
-                <span class="position-relative search-icon">
-                    <i class="fe fe-search"></i>
-                </span>
-                <input type="search" class="form-control" placeholder="Rechercher une musique..." style="width: 250px;">
+            <!-- Search and sort -->
+            <form id="searchSortForm" method="get" class="d-flex align-items-end gap-2 flex-wrap">
+                <div>
+                    <label for="searchInput" class="form-label small mb-1">Rechercher</label>
+                    <input type="search" class="form-control" id="searchInput" name="search" placeholder="Rechercher une musique..." value="{{ searchTerm }}" style="width: 220px;">
+                </div>
+                <div>
+                    <label for="sortBy" class="form-label small mb-1">Trier par</label>
+                    <select class="form-select" id="sortBy" name="sort" style="min-width: 170px;">
+                        <option value="date" {% if sortBy == 'date' %}selected{% endif %}>Date</option>
+                        <option value="titre" {% if sortBy == 'titre' %}selected{% endif %}>Titre</option>
+                        <option value="genre" {% if sortBy == 'genre' %}selected{% endif %}>Genre</option>
+                    </select>
+                </div>
+                <input type="hidden" name="order" id="sortOrderInput" value="{{ sortOrder }}">
+                <div class="d-flex gap-2 align-items-end">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="toggleSortBtn">
+                        <i class="bi {% if sortOrder == 'DESC' %}bi-sort-down{% else %}bi-sort-up{% endif %}"></i>
+                        <span id="sortOrderText">{{ sortOrder == 'DESC' ? 'Desc' : 'Asc' }}</span>
+                    </button>
+                    {% if searchTerm %}
+                        <a href="{{ path('app_musicfront') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Effacer
+                        </a>
+                    {% endif %}
+                </div>
             </form>
         </div>
         <!-- Card header END -->
@@ -26,21 +49,31 @@
                 <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-jazz"> Jazz </a> </li>
                 <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-classical"> Classique </a> </li>
                 <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-pop"> Pop </a> </li>
+                <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-playlists"> Playlists </a> </li>
             </ul>
 
+            <div class="mb-3" id="resultsInfo">
+                {% if searchTerm %}
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        Resultats: <strong>{{ musiques|length }}</strong> musique(s) pour "{{ searchTerm }}"
+                    </p>
+                {% endif %}
+            </div>
+
             <!-- Tab content START -->
-            <div class="tab-content mb-0 pb-0">
+            <div class="tab-content mb-0 pb-0" id="musicTabContent">
                 
                 <!-- All genres tab START -->
                 <div class="tab-pane fade show active" id="tab-all">
                     {% if musiques is empty %}
-                        <div class="text-center py-5">
+                        <div class="text-center py-5" id="emptyMessage">
                             <i class="bi bi-music-note-beamed display-1 text-muted"></i>
                             <h5 class="mt-3">Aucune musique disponible</h5>
                             <p class="text-muted">Aucune chanson n'a été trouvée pour le moment.</p>
                         </div>
                     {% else %}
-                        <div class="row g-4">
+                        <div class="row g-4" id="musicGrid">
                             {% for musique in musiques %}
                                 <!-- Music item START -->
                                 <div class="col-sm-6 col-xl-4">
@@ -82,6 +115,25 @@
                                             <div class="progress mt-2" style="height: 3px;">
                                                 <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
                                             </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
                                         </div>
                                         <!-- Card body END -->
                                     </div>
@@ -129,6 +181,25 @@
                                             <div class="progress mt-2" style="height: 3px;">
                                                 <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
                                             </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -174,6 +245,25 @@
                                             <div class="progress mt-2" style="height: 3px;">
                                                 <div class="progress-bar bg-danger music-progress" role="progressbar" style="width: 0%"></div>
                                             </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -219,6 +309,25 @@
                                             <div class="progress mt-2" style="height: 3px;">
                                                 <div class="progress-bar bg-success music-progress" role="progressbar" style="width: 0%"></div>
                                             </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-success">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -264,6 +373,25 @@
                                             <div class="progress mt-2" style="height: 3px;">
                                                 <div class="progress-bar bg-secondary music-progress" role="progressbar" style="width: 0%"></div>
                                             </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -272,6 +400,106 @@
                     {% endif %}
                 </div>
                 <!-- Pop tab END -->
+
+                <!-- Playlists tab START -->
+                <div class="tab-pane fade" id="tab-playlists">
+                    <div class="row g-4">
+                        <div class="col-sm-6 col-xl-4">
+                            <div class="card h-100 music-card border">
+                                <div class="position-relative">
+                                    <div class="rounded-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(135deg, #0d6efd 0%, #6ea8fe 100%);">
+                                        <i class="bi bi-plus-circle text-white" style="font-size: 3rem;"></i>
+                                    </div>
+                                    <div class="badge bg-dark text-white mt-2 me-2 position-absolute top-0 end-0">Nouvelle</div>
+                                </div>
+                                <div class="card-body position-relative pt-0">
+                                    <h6 class="mt-2">Creer une playlist</h6>
+                                    <p class="small text-muted">Vous pouvez creer une playlist vide, puis ajouter des musiques.</p>
+                                    <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#createPlaylistCollapse" aria-expanded="false" aria-controls="createPlaylistCollapse">
+                                        <i class="bi bi-plus-lg"></i> Ajouter
+                                    </button>
+                                    <div class="collapse mt-3" id="createPlaylistCollapse">
+                                        <form method="post" action="{{ path('app_playlist_create') }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('create_playlist') }}">
+                                            <div class="mb-2">
+                                                <label class="form-label small" for="playlist-name">Nom</label>
+                                                <input id="playlist-name" name="playlist_name" type="text" class="form-control form-control-sm" placeholder="Ma playlist" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small" for="playlist-description">Description</label>
+                                                <textarea id="playlist-description" name="playlist_description" class="form-control form-control-sm" rows="2" placeholder="Optionnel"></textarea>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small">Musiques (optionnel)</label>
+                                                {% if musiques is empty %}
+                                                    <div class="text-muted small">Aucune musique disponible.</div>
+                                                {% else %}
+                                                    <div class="row">
+                                                        {% for musique in musiques %}
+                                                            <div class="col-12">
+                                                                <div class="form-check mb-1">
+                                                                    <input class="form-check-input" type="checkbox" name="musique_ids[]" value="{{ musique.id }}" id="playlist-musique-{{ musique.id }}">
+                                                                    <label class="form-check-label small" for="playlist-musique-{{ musique.id }}">
+                                                                        {{ musique.titre }}
+                                                                        <span class="text-muted">({{ musique.genre.value }})</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-primary">Creer</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if app.user %}
+                            {% if playlists is empty %}
+                                <div class="col-12">
+                                    <div class="text-center py-5">
+                                        <i class="bi bi-music-note-list display-6 text-muted"></i>
+                                        <h6 class="mt-3">Aucune playlist pour le moment</h6>
+                                        <p class="text-muted small">Creez votre premiere playlist pour commencer.</p>
+                                    </div>
+                                </div>
+                            {% else %}
+                                {% for playlist in playlists %}
+                                    <div class="col-sm-6 col-xl-4">
+                                        <div class="card h-100 music-card">
+                                            <div class="position-relative">
+                                                <div class="rounded-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(135deg, #198754 0%, #75b798 100%);">
+                                                    <i class="bi bi-music-note-list text-white" style="font-size: 3rem;"></i>
+                                                </div>
+                                                <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">
+                                                    {{ playlist.musique|length }} titre(s)
+                                                </div>
+                                            </div>
+                                            <div class="card-body position-relative pt-0">
+                                                <h6 class="mt-2">{{ playlist.nom }}</h6>
+                                                <p class="mb-2 small text-muted">
+                                                    {{ playlist.description|default('Aucune description')|length > 60 ? playlist.description|slice(0, 60) ~ '...' : playlist.description|default('Aucune description') }}
+                                                </p>
+                                                <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ playlist.dateCreation|date('M d, Y') }} </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            <div class="col-12">
+                                <div class="text-center py-5">
+                                    <i class="bi bi-person-circle display-6 text-muted"></i>
+                                    <h6 class="mt-3">Connectez-vous pour creer une playlist</h6>
+                                    <p class="text-muted small">Vous pourrez ensuite ajouter des musiques a vos playlists.</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Playlists tab END -->
             </div>
             <!-- Tab content END -->
         </div>
@@ -286,8 +514,9 @@
         const audioPlayer = document.getElementById('audioPlayer');
         let currentPlayingButton = null;
 
-        // Bind click handlers to all play buttons
-        document.addEventListener('DOMContentLoaded', function() {
+        let currentSortOrder = '{{ sortOrder }}';
+
+        function bindPlayButtons() {
             const playButtons = document.querySelectorAll('.play-btn');
             playButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
@@ -295,6 +524,118 @@
                     playPauseMusic(this);
                 });
             });
+        }
+
+        function updateSortButton() {
+            const btn = document.getElementById('toggleSortBtn');
+            const icon = btn ? btn.querySelector('i') : null;
+            const text = document.getElementById('sortOrderText');
+
+            if (icon && text) {
+                if (currentSortOrder === 'DESC') {
+                    icon.className = 'bi bi-sort-down';
+                    text.textContent = 'Desc';
+                } else {
+                    icon.className = 'bi bi-sort-up';
+                    text.textContent = 'Asc';
+                }
+            }
+        }
+
+        function loadMusicResults() {
+            const search = document.getElementById('searchInput')?.value || '';
+            const sort = document.getElementById('sortBy')?.value || 'date';
+            const hasSearch = search.trim().length > 0;
+
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            params.append('sort', sort);
+            params.append('order', currentSortOrder);
+
+            const tabContent = document.getElementById('musicTabContent');
+            if (tabContent) {
+                tabContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+            }
+
+            fetch(`{{ path('app_musicfront') }}?${params.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const newTabContent = doc.querySelector('#musicTabContent');
+                const newResults = doc.querySelector('#resultsInfo');
+
+                if (newTabContent && tabContent) {
+                    tabContent.innerHTML = newTabContent.innerHTML;
+                }
+
+                if (newResults) {
+                    const resultsInfo = document.getElementById('resultsInfo');
+                    if (resultsInfo) {
+                        resultsInfo.innerHTML = newResults.innerHTML;
+                    }
+                }
+
+                const activeTab = document.querySelector('.nav-link.active');
+                const activeTabId = hasSearch ? '#tab-all' : (activeTab ? activeTab.getAttribute('href') : '#tab-all');
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                const activePane = document.querySelector(activeTabId);
+                if (activePane) {
+                    activePane.classList.add('show', 'active');
+                }
+
+                updateSortButton();
+                bindPlayButtons();
+            })
+            .catch(error => console.error('Error loading results:', error));
+        }
+
+        // Bind handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            bindPlayButtons();
+            updateSortButton();
+
+            const searchSortForm = document.getElementById('searchSortForm');
+            const sortBy = document.getElementById('sortBy');
+            const toggleSortBtn = document.getElementById('toggleSortBtn');
+            const searchInput = document.getElementById('searchInput');
+
+            if (searchSortForm) {
+                searchSortForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    loadMusicResults();
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        loadMusicResults();
+                    }
+                });
+            }
+
+            if (sortBy) {
+                sortBy.addEventListener('change', function() {
+                    loadMusicResults();
+                });
+            }
+
+            if (toggleSortBtn) {
+                toggleSortBtn.addEventListener('click', function() {
+                    currentSortOrder = currentSortOrder === 'DESC' ? 'ASC' : 'DESC';
+                    updateSortButton();
+                    loadMusicResults();
+                });
+            }
         });
 
         function playPauseMusic(button) {

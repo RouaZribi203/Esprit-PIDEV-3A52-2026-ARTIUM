@@ -93,7 +93,7 @@
                       <i class="fe fe-message-circle dropdown-item-icon"></i>
                       Repondre
                     </button>
-                    <form method="post" action="{{ path('app_reclamation_delete', {'id': reclamation.id}) }}" onsubmit="return confirm('Supprimer cette reclamation ?');" style="display: inline;">
+                    <form method="post" action="{{ path('app_reclamation_admin_delete', {'id': reclamation.id}) }}" onsubmit="return confirm('Supprimer cette reclamation ?');" style="display: inline;">
                       <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reclamation.id) }}">
                       <button class="dropdown-item text-danger" type="submit">
                         <i class="fe fe-trash dropdown-item-icon"></i>
@@ -178,23 +178,6 @@
                 </div>
                 </div>
                 
-                <script>
-                  (function() {
-                    const searchForm = document.getElementById('searchForm');
-                    const searchInput = document.getElementById('searchInput');
-                    
-                    if (searchForm && searchInput) {
-                      let searchTimeout;
-                      searchInput.addEventListener('input', function() {
-                        clearTimeout(searchTimeout);
-                        searchTimeout = setTimeout(function() {
-                          searchForm.submit();
-                        }, 500);
-                      });
-                    }
-                  })();
-                </script>
-                
                 <div>
                   <div class="tab-content" id="tabContent">
                     <div class="tab-pane fade show active" id="all-post" role="tabpanel" aria-labelledby="all-post-tab">
@@ -215,13 +198,26 @@
                   </div>
                 </div>
                 {% for reclamation in reclamations %}
+                  {% set create_errors = responseCreateForms[reclamation.id] is defined
+                    and (responseCreateForms[reclamation.id].vars.errors|length > 0
+                      or responseCreateForms[reclamation.id].contenu.vars.errors|length > 0) %}
+                  {% set edit_errors = false %}
+                  {% for reponse in reclamation.reponses %}
+                    {% if responseEditForms[reponse.id] is defined
+                      and (responseEditForms[reponse.id].vars.errors|length > 0
+                        or responseEditForms[reponse.id].contenu.vars.errors|length > 0) %}
+                      {% set edit_errors = true %}
+                    {% endif %}
+                  {% endfor %}
+                  {% set offcanvas_open = create_errors or edit_errors %}
                   <div
-                    class="offcanvas offcanvas-end"
+                    class="offcanvas offcanvas-end{{ offcanvas_open ? ' show' : '' }}"
                     tabindex="-1"
                     id="offcanvasResponse-{{ reclamation.id }}"
                     data-bs-backdrop="false"
                     data-bs-scroll="true"
-                    style="width: 600px; z-index: 2000;">
+                    aria-hidden="{{ offcanvas_open ? 'false' : 'true' }}"
+                    style="width: 600px; z-index: 2000;{{ offcanvas_open ? ' visibility: visible;' : '' }}">
                     <div class="offcanvas-body" data-simplebar>
                       <div class="offcanvas-header px-2 pt-0">
                         <div class="d-flex flex-column">
@@ -257,7 +253,7 @@
                             <div class="card-body">
                               {% if responseCreateForms[reclamation.id] is defined %}
                                 {{ form_start(responseCreateForms[reclamation.id], {
-                                  attr: { class: 'row g-3', 'data-turbo': 'false' },
+                                  attr: { class: 'row g-3', 'data-turbo': 'false', 'novalidate': 'novalidate' },
                                   action: path('app_reponse_admin_create', { id: reclamation.id }),
                                   method: 'POST'
                                 }) }}
@@ -265,13 +261,18 @@
                                   {{ form_errors(responseCreateForms[reclamation.id]) }}
                                 </div>
                                 <div class="col-12">
-                                {{ form_row(responseCreateForms[reclamation.id].contenu, {
-                                      attr: {
-                                        class: 'form-control',
-                                        rows: 5,
-                                        placeholder: 'Ecrire une reponse...'
-                                      }
-                                    }) }}
+                                  {{ form_label(responseCreateForms[reclamation.id].contenu) }}
+                                  {% set contenu_has_errors = responseCreateForms[reclamation.id].contenu.vars.errors|length > 0 %}
+                                  {{ form_widget(responseCreateForms[reclamation.id].contenu, {
+                                    attr: {
+                                      class: 'form-control' ~ (contenu_has_errors ? ' is-invalid' : ''),
+                                      rows: 5,
+                                      placeholder: 'Ecrire une reponse...'
+                                    }
+                                  }) }}
+                                  {% for error in responseCreateForms[reclamation.id].contenu.vars.errors %}
+                                    <div class="invalid-feedback d-block">{{ error.message }}</div>
+                                  {% endfor %}
                                 </div>
                                 <div class="col-12">
                                   <div class="alert alert-info mb-0">
@@ -337,7 +338,7 @@
                                       <div class="mt-3">
                                         {% if responseEditForms[reponse.id] is defined %}
                                           {{ form_start(responseEditForms[reponse.id], {
-                                            attr: { class: 'row g-3', 'data-turbo': 'false' },
+                                            attr: { class: 'row g-3', 'data-turbo': 'false', 'novalidate': 'novalidate' },
                                             action: path('app_reponse_admin_edit', { id: reponse.id }),
                                             method: 'POST'
                                           }) }}
@@ -346,13 +347,18 @@
                                           </div>
                                           <div class="col-12">
                                             <div class="p-2 bg-light rounded-3">
-                                              {{ form_row(responseEditForms[reponse.id].contenu, {
+                                              {{ form_label(responseEditForms[reponse.id].contenu) }}
+                                              {% set edit_contenu_has_errors = responseEditForms[reponse.id].contenu.vars.errors|length > 0 %}
+                                              {{ form_widget(responseEditForms[reponse.id].contenu, {
                                                 attr: {
-                                                  class: 'form-control',
+                                                  class: 'form-control' ~ (edit_contenu_has_errors ? ' is-invalid' : ''),
                                                   rows: 4,
                                                   placeholder: 'Mettre a jour la reponse...'
                                                 }
                                               }) }}
+                                              {% for error in responseEditForms[reponse.id].contenu.vars.errors %}
+                                                <div class="invalid-feedback d-block">{{ error.message }}</div>
+                                              {% endfor %}
                                             </div>
                                           </div>
                                           <div class="col-12 d-flex gap-2">

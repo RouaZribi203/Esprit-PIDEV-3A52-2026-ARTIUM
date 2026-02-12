@@ -12,6 +12,15 @@ framework:
         cookie_secure: auto
         cookie_samesite: lax
 
+    # Enable cache for better performance
+    cache:
+        app: cache.adapter.filesystem
+        pools:
+            doctrine.query_cache_pool:
+                adapter: cache.app
+            doctrine.result_cache_pool:
+                adapter: cache.app
+
     #esi: true
     #fragments: true
     php_errors:

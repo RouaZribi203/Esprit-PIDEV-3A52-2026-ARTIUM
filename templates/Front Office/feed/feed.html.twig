@@ -81,12 +81,12 @@
                 </li>
 				<!-- Card share action START -->
                 <li class="nav-item dropdown ms-sm-auto">
-                    <a class="nav-link mb-0" href="#" id="cardShareAction{{ oeuvre.id }}" data-bs-toggle="dropdown"
-                       aria-expanded="false">
-                        <i class="bi bi-star-fill fa-fw pe-2"></i>Ajouter aux Favoris
-                    </a>
-                    
-                </li>
+    <a class="nav-link mb-0" 
+       href="{{ path('oeuvre_favorite', {'id': oeuvre.id}) }}" 
+       id="cardShareAction{{ oeuvre.id }}">
+        <i class="bi bi-star-fill fa-fw pe-2"></i>Ajouter aux Favoris
+    </a>
+</li>
                 
             </ul>
             <!-- Feed react END -->
@@ -136,9 +136,6 @@
                             </div>
                             <!-- Comment react -->
                             <ul class="nav nav-divider py-2 small">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="#!">J'aime</a>
-                                </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="#!">Répondre</a>
                                 </li>
@@ -263,12 +260,12 @@
                 </li>
                 <!-- Card share action START -->
                 <li class="nav-item dropdown ms-sm-auto">
-                    <a class="nav-link mb-0" href="#" id="cardShareAction{{ oeuvre.id }}" data-bs-toggle="dropdown"
-                       aria-expanded="false">
-                        <i class="bi bi-star-fill fa-fw pe-2"></i>Ajouter aux Favoris
-                    </a>
-                    
-                </li>
+    <a class="nav-link mb-0" 
+       href="{{ path('oeuvre_favorite', {'id': oeuvre.id}) }}" 
+       id="cardShareAction{{ oeuvre.id }}">
+        <i class="bi bi-star-fill fa-fw pe-2"></i>Ajouter aux Favoris
+    </a>
+</li>
                 <!-- Card share action END -->
             </ul>
             <!-- Feed react END -->
@@ -318,9 +315,6 @@
                             </div>
                             <!-- Comment react -->
                             <ul class="nav nav-divider py-2 small">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="#!">J'aime</a>
-                                </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="#!">Répondre</a>
                                 </li>

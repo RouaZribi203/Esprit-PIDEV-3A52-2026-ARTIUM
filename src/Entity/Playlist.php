@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PlaylistRepository::class)]
 class Playlist
@@ -17,9 +18,12 @@ class Playlist
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le nom de la playlist est obligatoire.')]
+    #[Assert\Length(min: 1, max: 100, minMessage: 'Le nom doit contenir au moins 1 caractère.', maxMessage: 'Le nom ne peut pas dépasser 100 caractères.')]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Length(max: 500, maxMessage: 'La description ne peut pas dépasser 500 caractères.')]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]

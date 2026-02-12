@@ -8,6 +8,9 @@ doctrine:
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        options:
+            # Improve performance for large result sets
+            1000: false  # PDO::MYSQL_ATTR_USE_BUFFERED_QUERY = false for streaming
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
@@ -22,6 +25,13 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+        # Add query and result caching even in dev for better performance
+        query_cache_driver:
+            type: pool
+            pool: doctrine.query_cache_pool
+        result_cache_driver:
+            type: pool
+            pool: doctrine.result_cache_pool
 
 when@test:
     doctrine:

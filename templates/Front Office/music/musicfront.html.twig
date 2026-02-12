@@ -3,17 +3,62 @@
 {% block title %}{{ 'Musique'|trans }}{% endblock %}
 
 {% block amateur_content %}
+    <!-- Flash messages -->
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+    {% for message in app.flashes('warning') %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
     <!-- Card START -->
     <div class="card h-100">
         <!-- Card header START -->
         <div class="card-header d-sm-flex align-items-center text-center justify-content-sm-between border-0 pb-0">
-            <h1 class="h4 card-title">Découvrir la Musique</h1>
-            <!-- Search bar -->
-            <form class="d-flex align-items-center gap-2">
-                <span class="position-relative search-icon">
-                    <i class="fe fe-search"></i>
-                </span>
-                <input type="search" class="form-control" placeholder="Rechercher une musique..." style="width: 250px;">
+            <h1 class="h4 card-title">Découvrir Musique</h1>
+            <!-- Search and sort -->
+            <form id="searchSortForm" method="get" class="d-flex align-items-end gap-2 flex-wrap">
+                <div>
+                    <label for="searchInput" class="form-label small mb-1">Rechercher</label>
+                    <input type="search" class="form-control" id="searchInput" name="search" placeholder="Rechercher une musique..." value="{{ searchTerm }}" style="width: 220px;">
+                </div>
+                <div>
+                    <label for="sortBy" class="form-label small mb-1">Trier par</label>
+                    <select class="form-select" id="sortBy" name="sort" style="min-width: 170px;">
+                        <option value="date" {% if sortBy == 'date' %}selected{% endif %}>Date</option>
+                        <option value="titre" {% if sortBy == 'titre' %}selected{% endif %}>Titre</option>
+                        <option value="genre" {% if sortBy == 'genre' %}selected{% endif %}>Genre</option>
+                    </select>
+                </div>
+                <input type="hidden" name="order" id="sortOrderInput" value="{{ sortOrder }}">
+                <div class="d-flex gap-2 align-items-end">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="toggleSortBtn">
+                        <i class="bi {% if sortOrder == 'DESC' %}bi-sort-down{% else %}bi-sort-up{% endif %}"></i>
+                        <span id="sortOrderText">{{ sortOrder == 'DESC' ? 'Desc' : 'Asc' }}</span>
+                    </button>
+                    {% if searchTerm %}
+                        <a href="{{ path('app_musicfront') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Effacer
+                        </a>
+                    {% endif %}
+                </div>
             </form>
         </div>
         <!-- Card header END -->
@@ -25,423 +70,451 @@
                 <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-rock"> Rock </a> </li>
                 <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-jazz"> Jazz </a> </li>
                 <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-classical"> Classique </a> </li>
-                <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-rap"> Rap </a> </li>
+                <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-pop"> Pop </a> </li>
+                <li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-playlists"> Playlists </a> </li>
             </ul>
 
+            <div class="mb-3" id="resultsInfo">
+                {% if searchTerm %}
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        Resultats: <strong>{{ musiques|length }}</strong> musique(s) pour "{{ searchTerm }}"
+                    </p>
+                {% endif %}
+            </div>
+
             <!-- Tab content START -->
-            <div class="tab-content mb-0 pb-0">
+            <div class="tab-content mb-0 pb-0" id="musicTabContent">
                 
                 <!-- All genres tab START -->
                 <div class="tab-pane fade show active" id="tab-all">
-                    <div class="row g-4">
-                        <!-- Music item 1 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Rock
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-primary mt-n3" href="#">Rock Music</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Bohemian Rhapsody </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Queen</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:55 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-primary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
+                    {% if musiques is empty %}
+                        <div class="text-center py-5" id="emptyMessage">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique disponible</h5>
+                            <p class="text-muted">Aucune chanson n'a été trouvée pour le moment.</p>
                         </div>
-                        <!-- Music item 1 END -->
-
-                        <!-- Music item 2 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-danger text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Jazz
+                    {% else %}
+                        <div class="row g-4" id="musicGrid">
+                            {% for musique in musiques %}
+                                <!-- Music item START -->
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">
+                                                {{ musique.genre.value }}
+                                            </div>
+                                        </div>
+                                        <!-- Card body START -->
+                                        <div class="card-body position-relative pt-0">
+                                            <!-- Genre tag -->
+                                            <a class="btn btn-xs btn-primary mt-n2 mb-2" href="#">{{ musique.genre.value }}</a>
+                                            <!-- Music title -->
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <!-- Description -->
+                                            <p class="mb-2 small text-muted">
+                                                {{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}
+                                            </p>
+                                            <!-- Date -->
+                                            <p class="small"> 
+                                                <i class="bi bi-calendar pe-1"></i> 
+                                                {{ musique.dateCreation|date('M d, Y') }} 
+                                            </p>
+                                            <!-- Player controls -->
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-primary flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" title="Add to favorites">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary" title="Add to playlist">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <!-- Progress bar -->
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
+                                        </div>
+                                        <!-- Card body END -->
                                     </div>
                                 </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-danger mt-n3" href="#">Jazz</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Autumn Leaves </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Bill Evans</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 4:32 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-danger flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-danger music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
+                                <!-- Music item END -->
+                            {% endfor %}
                         </div>
-                        <!-- Music item 2 END -->
-
-                        <!-- Music item 3 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Classique
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-success mt-n3" href="#">Classique</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Clair de Lune </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Claude Debussy</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 4:43 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-success flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-success music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
-                        </div>
-                        <!-- Music item 3 END -->
-
-                        <!-- Music item 4 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-info text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Rock
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-info mt-n3" href="#">Rock Music</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Stairway to Heaven </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Led Zeppelin</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 8:02 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-info flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-info music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
-                        </div>
-                        <!-- Music item 4 END -->
-
-                        <!-- Music item 5 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-warning text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Jazz
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-warning mt-n3" href="#">Jazz</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Take Five </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Dave Brubeck</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:24 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-warning flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-warning">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-warning music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
-                        </div>
-                        <!-- Music item 5 END -->
-
-                        <!-- Music item 6 START -->
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-secondary text-white mt-2 me-2 position-absolute top-0 end-0">
-                                        Rap
-                                    </div>
-                                </div>
-                                <!-- Card body START -->
-                                <div class="card-body position-relative pt-0">
-                                    <!-- Genre tag -->
-                                    <a class="btn btn-xs btn-secondary mt-n3" href="#">Rap</a>
-                                    <!-- Music title -->
-                                    <h6 class="mt-3"> <a href="#"> Lose Yourself </a> </h6>
-                                    <!-- Artist -->
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Eminem</strong> </p>
-                                    <!-- Duration -->
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:26 </p>
-                                    <!-- Player controls -->
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-secondary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-secondary music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- Card body END -->
-                            </div>
-                        </div>
-                        <!-- Music item 6 END -->
-                    </div>
+                    {% endif %}
                 </div>
                 <!-- All genres tab END -->
 
                 <!-- Rock tab START -->
                 <div class="tab-pane fade" id="tab-rock">
-                    <div class="row g-4">
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">Rock</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-primary mt-n3" href="#">Rock Music</a>
-                                    <h6 class="mt-3"> <a href="#"> Bohemian Rhapsody </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Queen</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:55 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-primary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                    {% set rockMusiques = musiques|filter(m => m.genre.value == 'Rock') %}
+                    {% if rockMusiques is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique Rock</h5>
                         </div>
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">Rock</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-primary mt-n3" href="#">Rock Music</a>
-                                    <h6 class="mt-3"> <a href="#"> Stairway to Heaven </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Led Zeppelin</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 8:02 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-primary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
+                    {% else %}
+                        <div class="row g-4">
+                            {% for musique in rockMusiques %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">Rock</div>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <a class="btn btn-xs btn-primary mt-n2 mb-2" href="#">Rock</a>
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-primary flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-primary music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
                                 </div>
-                            </div>
+                            {% endfor %}
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
                 <!-- Rock tab END -->
 
                 <!-- Jazz tab START -->
                 <div class="tab-pane fade" id="tab-jazz">
-                    <div class="row g-4">
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-danger text-white mt-2 me-2 position-absolute top-0 end-0">Jazz</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-danger mt-n3" href="#">Jazz</a>
-                                    <h6 class="mt-3"> <a href="#"> Autumn Leaves </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Bill Evans</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 4:32 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-danger flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-danger music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                    {% set jazzMusiques = musiques|filter(m => m.genre.value == 'Jazz') %}
+                    {% if jazzMusiques is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique Jazz</h5>
                         </div>
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-danger text-white mt-2 me-2 position-absolute top-0 end-0">Jazz</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-danger mt-n3" href="#">Jazz</a>
-                                    <h6 class="mt-3"> <a href="#"> Take Five </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Dave Brubeck</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:24 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-danger flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
+                    {% else %}
+                        <div class="row g-4">
+                            {% for musique in jazzMusiques %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-danger text-white mt-2 me-2 position-absolute top-0 end-0">Jazz</div>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <a class="btn btn-xs btn-danger mt-n2 mb-2" href="#">Jazz</a>
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-danger flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-danger music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-danger music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
                                 </div>
-                            </div>
+                            {% endfor %}
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
                 <!-- Jazz tab END -->
 
                 <!-- Classical tab START -->
                 <div class="tab-pane fade" id="tab-classical">
-                    <div class="row g-4">
-                        <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
-                                <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">Classique</div>
-                                </div>
-                                <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-success mt-n3" href="#">Classique</a>
-                                    <h6 class="mt-3"> <a href="#"> Clair de Lune </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Claude Debussy</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 4:43 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-success flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-success music-progress" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                    {% set classicalMusiques = musiques|filter(m => m.genre.value == 'Classique') %}
+                    {% if classicalMusiques is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique Classique</h5>
                         </div>
-                    </div>
+                    {% else %}
+                        <div class="row g-4">
+                            {% for musique in classicalMusiques %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">Classique</div>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <a class="btn btn-xs btn-success mt-n2 mb-2" href="#">Classique</a>
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-success flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-success">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-success">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-success music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-success">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
                 <!-- Classical tab END -->
 
-                <!-- Rap tab START -->
-                <div class="tab-pane fade" id="tab-rap">
+                <!-- Pop tab START -->
+                <div class="tab-pane fade" id="tab-pop">
+                    {% set popMusiques = musiques|filter(m => m.genre.value == 'Pop') %}
+                    {% if popMusiques is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune musique Pop</h5>
+                        </div>
+                    {% else %}
+                        <div class="row g-4">
+                            {% for musique in popMusiques %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}">
+                                        <div class="position-relative">
+                                            <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
+                                            <div class="badge bg-secondary text-white mt-2 me-2 position-absolute top-0 end-0">Pop</div>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <a class="btn btn-xs btn-secondary mt-n2 mb-2" href="#">Pop</a>
+                                            <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
+                                            <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex mt-3 gap-2">
+                                                <button class="btn btn-sm btn-secondary flex-grow-1 play-btn">
+                                                    <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary">
+                                                    <i class="bi bi-heart"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </button>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 3px;">
+                                                <div class="progress-bar bg-secondary music-progress" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            {% if app.user %}
+                                                {% if playlists is empty %}
+                                                    <div class="mt-2 small text-muted">Aucune playlist disponible.</div>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('app_playlist_add_song') }}" class="mt-2 d-flex gap-2 align-items-center">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                                                        <input type="hidden" name="musique_id" value="{{ musique.id }}">
+                                                        <select name="playlist_id" class="form-select form-select-sm" required>
+                                                            <option value="" disabled selected>Choisir une playlist</option>
+                                                            {% for playlist in playlists %}
+                                                                <option value="{{ playlist.id }}">{{ playlist.nom }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Ajouter</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="mt-2 small text-muted">Connectez-vous pour ajouter a une playlist.</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <!-- Pop tab END -->
+
+                <!-- Playlists tab START -->
+                <div class="tab-pane fade" id="tab-playlists">
                     <div class="row g-4">
                         <div class="col-sm-6 col-xl-4">
-                            <div class="card h-100">
+                            <div class="card h-100 music-card border">
                                 <div class="position-relative">
-                                    <img class="img-fluid rounded-top" src="assets/assetsfront/images/concerts.jpg" alt="Album Cover">
-                                    <div class="badge bg-secondary text-white mt-2 me-2 position-absolute top-0 end-0">Rap</div>
+                                    <div class="rounded-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(135deg, #0d6efd 0%, #6ea8fe 100%);">
+                                        <i class="bi bi-plus-circle text-white" style="font-size: 3rem;"></i>
+                                    </div>
+                                    <div class="badge bg-dark text-white mt-2 me-2 position-absolute top-0 end-0">Nouvelle</div>
                                 </div>
                                 <div class="card-body position-relative pt-0">
-                                    <a class="btn btn-xs btn-secondary mt-n3" href="#">Rap</a>
-                                    <h6 class="mt-3"> <a href="#"> Lose Yourself </a> </h6>
-                                    <p class="mb-2 small"> <i class="bi bi-music-note-beamed pe-1"></i> <strong>Eminem</strong> </p>
-                                    <p class="small"> <i class="bi bi-clock pe-1"></i> 5:26 </p>
-                                    <div class="d-flex mt-3 gap-2">
-                                        <button class="btn btn-sm btn-secondary flex-grow-1 play-btn" onclick="playPauseMusic(this)">
-                                            <i class="bi bi-play-fill pe-1"></i> Jouer
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="progress mt-2" style="height: 3px;">
-                                        <div class="progress-bar bg-secondary music-progress" role="progressbar" style="width: 0%"></div>
+                                    <h6 class="mt-2">Creer une playlist</h6>
+                                    <p class="small text-muted">Vous pouvez creer une playlist vide, puis ajouter des musiques.</p>
+                                    <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#createPlaylistCollapse" aria-expanded="false" aria-controls="createPlaylistCollapse">
+                                        <i class="bi bi-plus-lg"></i> Ajouter
+                                    </button>
+                                    <div class="collapse mt-3" id="createPlaylistCollapse">
+                                        <form method="post" action="{{ path('app_playlist_create') }}" enctype="multipart/form-data" id="createPlaylistForm">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('create_playlist') }}">
+                                            <div class="mb-2">
+                                                <label class="form-label small" for="playlist-name">Nom</label>
+                                                <input id="playlist-name" name="playlist_name" type="text" class="form-control form-control-sm" placeholder="Ma playlist">
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small" for="playlist-description">Description</label>
+                                                <textarea id="playlist-description" name="playlist_description" class="form-control form-control-sm" rows="2" placeholder="Optionnel"></textarea>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small" for="playlist-image">Image (optionnel)</label>
+                                                <input id="playlist-image" name="playlist_image" type="file" class="form-control form-control-sm" accept="image/*">
+                                                <small class="form-text text-muted">Max 5MB</small>
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-primary">Creer</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        {% if playlists is empty %}
+                            <div class="col-12">
+                                <div class="text-center py-5">
+                                    <i class="bi bi-music-note-list display-6 text-muted"></i>
+                                    <h6 class="mt-3">Aucune playlist pour le moment</h6>
+                                    <p class="text-muted small">Creez votre premiere playlist pour commencer.</p>
+                                </div>
+                            </div>
+                        {% else %}
+                            {% for playlist in playlists %}
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card h-100 music-card">
+                                        <div class="position-relative">
+                                            {% if playlist.image %}
+                                                <img class="img-fluid rounded-top" src="{{ path('app_playlist_image', {'id': playlist.id}) }}" alt="{{ playlist.nom }}" style="height: 200px; object-fit: cover;">
+                                            {% else %}
+                                                <div class="rounded-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(135deg, #198754 0%, #75b798 100%);">
+                                                    <i class="bi bi-music-note-list text-white" style="font-size: 3rem;"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">
+                                                {{ playlist.musique|length }} titre(s)
+                                            </div>
+                                        </div>
+                                        <div class="card-body position-relative pt-0">
+                                            <h6 class="mt-2">{{ playlist.nom }}</h6>
+                                            <p class="mb-2 small text-muted">
+                                                {{ playlist.description|default('Aucune description')|length > 60 ? playlist.description|slice(0, 60) ~ '...' : playlist.description|default('Aucune description') }}
+                                            </p>
+                                            <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ playlist.dateCreation|date('M d, Y') }} </p>
+                                            <div class="d-flex gap-2 mt-2 flex-wrap">
+                                                <button class="btn btn-sm btn-outline-primary flex-grow-1" type="button" data-bs-toggle="modal" data-bs-target="#viewPlaylistModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom }}">
+                                                    <i class="bi bi-play-circle"></i> Écouter
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-success flex-grow-1" type="button" data-bs-toggle="modal" data-bs-target="#addSongsModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom }}">
+                                                    <i class="bi bi-plus-circle"></i> Ajouter
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-warning playlist-edit-btn" type="button" data-bs-toggle="modal" data-bs-target="#editPlaylistModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom | escape('js') }}" data-playlist-description="{{ playlist.description | default('') | escape('js') }}">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger playlist-delete-btn" type="button" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom | escape('js') }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
-                <!-- Rap tab END -->
+                <!-- Playlists tab END -->
             </div>
             <!-- Tab content END -->
         </div>
@@ -449,22 +522,616 @@
     </div>
     <!-- Card END -->
 
+    <!-- View Playlist Modal -->
+    <div class="modal fade" id="viewPlaylistModal" tabindex="-1" aria-labelledby="viewPlaylistModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewPlaylistModalLabel">Playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewPlaylistModalBody">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Songs to Playlist Modal -->
+    <div class="modal fade" id="addSongsModal" tabindex="-1" aria-labelledby="addSongsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSongsModalLabel">Ajouter des musiques à la playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{{ path('app_playlist_add_multiple') }}" id="addSongsForm">
+                    <div class="modal-body" id="addSongsModalBody">
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-success">Ajouter les sélectionnées</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Playlist Modal -->
+    <div class="modal fade" id="editPlaylistModal" tabindex="-1" aria-labelledby="editPlaylistModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPlaylistModalLabel">Modifier la playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" id="editPlaylistForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="_token" value="{{ csrf_token('edit_playlist') }}">
+                        <input type="hidden" name="playlist_id" id="editPlaylistId" value="">
+                        <div class="mb-3">
+                            <label for="editPlaylistName" class="form-label">Nom de la playlist</label>
+                            <input type="text" class="form-control" id="editPlaylistName" name="nom">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPlaylistDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editPlaylistDescription" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Audio element for playback -->
     <audio id="audioPlayer" style="display: none;"></audio>
 
     <script>
         const audioPlayer = document.getElementById('audioPlayer');
         let currentPlayingButton = null;
+        let currentSortOrder = '{{ sortOrder }}';
+
+        function bindPlayButtons() {
+            const playButtons = document.querySelectorAll('.play-btn');
+            playButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    playPauseMusic(this);
+                });
+            });
+        }
+
+        function updateSortButton() {
+            const btn = document.getElementById('toggleSortBtn');
+            const icon = btn ? btn.querySelector('i') : null;
+            const text = document.getElementById('sortOrderText');
+
+            if (icon && text) {
+                if (currentSortOrder === 'DESC') {
+                    icon.className = 'bi bi-sort-down';
+                    text.textContent = 'Desc';
+                } else {
+                    icon.className = 'bi bi-sort-up';
+                    text.textContent = 'Asc';
+                }
+            }
+        }
+
+        function loadMusicResults() {
+            const search = document.getElementById('searchInput')?.value || '';
+            const sort = document.getElementById('sortBy')?.value || 'date';
+            const hasSearch = search.trim().length > 0;
+
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            params.append('sort', sort);
+            params.append('order', currentSortOrder);
+
+            const tabContent = document.getElementById('musicTabContent');
+            if (tabContent) {
+                tabContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Chargement...</span></div></div>';
+            }
+
+            fetch(`{{ path('app_musicfront') }}?${params.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const newTabContent = doc.querySelector('#musicTabContent');
+                const newResults = doc.querySelector('#resultsInfo');
+
+                if (newTabContent && tabContent) {
+                    tabContent.innerHTML = newTabContent.innerHTML;
+                }
+
+                if (newResults) {
+                    const resultsInfo = document.getElementById('resultsInfo');
+                    if (resultsInfo) {
+                        resultsInfo.innerHTML = newResults.innerHTML;
+                    }
+                }
+
+                const activeTabId = hasSearch ? '#tab-all' : '#tab-all';
+                
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === activeTabId) {
+                        link.classList.add('active');
+                    }
+                });
+                
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                const activePane = document.querySelector(activeTabId);
+                if (activePane) {
+                    activePane.classList.add('show', 'active');
+                }
+
+                updateSortButton();
+                bindPlayButtons();
+            })
+            .catch(error => console.error('Error loading results:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            bindPlayButtons();
+            updateSortButton();
+
+            const searchSortForm = document.getElementById('searchSortForm');
+            const sortBy = document.getElementById('sortBy');
+            const toggleSortBtn = document.getElementById('toggleSortBtn');
+            const searchInput = document.getElementById('searchInput');
+
+            if (searchSortForm) {
+                searchSortForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    loadMusicResults();
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        loadMusicResults();
+                    }
+                });
+            }
+
+            if (sortBy) {
+                sortBy.addEventListener('change', function() {
+                    loadMusicResults();
+                });
+            }
+
+            if (toggleSortBtn) {
+                toggleSortBtn.addEventListener('click', function() {
+                    currentSortOrder = currentSortOrder === 'DESC' ? 'ASC' : 'DESC';
+                    updateSortButton();
+                    loadMusicResults();
+                });
+            }
+
+            // Handle create playlist form with AJAX
+            const createPlaylistForm = document.getElementById('createPlaylistForm');
+            if (createPlaylistForm) {
+                createPlaylistForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+
+                    fetch('{{ path("app_playlist_create") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            createPlaylistForm.reset();
+                            
+                            // Close collapse
+                            const collapseElement = document.getElementById('createPlaylistCollapse');
+                            if (collapseElement) {
+                                collapseElement.classList.remove('show');
+                            }
+                            
+                            // Refresh playlists tab
+                            fetch('{{ path("app_musicfront") }}', {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            })
+                            .then(response => response.text())
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+                                const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                                const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                                if (newPlaylistsTab && currentPlaylistsTab) {
+                                    currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                                }
+                            });
+                        } else {
+                            alert(data.error || 'Erreur lors de la création de la playlist');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Une erreur s\'est produite');
+                    });
+                });
+            }
+        });
+
+        let currentPlaylistId = null;
+
+        const viewPlaylistModal = document.getElementById('viewPlaylistModal');
+        if (viewPlaylistModal) {
+            viewPlaylistModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                currentPlaylistId = button.getAttribute('data-playlist-id');
+                const playlistName = button.getAttribute('data-playlist-name');
+                
+                const modalLabel = document.getElementById('viewPlaylistModalLabel');
+                if (modalLabel) {
+                    modalLabel.textContent = `"${playlistName}"`;
+                }
+
+                loadPlaylistSongs();
+            });
+        }
+
+        function loadPlaylistSongs() {
+            const modalBody = document.getElementById('viewPlaylistModalBody');
+
+            fetch('{{ path("app_playlist_songs", {"id": "__PLAYLIST_ID__"}) }}'.replace('__PLAYLIST_ID__', currentPlaylistId), {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const songs = data.songs;
+                
+                if (songs.length === 0) {
+                    modalBody.innerHTML = '<p class="text-muted text-center py-4">Aucune musique dans cette playlist</p>';
+                    return;
+                }
+
+                const removeSongUrlTemplate = "{{ path('app_playlist_remove_song', {'playlistId': 'PLAYLIST_ID', 'musicId': 'MUSIC_ID'}) }}";
+                let songsHtml = '<div class="list-group">';
+                
+                songs.forEach(song => {
+                    songsHtml += `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>${song.titre}</span>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-primary playlist-play-btn" data-audio-id="${song.id}" data-audio-src="${song.audioSrc}" data-title="${song.titre}">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>
+                                    <form method="post" action="${removeSongUrlTemplate.replace('PLAYLIST_ID', currentPlaylistId).replace('MUSIC_ID', song.id)}" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('remove_song') }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                songsHtml += '</div>';
+                modalBody.innerHTML = songsHtml;
+
+                const playButtons = modalBody.querySelectorAll('.playlist-play-btn');
+                let currentlyPlaying = null;
+
+                playButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const audioSrc = this.getAttribute('data-audio-src');
+                        const audioId = this.getAttribute('data-audio-id');
+                        
+                        if (currentlyPlaying === audioId && !audioPlayer.paused) {
+                            audioPlayer.pause();
+                            this.innerHTML = '<i class="bi bi-play-fill"></i>';
+                        } 
+                        else if (currentlyPlaying === audioId && audioPlayer.paused) {
+                            audioPlayer.play();
+                            this.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                        } 
+                        else {
+                            audioPlayer.src = audioSrc;
+                            audioPlayer.play();
+                            
+                            playButtons.forEach(btn => {
+                                btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                            });
+                            this.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                            currentlyPlaying = audioId;
+                        }
+                    });
+                });
+
+                audioPlayer.onended = function() {
+                    playButtons.forEach(btn => {
+                        btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                    });
+                    currentlyPlaying = null;
+                };
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<p class="text-danger">Erreur lors du chargement de la playlist</p>';
+            });
+        }
+
+        const addSongsModal = document.getElementById('addSongsModal');
+        if (addSongsModal) {
+            addSongsModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                currentPlaylistId = button.getAttribute('data-playlist-id');
+                const playlistName = button.getAttribute('data-playlist-name');
+                
+                const modalLabel = document.getElementById('addSongsModalLabel');
+                if (modalLabel) {
+                    modalLabel.textContent = `Ajouter des musiques à "${playlistName}"`;
+                }
+
+                loadSongsForPlaylist();
+            });
+        }
+
+        function loadSongsForPlaylist() {
+            const modalBody = document.getElementById('addSongsModalBody');
+            
+            fetch('{{ path("app_musicfront") }}', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const allGenresTab = doc.querySelector('#tab-all');
+                const musicCards = allGenresTab ? allGenresTab.querySelectorAll('.music-card[data-music-id]') : [];
+                
+                let songsHtml = `
+                    <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                    <input type="hidden" name="playlist_id" value="${currentPlaylistId}">
+                    <div class="list-group">
+                `;
+                
+                musicCards.forEach(card => {
+                    const musicId = card.getAttribute('data-music-id');
+                    const titleElement = card.querySelector('h6 a');
+                    const title = titleElement ? titleElement.textContent.trim() : 'Unknown';
+                    
+                    songsHtml += `
+                        <label class="list-group-item">
+                            <input class="form-check-input me-2" type="checkbox" name="song_ids[]" value="${musicId}">
+                            <span>${title}</span>
+                        </label>
+                    `;
+                });
+                
+                songsHtml += '</div>';
+                modalBody.innerHTML = songsHtml;
+                
+                // Attach form submit handler
+                const addSongsForm = document.getElementById('addSongsForm');
+                if (addSongsForm) {
+                    addSongsForm.removeEventListener('submit', handleAddSongsSubmit);
+                    addSongsForm.addEventListener('submit', handleAddSongsSubmit);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<p class="text-danger">Erreur lors du chargement des musiques</p>';
+            });
+        }
+
+        function handleAddSongsSubmit(e) {
+            e.preventDefault();
+            
+            const selectedCheckboxes = document.querySelectorAll('#addSongsModalBody input[name="song_ids[]"]:checked');
+
+            const formData = new FormData();
+            const csrfToken = document.querySelector('#addSongsModalBody input[name="_token"]').value;
+            formData.append('_token', csrfToken);
+            formData.append('playlist_id', currentPlaylistId);
+            
+            selectedCheckboxes.forEach(checkbox => {
+                formData.append('song_ids[]', checkbox.value);
+            });
+
+            fetch('{{ path("app_playlist_add_multiple") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(addSongsModal);
+                    if (modal) modal.hide();
+                    
+                    // Refresh playlists tab
+                    fetch('{{ path("app_musicfront") }}', {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                        const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                        if (newPlaylistsTab && currentPlaylistsTab) {
+                            currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                        }
+                    });
+                } else {
+                    alert(data.error || 'Erreur lors de l\'ajout des musiques');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur s\'est produite');
+            });
+        }
+
+        const editPlaylistModal = document.getElementById('editPlaylistModal');
+        if (editPlaylistModal) {
+            editPlaylistModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const playlistId = button.getAttribute('data-playlist-id');
+                const playlistName = button.getAttribute('data-playlist-name');
+                const playlistDescription = button.getAttribute('data-playlist-description');
+                
+                document.getElementById('editPlaylistId').value = playlistId;
+                document.getElementById('editPlaylistName').value = playlistName;
+                document.getElementById('editPlaylistDescription').value = playlistDescription || '';
+            });
+        }
+
+        // Handle edit playlist form submission
+        const editPlaylistForm = document.getElementById('editPlaylistForm');
+        if (editPlaylistForm) {
+            editPlaylistForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const playlistId = document.getElementById('editPlaylistId').value;
+                const formData = new FormData(this);
+
+                fetch(`{{ path('app_playlist_edit', {'id': '__PLAYLIST_ID__'}) }}`.replace('__PLAYLIST_ID__', playlistId), {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(editPlaylistModal);
+                        if (modal) modal.hide();
+                        
+                        // Refresh playlists tab
+                        fetch('{{ path("app_musicfront") }}', {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                            const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                            if (newPlaylistsTab && currentPlaylistsTab) {
+                                currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                            }
+                        });
+                    } else {
+                        alert(data.error || 'Erreur lors de la modification de la playlist');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur s\'est produite');
+                });
+            });
+        }
+
+        // Handle delete playlist buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.playlist-delete-btn')) {
+                const button = e.target.closest('.playlist-delete-btn');
+                const playlistId = button.getAttribute('data-playlist-id');
+                const playlistName = button.getAttribute('data-playlist-name');
+                
+                if (!confirm(`Êtes-vous sûr de vouloir supprimer la playlist « ${playlistName} »?`)) {
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token("delete_playlist") }}');
+
+                fetch(`{{ path('app_playlist_delete', {'id': '__PLAYLIST_ID__'}) }}`.replace('__PLAYLIST_ID__', playlistId), {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Refresh playlists tab
+                        fetch('{{ path("app_musicfront") }}', {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                            const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                            if (newPlaylistsTab && currentPlaylistsTab) {
+                                currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                            }
+                        });
+                    } else {
+                        alert(data.error || 'Erreur lors de la suppression de la playlist');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur s\'est produite');
+                });
+            }
+        });
 
         function playPauseMusic(button) {
-            // If another button is currently playing, stop it
             if (currentPlayingButton && currentPlayingButton !== button) {
                 const prevIcon = currentPlayingButton.querySelector('i');
                 prevIcon.className = 'bi bi-play-fill pe-1';
                 currentPlayingButton.textContent = ' Jouer';
                 currentPlayingButton.prepend(prevIcon);
                 
-                // Reset progress bar of previous song
                 const prevProgressBar = currentPlayingButton.closest('.card').querySelector('.music-progress');
                 if (prevProgressBar) {
                     prevProgressBar.style.width = '0%';
@@ -474,15 +1141,15 @@
             const icon = button.querySelector('i');
             
             if (audioPlayer.paused || audioPlayer.src === '') {
-                // Play music
-                audioPlayer.src = 'assets/sample-music.mp3'; // You can change this to actual music file
+                const card = button.closest('.card');
+                const audioSrc = card.getAttribute('data-audio-src');
+                audioPlayer.src = audioSrc;
                 audioPlayer.play();
                 icon.className = 'bi bi-pause-fill pe-1';
                 button.textContent = ' Pause';
                 button.prepend(icon);
                 currentPlayingButton = button;
                 
-                // Update progress bar
                 audioPlayer.ontimeupdate = function() {
                     const progressBar = button.closest('.card').querySelector('.music-progress');
                     if (progressBar && audioPlayer.duration) {
@@ -491,7 +1158,6 @@
                     }
                 };
 
-                // Reset when music ends
                 audioPlayer.onended = function() {
                     icon.className = 'bi bi-play-fill pe-1';
                     button.textContent = ' Jouer';
@@ -503,7 +1169,6 @@
                     currentPlayingButton = null;
                 };
             } else {
-                // Pause music
                 audioPlayer.pause();
                 icon.className = 'bi bi-play-fill pe-1';
                 button.textContent = ' Jouer';

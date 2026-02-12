@@ -59,7 +59,10 @@
                   <span class="text-muted">Utilisateur inconnu</span>
                 {% endif %}
               </td>
-              <td>{{ reclamation.type ? reclamation.type.value : '-' }}</td>
+              <td>
+                <div>{{ reclamation.type ? reclamation.type.value : '-' }}</div>
+                <div class="text-muted small">Reponses: {{ reclamation.reponses|length }}</div>
+              </td>
               <td>
                 {% if reclamation.statut %}
                   {{ ui.statut_badge(reclamation.statut.value) }}
@@ -99,31 +102,6 @@
                     </form>
                   </span>
                 </span>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="8" class="bg-light">
-                {% if reclamation.reponses|length > 0 %}
-                  <div class="d-flex flex-column gap-2">
-                    {% for reponse in reclamation.reponses %}
-                      <div class="border rounded p-2 bg-white">
-                        <div class="d-flex justify-content-between align-items-start">
-                          <div class="fw-semibold">
-                            {{ reponse.userAdmin ? reponse.userAdmin.prenom ~ ' ' ~ reponse.userAdmin.nom : 'Admin' }}
-                          </div>
-                          <div class="text-muted small">
-                            {{ reponse.dateReponse ? reponse.dateReponse|date('d/m/Y H:i') : '-' }}
-                          </div>
-                        </div>
-                        <div class="mt-2">
-                          {{ reponse.contenu }}
-                        </div>
-                      </div>
-                    {% endfor %}
-                  </div>
-                {% else %}
-                  <span class="text-muted">Aucune reponse.</span>
-                {% endif %}
               </td>
             </tr>
           {% endif %}
@@ -246,7 +224,15 @@
                     style="width: 600px; z-index: 2000;">
                     <div class="offcanvas-body" data-simplebar>
                       <div class="offcanvas-header px-2 pt-0">
-                        <h3 class="offcanvas-title">Repondre a la reclamation #{{ reclamation.id }}</h3>
+                        <div class="d-flex flex-column">
+                          <div class="d-flex align-items-center gap-2">
+                            <h3 class="offcanvas-title mb-0">Repondre a la reclamation #{{ reclamation.id }}</h3>
+                            <span class="badge bg-info">
+                              {{ reclamation.reponses|length }} reponse{{ reclamation.reponses|length > 1 ? 's' : '' }}
+                            </span>
+                          </div>
+                          <span class="text-muted small">Fil de discussion et reponses admin</span>
+                        </div>
                         <button
                           type="button"
                           class="btn-close text-reset"
@@ -254,85 +240,137 @@
                           aria-label="Close"></button>
                       </div>
                       <div class="container">
-                        {% if responseCreateForms[reclamation.id] is defined %}
-                          {{ form_start(responseCreateForms[reclamation.id], {
-                            attr: { class: 'row g-3', 'data-turbo': 'false' },
-                            action: path('app_reponse_admin_create', { id: reclamation.id }),
-                            method: 'POST'
-                          }) }}
-                          <div class="col-12">
-                            {{ form_errors(responseCreateForms[reclamation.id]) }}
-                          </div>
-                          <div class="col-12">
-                            {{ form_row(responseCreateForms[reclamation.id].contenu) }}
-                          </div>
-                          <div class="col-12">
-                            <div class="alert alert-info mb-0">
-                              <i class="fe fe-info me-2"></i>
-                              <small>Le statut de la reclamation passera automatiquement à "Traitée" après votre réponse.</small>
-                            </div>
-                          </div>
-                          <div class="col-12 d-flex gap-2">
-                            <button class="btn btn-primary" type="submit">Enregistrer</button>
-                            <button
-                              type="button"
-                              class="btn btn-outline-primary"
-                              data-bs-dismiss="offcanvas"
-                              aria-label="Close">Fermer</button>
-                          </div>
-                          {{ form_end(responseCreateForms[reclamation.id]) }}
-                        {% else %}
-                          <p class="text-muted">Formulaire indisponible.</p>
-                        {% endif %}
-
-                        <div class="mt-4">
-                          <h5 class="mb-3">Reponses existantes</h5>
-                          {% if reclamation.reponses|length > 0 %}
-                            {% for reponse in reclamation.reponses %}
-                              <div class="border rounded p-3 mb-3">
-                                <div class="d-flex justify-content-between align-items-start">
+                        <div class="d-flex flex-column gap-4">
+                          <div class="card border-0 shadow-sm bg-body-tertiary">
+                            <div class="card-header bg-transparent border-0 pb-0">
+                              <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                  <span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                    <i class="fe fe-edit-3"></i>
+                                  </span>
                                   <div>
-                                    <div class="fw-semibold">
-                                      {{ reponse.userAdmin ? reponse.userAdmin.prenom ~ ' ' ~ reponse.userAdmin.nom : 'Admin' }}
-                                    </div>
-                                    <div class="text-muted small">
-                                      {{ reponse.dateReponse ? reponse.dateReponse|date('d/m/Y H:i') : '-' }}
-                                    </div>
+                                    <h5 class="mb-0">Nouvelle reponse</h5>
                                   </div>
-                                  <form
-                                    method="post"
-                                    action="{{ path('app_reponse_admin_delete', {id: reponse.id}) }}"
-                                    onsubmit="return confirm('Supprimer cette reponse ?');">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_response' ~ reponse.id) }}" />
-                                    <button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>
-                                  </form>
-                                </div>
-                                <div class="mt-3">
-                                  {% if responseEditForms[reponse.id] is defined %}
-                                    {{ form_start(responseEditForms[reponse.id], {
-                                      attr: { class: 'row g-3', 'data-turbo': 'false' },
-                                      action: path('app_reponse_admin_edit', { id: reponse.id }),
-                                      method: 'POST'
-                                    }) }}
-                                    <div class="col-12">
-                                      {{ form_errors(responseEditForms[reponse.id]) }}
-                                    </div>
-                                    <div class="col-12">
-                                      {{ form_row(responseEditForms[reponse.id].contenu) }}
-                                    </div>
-                                    <div class="col-12 d-flex gap-2">
-                                      <button class="btn btn-outline-primary" type="submit">Mettre a jour</button>
-                                    </div>
-                                    {{ form_end(responseEditForms[reponse.id]) }}
-                                  {% else %}
-                                    <p class="text-muted mb-0">Formulaire indisponible.</p>
-                                  {% endif %}
                                 </div>
                               </div>
-                            {% endfor %}
-                          {% else %}
-                            <p class="text-muted">Aucune reponse pour le moment.</p>
-                          {% endif %}
+                            </div>
+                            <div class="card-body">
+                              {% if responseCreateForms[reclamation.id] is defined %}
+                                {{ form_start(responseCreateForms[reclamation.id], {
+                                  attr: { class: 'row g-3', 'data-turbo': 'false' },
+                                  action: path('app_reponse_admin_create', { id: reclamation.id }),
+                                  method: 'POST'
+                                }) }}
+                                <div class="col-12">
+                                  {{ form_errors(responseCreateForms[reclamation.id]) }}
+                                </div>
+                                <div class="col-12">
+                                {{ form_row(responseCreateForms[reclamation.id].contenu, {
+                                      attr: {
+                                        class: 'form-control',
+                                        rows: 5,
+                                        placeholder: 'Ecrire une reponse...'
+                                      }
+                                    }) }}
+                                </div>
+                                <div class="col-12">
+                                  <div class="alert alert-info mb-0">
+                                    <i class="fe fe-info me-2"></i>
+                                    <small>Le statut de la reclamation passera automatiquement a "Traitee" apres votre reponse.</small>
+                                  </div>
+                                </div>
+                                <div class="col-12 d-flex gap-2">
+                                  <button class="btn btn-primary" type="submit">Enregistrer</button>
+                                  <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    data-bs-dismiss="offcanvas"
+                                    aria-label="Close">Fermer</button>
+                                </div>
+                                {{ form_end(responseCreateForms[reclamation.id]) }}
+                              {% else %}
+                                <p class="text-muted mb-0">Formulaire indisponible.</p>
+                              {% endif %}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                              <div class="d-flex align-items-center gap-2">
+                                <span class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                                  <i class="fe fe-message-square"></i>
+                                </span>
+                                <h5 class="mb-0">Reponses existantes</h5>
+                              </div>
+                              <span class="badge bg-secondary">
+                                {{ reclamation.reponses|length }} reponse{{ reclamation.reponses|length > 1 ? 's' : '' }}
+                              </span>
+                            </div>
+                            {% if reclamation.reponses|length > 0 %}
+                              <div class="ps-3" style="border-left: 2px dashed #dee2e6;">
+                                {% for reponse in reclamation.reponses %}
+                                  <div class="position-relative mb-4">
+                                    <span class="position-absolute top-0 start-0 translate-middle bg-primary rounded-circle" style="width: 10px; height: 10px;"></span>
+                                    <div class="border rounded-3 p-3 bg-white shadow-sm">
+                                      <div class="d-flex justify-content-between align-items-start">
+                                        <div class="d-flex align-items-center gap-2">
+                                          <span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                                            {{ reponse.userAdmin ? reponse.userAdmin.prenom|slice(0, 1) : 'A' }}
+                                          </span>
+                                          <div>
+                                            <div class="fw-semibold">
+                                              {{ reponse.userAdmin ? reponse.userAdmin.prenom ~ ' ' ~ reponse.userAdmin.nom : 'Admin' }}
+                                            </div>
+                                            <div class="text-muted small">
+                                              {{ reponse.dateReponse ? reponse.dateReponse|date('d/m/Y H:i') : '-' }}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <form
+                                          method="post"
+                                          action="{{ path('app_reponse_admin_delete', {id: reponse.id}) }}"
+                                          onsubmit="return confirm('Supprimer cette reponse ?');">
+                                          <input type="hidden" name="_token" value="{{ csrf_token('delete_response' ~ reponse.id) }}" />
+                                          <button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>
+                                        </form>
+                                      </div>
+                                      <div class="mt-3">
+                                        {% if responseEditForms[reponse.id] is defined %}
+                                          {{ form_start(responseEditForms[reponse.id], {
+                                            attr: { class: 'row g-3', 'data-turbo': 'false' },
+                                            action: path('app_reponse_admin_edit', { id: reponse.id }),
+                                            method: 'POST'
+                                          }) }}
+                                          <div class="col-12">
+                                            {{ form_errors(responseEditForms[reponse.id]) }}
+                                          </div>
+                                          <div class="col-12">
+                                            <div class="p-2 bg-light rounded-3">
+                                              {{ form_row(responseEditForms[reponse.id].contenu, {
+                                                attr: {
+                                                  class: 'form-control',
+                                                  rows: 4,
+                                                  placeholder: 'Mettre a jour la reponse...'
+                                                }
+                                              }) }}
+                                            </div>
+                                          </div>
+                                          <div class="col-12 d-flex gap-2">
+                                            <button class="btn btn-outline-primary" type="submit">Mettre a jour</button>
+                                          </div>
+                                          {{ form_end(responseEditForms[reponse.id]) }}
+                                        {% else %}
+                                          <p class="text-muted mb-0">Formulaire indisponible.</p>
+                                        {% endif %}
+                                      </div>
+                                    </div>
+                                  </div>
+                                {% endfor %}
+                              </div>
+                            {% else %}
+                              <p class="text-muted">Aucune reponse pour le moment.</p>
+                            {% endif %}
+                          </div>
                         </div>
                       </div>
                     </div>

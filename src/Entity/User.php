@@ -119,7 +119,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         max: 8,
         exactMessage: 'Le numero de telephone doit contenir exactement {{ limit }} chiffres'
     )]
-    // ...existing code...
+    
     private ?string $num_tel = null;
 
     #[ORM\Column(length: 255)]
@@ -130,7 +130,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         minMessage: 'La ville doit contenir au moins {{ limit }} caracteres',
         maxMessage: 'La ville ne peut pas depasser {{ limit }} caracteres'
     )]
-    // ...existing code...
+    
     private ?string $ville = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -138,19 +138,19 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         max: 1000,
         maxMessage: 'La biographie ne peut pas depasser {{ limit }} caracteres'
     )]
-    // ...existing code...
+    
     private ?string $biographie = null;
 
     #[ORM\Column(nullable: true, enumType: Specialite::class)]
     #[Assert\Choice(callback: [Specialite::class, 'cases'], message: 'La specialite selectionnee est invalide')]
-    // ...existing code...
+    
     private ?Specialite $specialite = null;
 
     #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true, enumType: CentreInteret::class)]
     #[Assert\All([
         new Assert\Choice(callback: [CentreInteret::class, 'cases'], message: 'Un centre d\'interet selectionne est invalide')
     ])]
-    // ...existing code...
+    
     private ?array $centre_interet = null;
 
     public static function getSpecialiteChoices(): array

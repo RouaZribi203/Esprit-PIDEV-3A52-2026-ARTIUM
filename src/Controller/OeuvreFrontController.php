@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Oeuvre;
+use App\Entity\User;
 use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
 use App\Repository\OeuvreRepository;
@@ -18,9 +19,16 @@ use Symfony\Component\Routing\Attribute\Route;
 final class OeuvreFrontController extends AbstractController
 {
     #[Route('/mes_oeuvres', name: 'app_oeuvre_front')]
-    public function index(OeuvreRepository $oeuvreRepository): Response
-    {   $oeuvre = new Oeuvre();
+    public function index(OeuvreRepository $oeuvreRepository, UserRepository $userRepository): Response
+    {   $user = $userRepository->find(1);
+        $oeuvre = new Oeuvre();
+        $oeuvres = [];
         $oeuvres = $oeuvreRepository->findAll();
+        //foreach ($user->getCollections() as $collection) {
+        //foreach ($collection->getOeuvres() as $oeuvre) {
+        //    $oeuvres[] = $oeuvre;
+        //}
+        //}
         $processedOeuvres = [];
         $form = $this->createForm(OeuvreType::class, $oeuvre,['include_date' => false,]);
         //$formEdit = [];

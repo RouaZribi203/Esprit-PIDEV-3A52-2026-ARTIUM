@@ -162,24 +162,7 @@
       </li>
     </ul>
 
-    <!-- Add Comment Form -->
-    <div class="d-flex mb-3">
-      <div class="avatar avatar-xs me-2">
-        <img class="avatar-img rounded-circle"
-             src="{{ asset('assetsfront/images/avatar/default.jpg') }}"
-             alt="">
-      </div>
-
-      <form method="post"
-            action="{{ path('app_commentaire_new', {'id': oeuvre.id}) }}"
-            class="w-100">
-
-        <textarea name="texte"
-                  class="form-control bg-light"
-                  rows="1"
-                  placeholder="Add a comment..."></textarea>
-      </form>
-    </div>
+    
 
     <!-- Comments List -->
     <ul class="comment-wrap list-unstyled">

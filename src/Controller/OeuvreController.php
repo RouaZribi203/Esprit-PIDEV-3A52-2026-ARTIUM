@@ -29,6 +29,7 @@ final class OeuvreController extends AbstractController
             'collections' => $collectionsRepository->findAll(),
         ]);
     }
+    
 
     #[Route('/test',name: 'app_oeuvre_index', methods: ['GET'])]
     public function index(OeuvreRepository $oeuvreRepository): Response
@@ -69,7 +70,7 @@ final class OeuvreController extends AbstractController
    }
 
 
-    #[Route('/{id}', name: 'app_oeuvre_show', methods: ['GET'])]
+    #[Route('/test/{id}', name: 'app_oeuvre_show', methods: ['GET'])]
     public function show(Oeuvre $oeuvre): Response
     {
     $imageBase64 = null;
@@ -92,6 +93,35 @@ final class OeuvreController extends AbstractController
     }
 
     return $this->render('oeuvre/show.html.twig', [
+        'oeuvre' => $oeuvre,
+        'imageBase64' => $imageBase64,
+        'mimeType' => $mimeType,
+    ]);
+    }
+
+    #[Route('/{id}', name: 'app_oeuvre_details', methods: ['GET'])]
+    public function details(Oeuvre $oeuvre): Response
+    {
+    $imageBase64 = null;
+    $mimeType = null;
+
+    if ($oeuvre->getImage()) {
+        $imageData = $oeuvre->getImage();
+
+        // Si c'est un flux
+        if (is_resource($imageData)) {
+            $imageData = stream_get_contents($imageData);
+            fclose($oeuvre->getImage()); // fermer le flux
+        }
+
+        $imageBase64 = base64_encode($imageData);
+
+        // Détecter le type MIME avec finfo
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->buffer($imageData); // ex: image/jpeg, image/png
+    }
+
+    return $this->render('oeuvre/oeuvre_details.html.twig', [
         'oeuvre' => $oeuvre,
         'imageBase64' => $imageBase64,
         'mimeType' => $mimeType,
@@ -147,6 +177,9 @@ final class OeuvreController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_oeuvre_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('oeuvres', [], Response::HTTP_SEE_OTHER);
     }
+    
+
+    
 }

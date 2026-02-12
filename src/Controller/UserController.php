@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
+use Knp\Component\Pager\PaginatorInterface;
 use App\Enum\Role;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,38 +18,87 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 #[Route('/user')]
 final class UserController extends AbstractController
 {
-    #[Route('/', name: 'app_user_index', methods: ['GET'])]
-    public function index(UserRepository $userRepository): Response
+    #[Route('/recherche', name: 'app_user_search', methods: ['GET'])]
+    public function search(Request $request, UserRepository $userRepository, PaginatorInterface $paginator): Response
     {
-        $users = $userRepository->findAll();
-
+        $nom = $request->query->get('nom');
+        $order = strtoupper($request->query->get('order', 'ASC'));
+        if (!in_array($order, ['ASC', 'DESC'])) {
+            $order = 'ASC';
+        }
+        $query = $userRepository->searchByNomQuery($nom, $order);
+        $page = $request->query->getInt('page', 1);
+        $pagination = $paginator->paginate($query, $page, 10);
         return $this->render('user/index.html.twig', [
-            'users' => $users,
-            'page_title' => 'Tous les utilisateurs',
+            'users' => $pagination,
+            'page_title' => 'Recherche utilisateurs',
+            'search_nom' => $nom,
+            'search_order' => $order
         ]);
     }
+    #[Route('/', name: 'app_user_index', methods: ['GET'])]
+    public function index(Request $request, UserRepository $userRepository, PaginatorInterface $paginator): Response
+    {
+        $order = strtoupper($request->query->get('order', 'ASC'));
+        if (!in_array($order, ['ASC', 'DESC'])) {
+            $order = 'ASC';
+        }
+        $query = $userRepository->searchByNomQuery(null, $order);
+        $page = $request->query->getInt('page', 1);
+        $pagination = $paginator->paginate($query, $page, 10);
+        return $this->render('user/index.html.twig', [
+            'users' => $pagination,
+            'page_title' => 'Tous les utilisateurs',
+            'search_nom' => null,
+            'search_order' => $order
+        ]);
+    }
+
 
     #[Route('/artistes', name: 'app_user_artistes', methods: ['GET'])]
-    public function artistes(UserRepository $userRepository): Response
+    public function artistes(Request $request, UserRepository $userRepository, PaginatorInterface $paginator): Response
     {
-        $users = $userRepository->findBy(['role' => Role::ARTISTE]);
-
+        $order = strtoupper($request->query->get('order', 'ASC'));
+        if (!in_array($order, ['ASC', 'DESC'])) {
+            $order = 'ASC';
+        }
+        $qb = $userRepository->createQueryBuilder('u')
+            ->andWhere('u.role = :role')
+            ->setParameter('role', Role::ARTISTE)
+            ->orderBy('u.nom', $order)
+            ->addOrderBy('u.prenom', $order);
+        $page = $request->query->getInt('page', 1);
+        $pagination = $paginator->paginate($qb, $page, 10);
         return $this->render('user/index.html.twig', [
-            'users' => $users,
+            'users' => $pagination,
             'page_title' => 'Liste des Artistes',
-            'current_filter' => 'ARTISTE'
+            'current_filter' => 'ARTISTE',
+            'search_nom' => null,
+            'search_order' => $order
         ]);
     }
 
-    #[Route('/amateurs', name: 'app_user_amateurs', methods: ['GET'])]
-    public function amateurs(UserRepository $userRepository): Response
-    {
-        $users = $userRepository->findBy(['role' => Role::AMATEUR]);
 
+    #[Route('/amateurs', name: 'app_user_amateurs', methods: ['GET'])]
+    public function amateurs(Request $request, UserRepository $userRepository, PaginatorInterface $paginator): Response
+    {
+        $order = strtoupper($request->query->get('order', 'ASC'));
+        if (!in_array($order, ['ASC', 'DESC'])) {
+            $order = 'ASC';
+        }
+        $qb = $userRepository->createQueryBuilder('u')
+            ->andWhere('u.role = :role')
+            ->setParameter('role', Role::AMATEUR)
+            ->orderBy('u.nom', $order)
+            ->addOrderBy('u.prenom', $order);
+        $page = $request->query->getInt('page', 1);
+        $pagination = $paginator->paginate($qb, $page, 10);
         return $this->render('user/index.html.twig', [
-            'users' => $users,
+            'users' => $pagination,
             'page_title' => 'Liste des Amateurs',
-            'current_filter' => 'AMATEUR'
+            'current_filter' => 'AMATEUR',
+            'search_nom' => null,
+            'search_order' => $order
         ]);
     }
 

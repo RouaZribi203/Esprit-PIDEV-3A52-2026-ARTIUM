@@ -19,7 +19,7 @@ class SignupType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        // Etape 1 : Informations personnelles
+        //Informations personnelles
         $builder->add('nom', TextType::class, [
             'label' => 'Nom',
             'attr' => ['data-step' => 1, 'placeholder' => 'Entrez le nom', 'class' => 'form-control']
@@ -42,7 +42,7 @@ class SignupType extends AbstractType
             'attr' => ['data-step' => 1, 'placeholder' => 'Entrez la ville', 'class' => 'form-control']
         ]);
 
-        // Etape 2 : Connexion
+        //Connexion
         $builder->add('email', EmailType::class, [
             'label' => 'Adresse e-mail',
             'attr' => ['data-step' => 2, 'placeholder' => 'Votre adresse e-mail', 'class' => 'form-control']
@@ -53,7 +53,7 @@ class SignupType extends AbstractType
             'required' => true
         ]);
 
-        // Etape 3 : Rôle et champs spécifiques
+        //Rôle et champs spécifiques
         $builder->add('role', EnumType::class, [
             'class' => Role::class,
             'label' => 'Rôle',

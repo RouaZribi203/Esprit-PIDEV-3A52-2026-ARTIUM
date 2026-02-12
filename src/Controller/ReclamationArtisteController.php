@@ -213,7 +213,7 @@ final class ReclamationArtisteController extends AbstractController
             throw $this->createAccessDeniedException('Vous ne pouvez pas consulter cette reclamation.');
         }
 
-        return $this->render('reclamation/show.html.twig', [
+        return $this->render('Front Office/reclamationsartiste/show.html.twig', [
             'reclamation' => $reclamation,
         ]);
     }

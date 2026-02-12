@@ -24,7 +24,7 @@ class Reclamation
     private ?User $user = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Assert\NotBlank(message: "Le texte de la reclamation est obligatoire", groups: ['Default'])]
+    #[Assert\NotBlank(message: "Le texte de la reclamation est obligatoire", groups: ['Default', 'edit'])]
     #[Assert\Length(
         min: 10,
         max: 2000,
@@ -41,7 +41,7 @@ class Reclamation
     private ?StatutReclamation $statut = null;
 
     #[ORM\Column(enumType: TypeReclamation::class)]
-    #[Assert\NotBlank(message: "Le type de reclamation est obligatoire", groups: ['Default'])]
+    #[Assert\NotBlank(message: "Le type de reclamation est obligatoire", groups: ['Default', 'edit'])]
     private ?TypeReclamation $type = null;
 
     /**

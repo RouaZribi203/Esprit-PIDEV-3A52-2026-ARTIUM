@@ -13,7 +13,7 @@
               </div>
               <!-- Post input -->
               <form class="w-100">
-                <input class="form-control pe-4 border-0" placeholder="Share your thoughts..." data-bs-toggle="modal" data-bs-target="#modalCreateFeed">
+                <input class="form-control pe-4 border-0 bg-light" placeholder="Ajouter une nouvelle œuvre..." readonly data-bs-toggle="modal" data-bs-target="#modalCreateOeuvre">              
               </form>
             </div>
             <!-- Share feed toolbar START -->
@@ -284,4 +284,66 @@
             <!-- Card footer END -->
           </div>
           <!-- Card feed item END -->
+
+<div class="modal fade" id="modalCreateOeuvre" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-4">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-palette-fill me-2 text-primary"></i>
+          Ajouter une œuvre
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        {{ form_start(form, {'action': path('app_oeuvre_new'),'attr': {'enctype': 'multipart/form-data'}}) }}
+
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.titre, {'attr': {'class': 'form-control'}}) }}
+          </div>
+
+          <div class="col-md-6">
+            {{ form_label(form.type) }}
+            {{ form_widget(form.type, {'attr': {'class': 'form-select'}}) }}
+          </div>
+
+          <div class="col-12">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+          </div>
+
+          <div class="col-md-6">
+            {{ form_label(form.date_creation) }}
+            {{ form_widget(form.date_creation, {'attr': {'class': 'form-control'}}) }}
+          </div>
+
+          <div class="col-md-6">
+            {{ form_label(form.collection) }}
+            {{ form_widget(form.collection, {'attr': {'class': 'form-select'}}) }}
+          </div>
+
+          <div class="col-12">
+            {{ form_label(form.image) }}
+            {{ form_widget(form.image, {'attr': {'class': 'form-control'}}) }}
+          </div>
+
+        </div>
+
+        <div class="mt-4 text-end">
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-plus-lg me-1"></i> Publier
+          </button>
+        </div>
+
+        {{ form_end(form) }}
+
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

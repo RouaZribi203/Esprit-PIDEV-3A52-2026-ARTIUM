@@ -6,6 +6,7 @@ use App\Entity\Collections;
 use App\Entity\Oeuvre;
 use App\Entity\User;
 use App\Enum\TypeOeuvre;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -30,14 +31,22 @@ class OeuvreType extends AbstractType
             'required' => true,
              ])
             ->add('description')
-            ->add('date_creation')
+            ->add('date_creation', DateType::class, [
+                'widget' => 'single_text',   
+                'html5' => true,
+                'required' => true,
+            ])
             ->add('image', FileType::class, [
             'label' => 'Image',
-            'mapped' => false,      // IMPORTANT : on ne lie pas directement à l’attribut BLOB
+            'mapped' => false,      
+            'required' => false,
             ])
             ->add('collection', EntityType::class, [
                 'class' => Collections::class,
-                'choice_label' => 'id',
+                'choice_label' => 'titre',
+                'placeholder' => 'Choisir une collection',
+                    'attr' => [
+                    'class' => 'form-select',],
             ])
             
         ;

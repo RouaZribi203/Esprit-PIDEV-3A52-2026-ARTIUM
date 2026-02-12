@@ -102,48 +102,51 @@ final class MusicfrontController extends AbstractController
     #[Route('/user-playlists/create', name: 'app_playlist_create', methods: ['POST'])]
     public function createPlaylist(
         Request $request,
-        MusiqueRepository $musiqueRepository,
         PlaylistRepository $playlistRepository,
         EntityManagerInterface $entityManager,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        \Symfony\Component\Validator\Validator\ValidatorInterface $validator
     ): Response {
         $user = $this->getUser();
         if (!$user) {
             $user = $userRepository->find(2);
         }
         if (!$user) {
-            $this->addFlash('error', 'Utilisateur par defaut introuvable.');
             if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
                 return new JsonResponse(['error' => 'Utilisateur par defaut introuvable.'], 400);
             }
+            $this->addFlash('error', 'Utilisateur par defaut introuvable.');
             return $this->redirectToRoute('app_musicfront');
         }
 
         $token = $request->request->get('_token');
         if (!$this->isCsrfTokenValid('create_playlist', $token)) {
-            $this->addFlash('error', 'Jeton CSRF invalide. Veuillez reessayer.');
             if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
                 return new JsonResponse(['error' => 'Jeton CSRF invalide.'], 400);
             }
+            $this->addFlash('error', 'Jeton CSRF invalide. Veuillez reessayer.');
             return $this->redirectToRoute('app_musicfront');
         }
 
         $name = trim((string) $request->request->get('playlist_name', ''));
         $description = trim((string) $request->request->get('playlist_description', ''));
 
-        if ($name === '') {
-            $this->addFlash('error', 'Le nom de la playlist est obligatoire.');
-            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
-                return new JsonResponse(['error' => 'Le nom est obligatoire.'], 400);
-            }
-            return $this->redirectToRoute('app_musicfront');
-        }
-
         $playlist = new Playlist();
         $playlist->setNom($name);
         $playlist->setDescription($description !== '' ? $description : null);
         $playlist->setDateCreation(new \DateTime());
         $playlist->setUser($user);
+
+        // Validate entity
+        $errors = $validator->validate($playlist);
+        if (count($errors) > 0) {
+            $errorMessage = $errors[0]->getMessage();
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => $errorMessage], 400);
+            }
+            $this->addFlash('error', $errorMessage);
+            return $this->redirectToRoute('app_musicfront');
+        }
 
         // Handle image upload
         $imageFile = $request->files->get('playlist_image');
@@ -153,12 +156,21 @@ final class MusicfrontController extends AbstractController
                     throw new \Exception('Image file exceeds maximum size of 5MB');
                 }
                 
+                // Validate image MIME type
+                $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                if (!in_array($imageFile->getMimeType(), $allowedMimes)) {
+                    throw new \Exception('Invalid image format. Allowed formats: JPG, PNG, GIF, WebP');
+                }
+                
                 $imageContent = file_get_contents($imageFile->getPathname());
                 if ($imageContent === false) {
                     throw new \Exception('Failed to read image file');
                 }
                 $playlist->setImage($imageContent);
             } catch (\Exception $e) {
+                if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                    return new JsonResponse(['error' => 'Image upload failed: ' . $e->getMessage()], 400);
+                }
                 $this->addFlash('warning', 'Image upload failed: ' . $e->getMessage());
             }
         }
@@ -174,8 +186,8 @@ final class MusicfrontController extends AbstractController
         return $this->redirectToRoute('app_musicfront');
     }
 
-    #[Route('/user-playlists/add-song', name: 'app_playlist_add_song', methods: ['POST'])]
-    public function addSongToPlaylist(
+    #[Route('/user-playlists/add-songs', name: 'app_playlist_add_multiple', methods: ['POST'])]
+    public function addMultipleSongs(
         Request $request,
         PlaylistRepository $playlistRepository,
         MusiqueRepository $musiqueRepository,
@@ -187,42 +199,68 @@ final class MusicfrontController extends AbstractController
             $user = $userRepository->find(2);
         }
         if (!$user) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Utilisateur par defaut introuvable.'], 400);
+            }
             $this->addFlash('error', 'Utilisateur par defaut introuvable.');
             return $this->redirectToRoute('app_musicfront');
         }
 
         $token = $request->request->get('_token');
         if (!$this->isCsrfTokenValid('add_to_playlist', $token)) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Jeton CSRF invalide.'], 400);
+            }
             $this->addFlash('error', 'Jeton CSRF invalide. Veuillez reessayer.');
             return $this->redirectToRoute('app_musicfront');
         }
 
         $playlistId = (int) $request->request->get('playlist_id');
-        $musiqueId = (int) $request->request->get('musique_id');
+        $songIds = $request->request->all()['song_ids'] ?? [];
 
-        if ($playlistId <= 0 || $musiqueId <= 0) {
-            $this->addFlash('error', 'Veuillez selectionner une playlist et une musique.');
+        if ($playlistId <= 0 || empty($songIds)) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Veuillez selectionner une playlist et au moins une musique.'], 400);
+            }
+            $this->addFlash('error', 'Veuillez selectionner une playlist et au moins une musique.');
             return $this->redirectToRoute('app_musicfront');
         }
 
         $playlist = $playlistRepository->find($playlistId);
         if (!$playlist || $playlist->getUser() !== $user) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Playlist introuvable.'], 404);
+            }
             $this->addFlash('error', 'Playlist introuvable.');
             return $this->redirectToRoute('app_musicfront');
         }
 
-        $musique = $musiqueRepository->find($musiqueId);
-        if (!$musique) {
-            $this->addFlash('error', 'Musique introuvable.');
-            return $this->redirectToRoute('app_musicfront');
+        $addedCount = 0;
+        foreach ($songIds as $musicId) {
+            $musicId = (int) $musicId;
+            if ($musicId <= 0) continue;
+
+            $musique = $musiqueRepository->find($musicId);
+            if (!$musique) continue;
+
+            if (!$playlist->getMusique()->contains($musique)) {
+                $playlist->addMusique($musique);
+                $addedCount++;
+            }
         }
 
-        if (!$playlist->getMusique()->contains($musique)) {
-            $playlist->addMusique($musique);
+        if ($addedCount > 0) {
             $entityManager->flush();
         }
 
-        $this->addFlash('success', 'Musique ajoutee a la playlist.');
+        if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return new JsonResponse([
+                'success' => true,
+                'message' => $addedCount . ' musique(s) ajoutee(s) a la playlist.'
+            ]);
+        }
+
+        $this->addFlash('success', $addedCount . ' musique(s) ajoutee(s) a la playlist.');
         return $this->redirectToRoute('app_musicfront');
     }
 
@@ -251,23 +289,172 @@ final class MusicfrontController extends AbstractController
     public function removeSongFromPlaylist(
         int $playlistId,
         int $musicId,
+        Request $request,
         PlaylistRepository $playlistRepository,
         MusiqueRepository $musiqueRepository,
         EntityManagerInterface $entityManager
     ): Response {
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('remove_song', $token)) {
+            $this->addFlash('error', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_musicfront');
+        }
+
         $playlist = $playlistRepository->find($playlistId);
         $musique = $musiqueRepository->find($musicId);
 
         if (!$playlist || !$musique) {
-            return new JsonResponse(['error' => 'Playlist or song not found'], 404);
+            $this->addFlash('error', 'Playlist ou musique introuvable.');
+            return $this->redirectToRoute('app_musicfront');
         }
 
         if ($playlist->getMusique()->contains($musique)) {
             $playlist->removeMusique($musique);
             $entityManager->flush();
+            $this->addFlash('success', 'Musique supprimee de la playlist.');
         }
 
-        return new JsonResponse(['success' => true]);
+        return $this->redirectToRoute('app_musicfront');
+    }
+
+    #[Route('/playlist/{id}/delete', name: 'app_playlist_delete', methods: ['POST'])]
+    public function deletePlaylist(
+        int $id,
+        Request $request,
+        PlaylistRepository $playlistRepository,
+        EntityManagerInterface $entityManager,
+        UserRepository $userRepository
+    ): Response {
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('delete_playlist', $token)) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Jeton CSRF invalide.'], 400);
+            }
+            $this->addFlash('error', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_musicfront');
+        }
+
+        $playlist = $playlistRepository->find($id);
+        
+        if (!$playlist) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Playlist introuvable.'], 404);
+            }
+            $this->addFlash('error', 'Playlist introuvable.');
+            return $this->redirectToRoute('app_musicfront');
+        }
+
+        // Check if user owns this playlist
+        $user = $this->getUser();
+        if (!$user) {
+            // For guest users, check if playlist belongs to user ID 2
+            $guestUser = $userRepository->find(2);
+            if (!$guestUser || $playlist->getUser()->getId() !== $guestUser->getId()) {
+                if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                    return new JsonResponse(['error' => 'Vous netes pas autorise a supprimer cette playlist.'], 403);
+                }
+                $this->addFlash('error', 'Vous netes pas autorise a supprimer cette playlist.');
+                return $this->redirectToRoute('app_musicfront');
+            }
+        } else {
+            // For logged-in users, verify they own the playlist
+            if ($playlist->getUser()->getId() !== $user->getId()) {
+                if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                    return new JsonResponse(['error' => 'Vous netes pas autorise a supprimer cette playlist.'], 403);
+                }
+                $this->addFlash('error', 'Vous netes pas autorise a supprimer cette playlist.');
+                return $this->redirectToRoute('app_musicfront');
+            }
+        }
+
+        $playlistName = $playlist->getNom();
+        $entityManager->remove($playlist);
+        $entityManager->flush();
+
+        if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return new JsonResponse(['success' => true]);
+        }
+
+        $this->addFlash('success', 'La playlist « ' . $playlistName . ' » a ete supprimee.');
+        return $this->redirectToRoute('app_musicfront');
+    }
+
+    #[Route('/playlist/{id}/edit', name: 'app_playlist_edit', methods: ['POST'])]
+    public function editPlaylist(
+        int $id,
+        Request $request,
+        PlaylistRepository $playlistRepository,
+        EntityManagerInterface $entityManager,
+        UserRepository $userRepository,
+        \Symfony\Component\Validator\Validator\ValidatorInterface $validator
+    ): Response {
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('edit_playlist', $token)) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Jeton CSRF invalide.'], 400);
+            }
+            $this->addFlash('error', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_musicfront');
+        }
+
+        $playlist = $playlistRepository->find($id);
+        
+        if (!$playlist) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => 'Playlist introuvable.'], 404);
+            }
+            $this->addFlash('error', 'Playlist introuvable.');
+            return $this->redirectToRoute('app_musicfront');
+        }
+
+        // Check if user owns this playlist
+        $user = $this->getUser();
+        if (!$user) {
+            // For guest users, check if playlist belongs to user ID 2
+            $guestUser = $userRepository->find(2);
+            if (!$guestUser || $playlist->getUser()->getId() !== $guestUser->getId()) {
+                if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                    return new JsonResponse(['error' => 'Vous netes pas autorise a modifier cette playlist.'], 403);
+                }
+                $this->addFlash('error', 'Vous netes pas autorise a modifier cette playlist.');
+                return $this->redirectToRoute('app_musicfront');
+            }
+        } else {
+            // For logged-in users, verify they own the playlist
+            if ($playlist->getUser()->getId() !== $user->getId()) {
+                if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                    return new JsonResponse(['error' => 'Vous netes pas autorise a modifier cette playlist.'], 403);
+                }
+                $this->addFlash('error', 'Vous netes pas autorise a modifier cette playlist.');
+                return $this->redirectToRoute('app_musicfront');
+            }
+        }
+
+        $nom = trim((string) $request->request->get('nom', ''));
+        $description = trim((string) $request->request->get('description', ''));
+
+        $playlist->setNom($nom);
+        $playlist->setDescription($description !== '' ? $description : null);
+
+        // Validate entity
+        $errors = $validator->validate($playlist);
+        if (count($errors) > 0) {
+            $errorMessage = $errors[0]->getMessage();
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return new JsonResponse(['error' => $errorMessage], 400);
+            }
+            $this->addFlash('error', $errorMessage);
+            return $this->redirectToRoute('app_musicfront');
+        }
+
+        $entityManager->flush();
+
+        if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+            return new JsonResponse(['success' => true]);
+        }
+
+        $this->addFlash('success', 'La playlist a ete modifiee avec succes.');
+        return $this->redirectToRoute('app_musicfront');
     }
 
     #[Route('/playlist/image/{id}', name: 'app_playlist_image')]

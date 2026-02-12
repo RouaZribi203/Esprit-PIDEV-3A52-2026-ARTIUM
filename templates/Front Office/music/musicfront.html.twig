@@ -3,6 +3,28 @@
 {% block title %}{{ 'Musique'|trans }}{% endblock %}
 
 {% block amateur_content %}
+    <!-- Flash messages -->
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+    {% for message in app.flashes('warning') %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
     <!-- Card START -->
     <div class="card h-100">
         <!-- Card header START -->
@@ -423,7 +445,7 @@
                                             <input type="hidden" name="_token" value="{{ csrf_token('create_playlist') }}">
                                             <div class="mb-2">
                                                 <label class="form-label small" for="playlist-name">Nom</label>
-                                                <input id="playlist-name" name="playlist_name" type="text" class="form-control form-control-sm" placeholder="Ma playlist" required>
+                                                <input id="playlist-name" name="playlist_name" type="text" class="form-control form-control-sm" placeholder="Ma playlist">
                                             </div>
                                             <div class="mb-2">
                                                 <label class="form-label small" for="playlist-description">Description</label>
@@ -471,12 +493,18 @@
                                                 {{ playlist.description|default('Aucune description')|length > 60 ? playlist.description|slice(0, 60) ~ '...' : playlist.description|default('Aucune description') }}
                                             </p>
                                             <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ playlist.dateCreation|date('M d, Y') }} </p>
-                                            <div class="d-flex gap-2 mt-2">
+                                            <div class="d-flex gap-2 mt-2 flex-wrap">
                                                 <button class="btn btn-sm btn-outline-primary flex-grow-1" type="button" data-bs-toggle="modal" data-bs-target="#viewPlaylistModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom }}">
                                                     <i class="bi bi-play-circle"></i> Écouter
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-success flex-grow-1" type="button" data-bs-toggle="modal" data-bs-target="#addSongsModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom }}">
                                                     <i class="bi bi-plus-circle"></i> Ajouter
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-warning playlist-edit-btn" type="button" data-bs-toggle="modal" data-bs-target="#editPlaylistModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom | escape('js') }}" data-playlist-description="{{ playlist.description | default('') | escape('js') }}">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger playlist-delete-btn" type="button" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom | escape('js') }}">
+                                                    <i class="bi bi-trash"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -517,22 +545,53 @@
     <div class="modal fade" id="addSongsModal" tabindex="-1" aria-labelledby="addSongsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
-                <input type="hidden" id="csrfTokenAddToPlaylist" value="{{ csrf_token('add_to_playlist') }}">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addSongsModalLabel">Ajouter des musiques à la playlist</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="addSongsModalBody">
-                    <div class="text-center py-4">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Chargement...</span>
+                <form method="post" action="{{ path('app_playlist_add_multiple') }}" id="addSongsForm">
+                    <div class="modal-body" id="addSongsModalBody">
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
                         </div>
                     </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-success">Ajouter les sélectionnées</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Playlist Modal -->
+    <div class="modal fade" id="editPlaylistModal" tabindex="-1" aria-labelledby="editPlaylistModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPlaylistModalLabel">Modifier la playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                    <button type="button" class="btn btn-success" id="addSelectedSongsBtn">Ajouter les sélectionnées</button>
-                </div>
+                <form method="post" id="editPlaylistForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="_token" value="{{ csrf_token('edit_playlist') }}">
+                        <input type="hidden" name="playlist_id" id="editPlaylistId" value="">
+                        <div class="mb-3">
+                            <label for="editPlaylistName" class="form-label">Nom de la playlist</label>
+                            <input type="text" class="form-control" id="editPlaylistName" name="nom">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPlaylistDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editPlaylistDescription" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -543,7 +602,6 @@
     <script>
         const audioPlayer = document.getElementById('audioPlayer');
         let currentPlayingButton = null;
-
         let currentSortOrder = '{{ sortOrder }}';
 
         function bindPlayButtons() {
@@ -584,7 +642,7 @@
 
             const tabContent = document.getElementById('musicTabContent');
             if (tabContent) {
-                tabContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+                tabContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Chargement...</span></div></div>';
             }
 
             fetch(`{{ path('app_musicfront') }}?${params.toString()}`, {
@@ -611,8 +669,15 @@
                     }
                 }
 
-                const activeTab = document.querySelector('.nav-link.active');
-                const activeTabId = hasSearch ? '#tab-all' : (activeTab ? activeTab.getAttribute('href') : '#tab-all');
+                const activeTabId = hasSearch ? '#tab-all' : '#tab-all';
+                
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === activeTabId) {
+                        link.classList.add('active');
+                    }
+                });
+                
                 document.querySelectorAll('.tab-pane').forEach(pane => {
                     pane.classList.remove('show', 'active');
                 });
@@ -627,7 +692,6 @@
             .catch(error => console.error('Error loading results:', error));
         }
 
-        // Bind handlers
         document.addEventListener('DOMContentLoaded', function() {
             bindPlayButtons();
             updateSortButton();
@@ -667,7 +731,7 @@
                 });
             }
 
-            // Handle playlist creation form with AJAX
+            // Handle create playlist form with AJAX
             const createPlaylistForm = document.getElementById('createPlaylistForm');
             if (createPlaylistForm) {
                 createPlaylistForm.addEventListener('submit', function(e) {
@@ -682,42 +746,40 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(response => {
-                        if (response.ok) {
-                            // Fetch updated playlists
-                            return fetch('{{ path("app_musicfront") }}', {
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            createPlaylistForm.reset();
+                            
+                            // Close collapse
+                            const collapseElement = document.getElementById('createPlaylistCollapse');
+                            if (collapseElement) {
+                                collapseElement.classList.remove('show');
+                            }
+                            
+                            // Refresh playlists tab
+                            fetch('{{ path("app_musicfront") }}', {
                                 headers: {
                                     'X-Requested-With': 'XMLHttpRequest'
                                 }
+                            })
+                            .then(response => response.text())
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+                                const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                                const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                                if (newPlaylistsTab && currentPlaylistsTab) {
+                                    currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                                }
                             });
                         } else {
-                            throw new Error('Failed to create playlist');
-                        }
-                    })
-                    .then(response => response.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-
-                        // Get the playlists section from the response
-                        const newPlaylistsTab = doc.querySelector('#tab-playlists');
-                        const currentPlaylistsTab = document.querySelector('#tab-playlists');
-
-                        if (newPlaylistsTab && currentPlaylistsTab) {
-                            currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
-                        }
-
-                        // Reset form
-                        createPlaylistForm.reset();
-                        
-                        // Close collapse by clicking the toggle button
-                        const collapseElement = document.getElementById('createPlaylistCollapse');
-                        if (collapseElement) {
-                            collapseElement.classList.remove('show');
+                            alert(data.error || 'Erreur lors de la création de la playlist');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
+                        alert('Une erreur s\'est produite');
                     });
                 });
             }
@@ -725,7 +787,6 @@
 
         let currentPlaylistId = null;
 
-        // Handle View Playlist Modal
         const viewPlaylistModal = document.getElementById('viewPlaylistModal');
         if (viewPlaylistModal) {
             viewPlaylistModal.addEventListener('show.bs.modal', function(event) {
@@ -754,18 +815,12 @@
             .then(data => {
                 const songs = data.songs;
                 
-                // Update the badge showing number of songs
-                const badge = document.querySelector(`button[data-playlist-id="${currentPlaylistId}"]`)?.closest('.card')?.querySelector('.badge');
-                if (badge) {
-                    const count = songs.length;
-                    badge.textContent = `${count} titre${count !== 1 ? 's' : ''}`;
-                }
-                
                 if (songs.length === 0) {
                     modalBody.innerHTML = '<p class="text-muted text-center py-4">Aucune musique dans cette playlist</p>';
                     return;
                 }
 
+                const removeSongUrlTemplate = "{{ path('app_playlist_remove_song', {'playlistId': 'PLAYLIST_ID', 'musicId': 'MUSIC_ID'}) }}";
                 let songsHtml = '<div class="list-group">';
                 
                 songs.forEach(song => {
@@ -777,9 +832,12 @@
                                     <button class="btn btn-sm btn-outline-primary playlist-play-btn" data-audio-id="${song.id}" data-audio-src="${song.audioSrc}" data-title="${song.titre}">
                                         <i class="bi bi-play-fill"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger playlist-delete-btn" data-music-id="${song.id}" data-title="${song.titre}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <form method="post" action="${removeSongUrlTemplate.replace('PLAYLIST_ID', currentPlaylistId).replace('MUSIC_ID', song.id)}" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('remove_song') }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -789,7 +847,6 @@
                 songsHtml += '</div>';
                 modalBody.innerHTML = songsHtml;
 
-                // Bind play buttons
                 const playButtons = modalBody.querySelectorAll('.playlist-play-btn');
                 let currentlyPlaying = null;
 
@@ -797,54 +854,24 @@
                     button.addEventListener('click', function() {
                         const audioSrc = this.getAttribute('data-audio-src');
                         const audioId = this.getAttribute('data-audio-id');
-                        const title = this.getAttribute('data-title');
                         
-                        // If this button's song is already playing, pause it
                         if (currentlyPlaying === audioId && !audioPlayer.paused) {
                             audioPlayer.pause();
                             this.innerHTML = '<i class="bi bi-play-fill"></i>';
                         } 
-                        // If this button's song is paused, resume it
                         else if (currentlyPlaying === audioId && audioPlayer.paused) {
                             audioPlayer.play();
                             this.innerHTML = '<i class="bi bi-pause-fill"></i>';
                         } 
-                        // Play a different song
                         else {
                             audioPlayer.src = audioSrc;
                             audioPlayer.play();
                             
-                            // Reset all buttons to play state
                             playButtons.forEach(btn => {
                                 btn.innerHTML = '<i class="bi bi-play-fill"></i>';
                             });
                             this.innerHTML = '<i class="bi bi-pause-fill"></i>';
                             currentlyPlaying = audioId;
-                        }
-                    });
-                });
-
-                // Bind delete buttons
-                const deleteButtons = modalBody.querySelectorAll('.playlist-delete-btn');
-                deleteButtons.forEach(button => {
-                    button.addEventListener('click', function() {
-                        const musicId = this.getAttribute('data-music-id');
-                        const title = this.getAttribute('data-title');
-                        
-                        if (confirm(`Êtes-vous sûr de vouloir supprimer "${title}" de cette playlist?`)) {
-                            fetch('{{ path("app_playlist_remove_song", {"playlistId": "__PLAYLIST_ID__", "musicId": "__MUSIC_ID__"}) }}'.replace('__PLAYLIST_ID__', currentPlaylistId).replace('__MUSIC_ID__', musicId), {
-                                method: 'POST',
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                }
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    loadPlaylistSongs();
-                                }
-                            })
-                            .catch(error => console.error('Error:', error));
                         }
                     });
                 });
@@ -862,7 +889,6 @@
             });
         }
 
-        // Handle Add Songs Modal
         const addSongsModal = document.getElementById('addSongsModal');
         if (addSongsModal) {
             addSongsModal.addEventListener('show.bs.modal', function(event) {
@@ -892,11 +918,14 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 
-                // Extract all musiques from the first tab
                 const allGenresTab = doc.querySelector('#tab-all');
                 const musicCards = allGenresTab ? allGenresTab.querySelectorAll('.music-card[data-music-id]') : [];
                 
-                let songsHtml = '<div class="list-group">';
+                let songsHtml = `
+                    <input type="hidden" name="_token" value="{{ csrf_token('add_to_playlist') }}">
+                    <input type="hidden" name="playlist_id" value="${currentPlaylistId}">
+                    <div class="list-group">
+                `;
                 
                 musicCards.forEach(card => {
                     const musicId = card.getAttribute('data-music-id');
@@ -905,7 +934,7 @@
                     
                     songsHtml += `
                         <label class="list-group-item">
-                            <input class="form-check-input me-2" type="checkbox" name="song_id" value="${musicId}">
+                            <input class="form-check-input me-2" type="checkbox" name="song_ids[]" value="${musicId}">
                             <span>${title}</span>
                         </label>
                     `;
@@ -913,6 +942,13 @@
                 
                 songsHtml += '</div>';
                 modalBody.innerHTML = songsHtml;
+                
+                // Attach form submit handler
+                const addSongsForm = document.getElementById('addSongsForm');
+                if (addSongsForm) {
+                    addSongsForm.removeEventListener('submit', handleAddSongsSubmit);
+                    addSongsForm.addEventListener('submit', handleAddSongsSubmit);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -920,74 +956,182 @@
             });
         }
 
-        const addSelectedSongsBtn = document.getElementById('addSelectedSongsBtn');
-        if (addSelectedSongsBtn) {
-            addSelectedSongsBtn.addEventListener('click', function() {
-                const selectedCheckboxes = document.querySelectorAll('#addSongsModalBody input[name="song_id"]:checked');
-                
-                if (selectedCheckboxes.length === 0) {
-                    alert('Veuillez sélectionner au moins une musique');
-                    return;
+        function handleAddSongsSubmit(e) {
+            e.preventDefault();
+            
+            const selectedCheckboxes = document.querySelectorAll('#addSongsModalBody input[name="song_ids[]"]:checked');
+
+            const formData = new FormData();
+            const csrfToken = document.querySelector('#addSongsModalBody input[name="_token"]').value;
+            formData.append('_token', csrfToken);
+            formData.append('playlist_id', currentPlaylistId);
+            
+            selectedCheckboxes.forEach(checkbox => {
+                formData.append('song_ids[]', checkbox.value);
+            });
+
+            fetch('{{ path("app_playlist_add_multiple") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-
-                // Add all selected songs
-                let addedCount = 0;
-                let totalCount = selectedCheckboxes.length;
-
-                selectedCheckboxes.forEach((checkbox, index) => {
-                    const musicId = checkbox.value;
-
-                    const formData = new FormData();
-                    const csrfToken = document.getElementById('csrfTokenAddToPlaylist').value;
-                    formData.append('_token', csrfToken);
-                    formData.append('musique_id', musicId);
-                    formData.append('playlist_id', currentPlaylistId);
-
-                    fetch('{{ path("app_playlist_add_song") }}', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            addedCount++;
-                            if (addedCount === totalCount) {
-                                // All songs added, close modal and refresh
-                                const modal = bootstrap.Modal.getInstance(addSongsModal);
-                                if (modal) modal.hide();
-                                
-                                // Reload the playlists section
-                                fetch('{{ path("app_musicfront") }}', {
-                                    headers: {
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    }
-                                })
-                                .then(response => response.text())
-                                .then(html => {
-                                    const parser = new DOMParser();
-                                    const doc = parser.parseFromString(html, 'text/html');
-                                    const newPlaylistsTab = doc.querySelector('#tab-playlists');
-                                    const currentPlaylistsTab = document.querySelector('#tab-playlists');
-                                    if (newPlaylistsTab && currentPlaylistsTab) {
-                                        currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
-                                    }
-                                });
-                            }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(addSongsModal);
+                    if (modal) modal.hide();
+                    
+                    // Refresh playlists tab
+                    fetch('{{ path("app_musicfront") }}', {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .catch(error => console.error('Error adding song:', error));
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                        const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                        if (newPlaylistsTab && currentPlaylistsTab) {
+                            currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                        }
+                    });
+                } else {
+                    alert(data.error || 'Erreur lors de l\'ajout des musiques');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur s\'est produite');
+            });
+        }
+
+        const editPlaylistModal = document.getElementById('editPlaylistModal');
+        if (editPlaylistModal) {
+            editPlaylistModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const playlistId = button.getAttribute('data-playlist-id');
+                const playlistName = button.getAttribute('data-playlist-name');
+                const playlistDescription = button.getAttribute('data-playlist-description');
+                
+                document.getElementById('editPlaylistId').value = playlistId;
+                document.getElementById('editPlaylistName').value = playlistName;
+                document.getElementById('editPlaylistDescription').value = playlistDescription || '';
+            });
+        }
+
+        // Handle edit playlist form submission
+        const editPlaylistForm = document.getElementById('editPlaylistForm');
+        if (editPlaylistForm) {
+            editPlaylistForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const playlistId = document.getElementById('editPlaylistId').value;
+                const formData = new FormData(this);
+
+                fetch(`{{ path('app_playlist_edit', {'id': '__PLAYLIST_ID__'}) }}`.replace('__PLAYLIST_ID__', playlistId), {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(editPlaylistModal);
+                        if (modal) modal.hide();
+                        
+                        // Refresh playlists tab
+                        fetch('{{ path("app_musicfront") }}', {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                            const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                            if (newPlaylistsTab && currentPlaylistsTab) {
+                                currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                            }
+                        });
+                    } else {
+                        alert(data.error || 'Erreur lors de la modification de la playlist');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur s\'est produite');
                 });
             });
         }
 
+        // Handle delete playlist buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.playlist-delete-btn')) {
+                const button = e.target.closest('.playlist-delete-btn');
+                const playlistId = button.getAttribute('data-playlist-id');
+                const playlistName = button.getAttribute('data-playlist-name');
+                
+                if (!confirm(`Êtes-vous sûr de vouloir supprimer la playlist « ${playlistName} »?`)) {
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token("delete_playlist") }}');
+
+                fetch(`{{ path('app_playlist_delete', {'id': '__PLAYLIST_ID__'}) }}`.replace('__PLAYLIST_ID__', playlistId), {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Refresh playlists tab
+                        fetch('{{ path("app_musicfront") }}', {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                            const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                            if (newPlaylistsTab && currentPlaylistsTab) {
+                                currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                            }
+                        });
+                    } else {
+                        alert(data.error || 'Erreur lors de la suppression de la playlist');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur s\'est produite');
+                });
+            }
+        });
+
         function playPauseMusic(button) {
-            // If another button is currently playing, stop it
             if (currentPlayingButton && currentPlayingButton !== button) {
                 const prevIcon = currentPlayingButton.querySelector('i');
                 prevIcon.className = 'bi bi-play-fill pe-1';
                 currentPlayingButton.textContent = ' Jouer';
                 currentPlayingButton.prepend(prevIcon);
                 
-                // Reset progress bar of previous song
                 const prevProgressBar = currentPlayingButton.closest('.card').querySelector('.music-progress');
                 if (prevProgressBar) {
                     prevProgressBar.style.width = '0%';
@@ -997,7 +1141,6 @@
             const icon = button.querySelector('i');
             
             if (audioPlayer.paused || audioPlayer.src === '') {
-                // Play music - get audio source from card data attribute
                 const card = button.closest('.card');
                 const audioSrc = card.getAttribute('data-audio-src');
                 audioPlayer.src = audioSrc;
@@ -1007,7 +1150,6 @@
                 button.prepend(icon);
                 currentPlayingButton = button;
                 
-                // Update progress bar
                 audioPlayer.ontimeupdate = function() {
                     const progressBar = button.closest('.card').querySelector('.music-progress');
                     if (progressBar && audioPlayer.duration) {
@@ -1016,7 +1158,6 @@
                     }
                 };
 
-                // Reset when music ends
                 audioPlayer.onended = function() {
                     icon.className = 'bi bi-play-fill pe-1';
                     button.textContent = ' Jouer';
@@ -1028,7 +1169,6 @@
                     currentPlayingButton = null;
                 };
             } else {
-                // Pause music
                 audioPlayer.pause();
                 icon.className = 'bi bi-play-fill pe-1';
                 button.textContent = ' Jouer';

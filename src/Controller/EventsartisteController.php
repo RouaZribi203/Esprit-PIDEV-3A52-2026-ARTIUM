@@ -2,17 +2,201 @@
 
 namespace App\Controller;
 
+use App\Entity\Evenement;
+use App\Entity\User;
+use App\Form\EvenementArtisteType;
+use App\Form\EvenementArtisteEditType;
+use App\Repository\EvenementRepository;
+use App\Repository\TicketRepository;
+use App\Repository\UserRepository;
+use App\Enum\StatutEvenement;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class EventsartisteController extends AbstractController
 {
-    #[Route('/artiste-evenements', name: 'app_eventsartiste')]
-    public function index(): Response
+    #[Route('/artiste-evenements', name: 'app_eventsartiste', methods: ['GET', 'POST'])]
+    public function index(
+        EvenementRepository $evenementRepository,
+        TicketRepository $ticketRepository,
+        UserRepository $userRepository,
+        FormFactoryInterface $formFactory,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response
     {
-        return $this->render('Front Office/eventsartiste/eventartiste.html.twig', [
-            'controller_name' => 'EventsartisteController',
+        $artiste = $this->getArtisteOrDeny($userRepository);
+
+        $evenements = $evenementRepository->findBy(
+            ['artiste' => $artiste],
+            ['date_debut' => 'DESC']
+        );
+
+        $newEvenement = new Evenement();
+        $newForm = $formFactory->createNamed('evenement_new', EvenementArtisteType::class, $newEvenement, [
+            'action' => $this->generateUrl('app_eventsartiste'),
+            'method' => 'POST',
         ]);
+        $newForm->handleRequest($request);
+
+        $showAddForm = false;
+        if ($newForm->isSubmitted()) {
+            $this->handleImageUpload($newForm, $newEvenement);
+            
+            if ($newForm->isValid()) {
+                $newEvenement->setArtiste($artiste);
+                $newEvenement->setDateCreation(new \DateTime());
+                $newEvenement->setStatut($this->resolveStatut($newEvenement));
+
+                $entityManager->persist($newEvenement);
+                $entityManager->flush();
+
+                return $this->redirectToRoute('app_eventsartiste');
+            }
+            
+            $showAddForm = true;
+        }
+
+        $editForms = [];
+        $showEditForms = [];
+        $evenementRows = [];
+
+        foreach ($evenements as $evenement) {
+            if ($evenement->getArtiste()?->getId() !== $artiste->getId()) {
+                continue;
+            }
+
+            $formName = 'evenement_edit_' . $evenement->getId();
+            $editForm = $formFactory->createNamed($formName, EvenementArtisteEditType::class, $evenement, [
+                'action' => $this->generateUrl('app_eventsartiste'),
+                'method' => 'POST',
+            ]);
+            $editForm->handleRequest($request);
+
+            $isFormSubmitted = $request->isMethod('POST') && $request->request->has($formName);
+            if ($isFormSubmitted) {
+                $this->handleImageUpload($editForm, $evenement);
+                
+                if ($editForm->isValid()) {
+                    $evenement->setStatut($this->resolveStatut($evenement));
+                    $entityManager->flush();
+
+                    return $this->redirectToRoute('app_eventsartiste');
+                }
+
+                $showEditForms[$evenement->getId()] = true;
+            }
+
+            $editForms[$evenement->getId()] = $editForm->createView();
+            $evenementRows[] = [
+                'evenement' => $evenement,
+                'image' => $this->getImageDataUri($evenement->getImageCouverture()),
+                'tickets_sold' => $ticketRepository->count(['evenement' => $evenement]),
+            ];
+        }
+
+        return $this->render('Front Office/eventsartiste/eventartiste.html.twig', [
+            'evenement_rows' => $evenementRows,
+            'new_form' => $newForm->createView(),
+            'edit_forms' => $editForms,
+            'show_add_form' => $showAddForm,
+            'show_edit_forms' => $showEditForms,
+        ]);
+    }
+
+    #[Route('/artiste-evenements/{id}', name: 'app_eventsartiste_delete', methods: ['POST'])]
+    public function delete(Request $request, Evenement $evenement, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
+    {
+        $artiste = $this->getArtisteOrDeny($userRepository);
+        if ($evenement->getArtiste()?->getId() !== $artiste->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($this->isCsrfTokenValid('delete_event_' . $evenement->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($evenement);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_eventsartiste');
+    }
+
+    #[Route('/artiste-evenements/{id}/cancel', name: 'app_eventsartiste_cancel', methods: ['POST'])]
+    public function cancel(Request $request, Evenement $evenement, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
+    {
+        $artiste = $this->getArtisteOrDeny($userRepository);
+        if ($evenement->getArtiste()?->getId() !== $artiste->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($this->isCsrfTokenValid('cancel_event_' . $evenement->getId(), $request->request->get('_token'))
+            && $evenement->getStatut() === StatutEvenement::A_VENIR
+        ) {
+            $evenement->setStatut(StatutEvenement::ANNULE);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_eventsartiste');
+    }
+
+    private function getArtisteOrDeny(UserRepository $userRepository): User
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            $fallback = $userRepository->find(1);
+            if ($fallback instanceof User) {
+                return $fallback;
+            }
+
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
+    }
+
+    private function handleImageUpload(FormInterface $form, Evenement $evenement): void
+    {
+        $file = $form->get('imageFile')->getData();
+        if ($file instanceof UploadedFile) {
+            $evenement->setImageCouverture(file_get_contents($file->getPathname()));
+        }
+    }
+
+    private function resolveStatut(Evenement $evenement): StatutEvenement
+    {
+        $now = new \DateTimeImmutable();
+        $dateFin = $evenement->getDateFin();
+
+        if ($dateFin instanceof \DateTime && $dateFin < $now) {
+            return StatutEvenement::TERMINE;
+        }
+
+        return StatutEvenement::A_VENIR;
+    }
+
+    private function getImageDataUri(mixed $image): ?string
+    {
+        if ($image === null) {
+            return null;
+        }
+
+        if (is_resource($image)) {
+            $data = stream_get_contents($image);
+        } elseif (is_string($image)) {
+            $data = $image;
+        } else {
+            return null;
+        }
+
+        if ($data === false || $data === '') {
+            return null;
+        }
+
+        return 'data:image/jpeg;base64,' . base64_encode($data);
     }
 }

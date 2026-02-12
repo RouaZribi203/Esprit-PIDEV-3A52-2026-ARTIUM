@@ -6,6 +6,7 @@ use App\Repository\GalerieRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: GalerieRepository::class)]
 class Galerie
@@ -16,18 +17,50 @@ class Galerie
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom de la galerie est obligatoire")]
+    #[Assert\Length(
+        min: 3,
+        max: 255,
+        minMessage: "Le nom doit contenir au minimum {{ limit }} caractères",
+        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères"
+    )]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "L'adresse est obligatoire")]
+    #[Assert\Length(
+        min: 5,
+        max: 255,
+        minMessage: "L'adresse doit contenir au minimum {{ limit }} caractères",
+        maxMessage: "L'adresse ne peut pas dépasser {{ limit }} caractères"
+    )]
     private ?string $adresse = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "La localisation est obligatoire")]
+    #[Assert\Length(
+        min: 3,
+        max: 255,
+        minMessage: "La localisation doit contenir au minimum {{ limit }} caractères",
+        maxMessage: "La localisation ne peut pas dépasser {{ limit }} caractères"
+    )]
     private ?string $localisation = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: "La description ne peut pas dépasser {{ limit }} caractères"
+    )]
     private ?string $description = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: "La capacité maximale est obligatoire")]
+    #[Assert\Positive(message: "La capacité doit être un nombre positif")]
+    #[Assert\Range(
+        min: 1,
+        max: 5000,
+        notInRangeMessage: "La capacité doit être entre {{ min }} et {{ max }}"
+    )]
     private ?int $capacite_max = null;
 
     /**
@@ -51,7 +84,7 @@ class Galerie
         return $this->nom;
     }
 
-    public function setNom(string $nom): static
+    public function setNom(?string $nom): static
     {
         $this->nom = $nom;
 
@@ -63,7 +96,7 @@ class Galerie
         return $this->adresse;
     }
 
-    public function setAdresse(string $adresse): static
+    public function setAdresse(?string $adresse): static
     {
         $this->adresse = $adresse;
 
@@ -75,7 +108,7 @@ class Galerie
         return $this->localisation;
     }
 
-    public function setLocalisation(string $localisation): static
+    public function setLocalisation(?string $localisation): static
     {
         $this->localisation = $localisation;
 

@@ -4,7 +4,7 @@
 {% set width = width|default('600px') %}
 {% set z_index = z_index|default(2000) %}
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="{{ offcanvas_id }}" aria-labelledby="{{ offcanvas_id }}Label" data-bs-backdrop="true" data-bs-scroll="false" style="width: 600px; z-index: 2000;">
+<div class="offcanvas offcanvas-end" tabindex="-1" id="{{ offcanvas_id }}" aria-labelledby="{{ offcanvas_id }}Label" data-bs-backdrop="true" data-bs-scroll="false" style="width: {{ width }}; z-index: {{ z_index }};">
 	<div class="offcanvas-body" data-simplebar>
 		<div class="offcanvas-header px-2 pt-0">
 			<div>

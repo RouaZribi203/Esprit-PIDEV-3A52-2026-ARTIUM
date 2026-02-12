@@ -142,13 +142,13 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
     private ?string $biographie = null;
 
     #[ORM\Column(nullable: true, enumType: Specialite::class)]
-    #[Assert\Choice(callback: [self::class, 'getSpecialiteChoices'], message: 'La specialite selectionnee est invalide')]
+    #[Assert\Choice(callback: [Specialite::class, 'cases'], message: 'La specialite selectionnee est invalide')]
     // ...existing code...
     private ?Specialite $specialite = null;
 
     #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true, enumType: CentreInteret::class)]
     #[Assert\All([
-        new Assert\Choice(callback: [self::class, 'getCentreInteretChoices'], message: 'Un centre d\'interet selectionne est invalide')
+        new Assert\Choice(callback: [CentreInteret::class, 'cases'], message: 'Un centre d\'interet selectionne est invalide')
     ])]
     // ...existing code...
     private ?array $centre_interet = null;

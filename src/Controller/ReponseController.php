@@ -15,6 +15,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mime\Address;
+use Psr\Log\LoggerInterface;
 
 #[Route('/reponse')]
 final class ReponseController extends AbstractController
@@ -28,7 +33,7 @@ final class ReponseController extends AbstractController
     }
 
     #[Route('/new', name: 'app_reponse_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer, LoggerInterface $logger): Response
     {
         $reponse = new Reponse();
         $form = $this->createForm(ReponseType::class, $reponse);
@@ -43,6 +48,9 @@ final class ReponseController extends AbstractController
             }
             $entityManager->persist($reponse);
             $entityManager->flush();
+
+            // Send notification email to the user who created the reclamation
+            $this->sendReplyNotificationEmail($mailer, $logger, $reponse);
 
             return $this->redirectToRoute('app_reponse_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -91,7 +99,7 @@ final class ReponseController extends AbstractController
     }
 
     #[Route('/admin/reclamation/{id}', name: 'app_reponse_admin_create', methods: ['POST'])]
-    public function adminCreate(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager, UserRepository $userRepository, ReclamationRepository $reclamationRepository): Response
+    public function adminCreate(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager, UserRepository $userRepository, ReclamationRepository $reclamationRepository, MailerInterface $mailer, LoggerInterface $logger): Response
     {
         $reponse = new Reponse();
         $reponse->setReclamation($reclamation);
@@ -123,6 +131,9 @@ final class ReponseController extends AbstractController
 
             $entityManager->persist($reponse);
             $entityManager->flush();
+
+            // Send notification email to the reclamation creator
+            $this->sendReplyNotificationEmail($mailer, $logger, $reponse);
 
             return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
         }
@@ -238,5 +249,54 @@ final class ReponseController extends AbstractController
         }
 
         return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+    }
+
+    private function sendReplyNotificationEmail(
+        MailerInterface $mailer,
+        LoggerInterface $logger,
+        Reponse $reponse
+    ): void {
+        $reclamation = $reponse->getReclamation();
+        if (!$reclamation) {
+            $logger->warning('Cannot send reply notification: reclamation not found', ['reponse_id' => $reponse->getId()]);
+            return;
+        }
+
+        $user = $reclamation->getUser();
+        if (!$user || !$user->getEmail()) {
+            $logger->warning('Cannot send reply notification: user has no email', ['reclamation_id' => $reclamation->getId()]);
+            return;
+        }
+
+        try {
+            // Prepare logo attachment
+            $logoPath = $this->getParameter('kernel.project_dir') . '/assets/assetsback/images/logo2.png';
+            $logoContent = file_get_contents($logoPath);
+
+            $email = (new TemplatedEmail())
+                ->from(new Address('noreply@artium.tn', 'Artium'))
+                ->to($user->getEmail())
+                ->subject('Réponse à votre réclamation - ARTIUM')
+                ->htmlTemplate('emails/reponse.html.twig')
+                ->context([
+                    'user' => $user,
+                    'reclamation' => $reclamation,
+                    'reponse' => $reponse,
+                ])
+                ->attach($logoContent, 'artium-logo', 'image/png');
+
+            $mailer->send($email);
+            $logger->info('Reply notification email sent successfully', [
+                'user_id' => $user->getId(),
+                'reclamation_id' => $reclamation->getId(),
+                'reponse_id' => $reponse->getId(),
+            ]);
+        } catch (\Exception $e) {
+            $logger->error('Failed to send reply notification email: ' . $e->getMessage(), [
+                'user_id' => $user->getId(),
+                'reclamation_id' => $reclamation->getId(),
+                'reponse_id' => $reponse->getId(),
+            ]);
+        }
     }
 }

@@ -145,49 +145,13 @@
                     {% endif %}
                 </dl>
             </div>
-            <!-- Le conteneur pour la carte -->
-<div id="map" class="w-100 rounded" style="height: 300px; border: 1px solid #ddd;"></div>
-
-<script>
-  // Initialiser la carte
-  function initMap() {
-    // Lire les coordonnées depuis le champ localisation (format: latitude,longitude)
-    let location = { lat: 40.7408, lng: -74.0045 }; // Défaut si vide
-    
-    {% if evenement.galerie.localisation %}
-      const coords = "{{ evenement.galerie.localisation }}".trim().split(',');
-      if (coords.length === 2) {
-        location = {
-          lat: parseFloat(coords[0].trim()),
-          lng: parseFloat(coords[1].trim())
-        };
-      }
-    {% endif %}
-    
-    // Créer la carte
-    const map = new google.maps.Map(document.getElementById('map'), {
-      zoom: 15,
-      center: location,
-      mapTypeControl: true,
-      fullscreenControl: true,
-      zoomControl: true,
-    });
-    
-    // Ajouter un marqueur
-    new google.maps.Marker({
-      position: location,
-      map: map,
-      title: '{{ evenement.galerie.nom }}',
-      icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
-    });
-  }
-  
-  // Appeler la fonction quand la page charge
-  window.addEventListener('load', initMap);
-</script>
-
-<!-- Charger l'API Google Maps (remplacez YOUR_API_KEY par votre clé) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAIOZpPn6OSdFZty2bTORmAkjvwQ9GFMOQ"></script>
+            <div class="col-md-8">
+                <iframe class="w-100 rounded" height="300" 
+                    src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d2903.1184504179037!2d10.110210075465782!3d36.81223797224373!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMzbCsDQ4JzQ0LjEiTiAxMMKwMDYnNDYuMCJF!5e1!3m2!1sen!2stn!4v1770955086347!5m2!1sen!2stn" 
+                    style="border:0;" 
+                    aria-hidden="false" 
+                    tabindex="0"></iframe>
+            </div>
         </div>
     </div>
     {% endif %}

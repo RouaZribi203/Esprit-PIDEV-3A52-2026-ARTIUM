@@ -20,9 +20,6 @@ final class ReclamationArtisteController extends AbstractController
     public function index(Request $request, ReclamationRepository $reclamationRepository, UserRepository $userRepository): Response
     {
         $user = $this->getUser();
-        if (!$user instanceof User) {
-            $user = $userRepository->find(1);
-        }
 
         $search = trim((string) $request->query->get('q', ''));
         $statutValue = $request->query->get('statut');
@@ -75,10 +72,7 @@ final class ReclamationArtisteController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $user = $this->getUser();
             if (!$user instanceof User) {
-                $user = $userRepository->find(1);
-                if (!$user instanceof User) {
-                    throw $this->createNotFoundException('Utilisateur par defaut introuvable.');
-                }
+                throw $this->createNotFoundException('Utilisateur par defaut introuvable.');
             }
 
             $reclamation->setUser($user);
@@ -99,9 +93,6 @@ final class ReclamationArtisteController extends AbstractController
 
         if ($form->isSubmitted() && !$form->isValid()) {
             $user = $this->getUser();
-            if (!$user instanceof User) {
-                $user = $userRepository->find(1);
-            }
 
             $reclamations = [];
             if ($user instanceof User) {
@@ -150,9 +141,6 @@ final class ReclamationArtisteController extends AbstractController
 
         if ($form->isSubmitted() && !$form->isValid()) {
             $user = $this->getUser();
-            if (!$user instanceof User) {
-                $user = $userRepository->find(1);
-            }
 
             $reclamations = [];
             if ($user instanceof User) {

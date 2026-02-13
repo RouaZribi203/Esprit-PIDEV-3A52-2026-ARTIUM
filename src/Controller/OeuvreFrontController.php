@@ -20,40 +20,37 @@ final class OeuvreFrontController extends AbstractController
 {
     #[Route('/mes_oeuvres', name: 'app_oeuvre_front')]
     public function index(OeuvreRepository $oeuvreRepository, UserRepository $userRepository): Response
-    {   $user = $userRepository->find(1);
+    {
+        $user = $this->getUser();
         $oeuvre = new Oeuvre();
         $oeuvres = [];
-        $oeuvres = $oeuvreRepository->findAll();
-        //foreach ($user->getCollections() as $collection) {
-        //foreach ($collection->getOeuvres() as $oeuvre) {
-        //    $oeuvres[] = $oeuvre;
-        //}
-        //}
+        if ($user && method_exists($user, 'getCollections')) {
+            foreach ($user->getCollections() as $collection) {
+                if (method_exists($collection, 'getOeuvres')) {
+                    foreach ($collection->getOeuvres() as $oeuvreItem) {
+                        $oeuvres[] = $oeuvreItem;
+                    }
+                }
+            }
+        }
         $processedOeuvres = [];
-        $form = $this->createForm(OeuvreType::class, $oeuvre,['include_date' => false,]);
-        //$formEdit = [];
-        //foreach ($oeuvres as $oeuvre) {
-        ///$formEdit[$oeuvre->getId()] = $this->createForm(OeuvreType::class, $oeuvre)->createView();
-       // }
-        
+        $form = $this->createForm(OeuvreType::class, $oeuvre, [
+            'include_date' => false,
+            'user' => $user,
+        ]);
         foreach ($oeuvres as $oeuvre) {
             $image = $oeuvre->getImage();
-            
             if ($image) {
-                // Handle resource streams
                 if (is_resource($image)) {
                     rewind($image);
                     $imageData = stream_get_contents($image);
                 } else {
                     $imageData = $image;
                 }
-                
-                // Only process if we have actual image data
                 if ($imageData && strlen($imageData) > 0) {
                     $imageBase64 = base64_encode($imageData);
                     $finfo = new \finfo(FILEINFO_MIME_TYPE);
                     $mimeType = $finfo->buffer($imageData);
-                    
                     $processedOeuvres[$oeuvre->getId()] = [
                         'imageBase64' => $imageBase64,
                         'mimeType' => $mimeType ?: 'image/jpeg',
@@ -64,8 +61,7 @@ final class OeuvreFrontController extends AbstractController
         return $this->render('oeuvre_front/oeuvre_front.html.twig', [
             'controller_name' => 'OeuvreFrontController',
             'form' => $form->createView(),
-            //'formEdit' => $formEdit, 
-            'oeuvres' => $oeuvreRepository->findAll(),
+            'oeuvres' => $oeuvres,
             'typeOeuvres' => TypeOeuvre::cases(),
             'processedOeuvres' => $processedOeuvres,
         ]);
@@ -74,7 +70,11 @@ final class OeuvreFrontController extends AbstractController
     public function new(Request $request,EntityManagerInterface $entityManager,UserRepository $userRepository): Response {
         
         $oeuvre = new Oeuvre();
-        $form = $this->createForm(OeuvreType::class, $oeuvre,['include_date' => false,]);
+        $user = $this->getUser();
+        $form = $this->createForm(OeuvreType::class, $oeuvre, [
+            'include_date' => false,
+            'user' => $user,
+        ]);
         $form->handleRequest($request);
 
        if ($form->isSubmitted() && $form->isValid()) {
@@ -96,8 +96,44 @@ final class OeuvreFrontController extends AbstractController
         return $this->redirectToRoute('app_oeuvre_front');
        }
 
+       $user = $this->getUser();
+       $oeuvres = [];
+       if ($user && method_exists($user, 'getCollections')) {
+           foreach ($user->getCollections() as $collection) {
+               if (method_exists($collection, 'getOeuvres')) {
+                   foreach ($collection->getOeuvres() as $oeuvreItem) {
+                       $oeuvres[] = $oeuvreItem;
+                   }
+               }
+           }
+       }
+       $processedOeuvres = [];
+       foreach ($oeuvres as $oeuvre) {
+           $image = $oeuvre->getImage();
+           if ($image) {
+               if (is_resource($image)) {
+                   rewind($image);
+                   $imageData = stream_get_contents($image);
+               } else {
+                   $imageData = $image;
+               }
+               if ($imageData && strlen($imageData) > 0) {
+                   $imageBase64 = base64_encode($imageData);
+                   $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                   $mimeType = $finfo->buffer($imageData);
+                   $processedOeuvres[$oeuvre->getId()] = [
+                       'imageBase64' => $imageBase64,
+                       'mimeType' => $mimeType ?: 'image/jpeg',
+                   ];
+               }
+           }
+       }
        return $this->render('oeuvre_front/oeuvre_front.html.twig', [
-        'form' => $form->createView(),]);
+           'form' => $form->createView(),
+           'oeuvres' => $oeuvres,
+           'typeOeuvres' => TypeOeuvre::cases(),
+           'processedOeuvres' => $processedOeuvres,
+       ]);
     }
     #[Route('/oeuvre/{id}', name: 'app_oeuvre_delete', methods: ['POST'])]
     public function delete(Request $request, Oeuvre $oeuvre, EntityManagerInterface $em): Response

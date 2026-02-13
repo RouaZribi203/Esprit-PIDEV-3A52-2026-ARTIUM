@@ -33,26 +33,24 @@
 							</div>
 							<!-- Info -->
 							<h5 class="mb-0">
-								<a href="#!">User
-								</a>
-							</h5>
-							<small>Web Developer at Webestica</small>
-							<p class="mt-3">I'd love to change the world, but they won’t give me the source code.</p>
+							<a href="#!">{{ app.user ? app.user.nom ~ ' ' ~ app.user.prenom : 'User' }}
+							</a>
+						</h5>
+						<small>Amateur D'art</small>
+						<p class="mt-3">{{ app.user.biographie ?? "I'd love to change the world, but they won't give me the source code." }}</p>
 
-							<!-- User stat START -->
-							<div class="hstack gap-2 gap-xl-3 justify-content-center">
-								<!-- User stat item -->
-								<div>
-									<h6 class="mb-0">Tunis</h6>
-									<small>Ville</small>
-								</div>
-								<!-- Divider -->
-								<div class="vr"></div>
-								<!-- User stat item -->
-								<div>
-									<h6 class="mb-0">12 Nov 1990</h6>
-									<small>Date de naissance</small>
-								</div>
+						<!-- User stat START -->
+						<div class="hstack gap-2 gap-xl-3 justify-content-center">
+							<!-- User stat item -->
+							<div>
+								<h6 class="mb-0">{{ app.user.ville ?? 'Tunis' }}</h6>
+								<small>Ville</small>
+							</div>
+							<!-- Divider -->
+							<div class="vr"></div>
+							<!-- User stat item -->
+							<div>
+								<h6 class="mb-0">{{ app.user.dateNaissance ? app.user.dateNaissance|date('d M Y') : '12 Nov 1990' }}</h6>
 								<!-- User stat item -->
 							</div>
 							<!-- User stat END -->

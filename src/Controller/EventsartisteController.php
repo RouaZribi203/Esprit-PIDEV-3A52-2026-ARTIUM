@@ -34,7 +34,7 @@ final class EventsartisteController extends AbstractController
         $artiste = $this->getArtisteOrDeny($userRepository);
 
         $evenements = $evenementRepository->findBy(
-            ['artiste' => $artiste],
+            ['artiste' => $this->getUser()],
             ['date_debut' => 'DESC']
         );
 
@@ -50,7 +50,7 @@ final class EventsartisteController extends AbstractController
             $this->handleImageUpload($newForm, $newEvenement);
             
             if ($newForm->isValid()) {
-                $newEvenement->setArtiste($artiste);
+                $newEvenement->setArtiste($this->getUser());
                 $newEvenement->setDateCreation(new \DateTime());
                 $newEvenement->setStatut($this->resolveStatut($newEvenement));
 

@@ -3,429 +3,273 @@
 {% block title %}{{ 'Bibliothèque'|trans }}{% endblock %}
 
 {% block artiste_content %}
-<!-- Share feed START -->
-          
-          <!-- Share feed END -->
 
-          <!-- Artist Bibliothèque (static UI) START -->
-          <div class="card mb-4">
-            <div class="card-body">
-              <div class="d-flex align-items-center justify-content-between mb-3">
-                <h4 class="mb-0">Ma Bibliothèque</h4>
-                <button class="btn btn-success" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddLivreFront" aria-controls="offcanvasAddLivreFront">Ajouter un Livre</button>
-              </div>
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="mb-0">Ma Bibliothèque</h4>
+      <button class="btn btn-success"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#offcanvasAddLivreFront">
+        Ajouter un Livre
+      </button>
+    </div>
 
-              <div class="row g-3">
-                {# Render actual livres for the current user if available, otherwise fallback to placeholders #}
-                {% if livres is defined and livres|length > 0 %}
-                  {% for livre in livres %}
-                    {% set stats = livreStats[livre.id] ?? {} %}
-                    <div class="col-12 col-sm-6 col-md-4">
-                      <div class="card h-100 shadow-sm border-0 rounded-3 position-relative">
-                        <div class="card-body d-flex flex-column p-3">
-                          <div style="position:absolute;top:8px;right:8px;z-index:5;">
-                            <div class="dropdown">
-                              <a href="#" class="text-muted" id="cardAction{{ livre.id }}" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></a>
-                              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardAction{{ livre.id }}">
-                                <li>
-                                  <a class="dropdown-item js-show-details" href="#"
-                                     data-id="{{ livre.id }}"
-                                     data-titre="{{ livre.titre|e('html_attr') }}"
-                                     data-date-creation="{{ livre.dateCreation ? livre.dateCreation|date('Y-m-d H:i:s') : '' }}"
-                                     data-description="{{ livre.description|e('html_attr') }}"
-                                     data-pdf-url="{{ livre.id ? path('livre_pdf', {'id': livre.id})|e('html_attr') : '' }}"
-                                     data-image="{{ livre.id ? path('livre_image', {'id': livre.id})|e('html_attr') : '' }}"
-                                     data-active-id="{{ stats.activeId is defined ? stats.activeId : '' }}"
-                                     data-active-date="{{ stats.activeDate is defined ? stats.activeDate : '' }}"
-                                     data-location-count="{{ stats.count is defined ? stats.count : 0 }}"
-                                     data-total-revenue="{{ stats.total is defined ? '%.2f'|format(stats.total) : '0.00' }}">
-                                    Détails
-                                  </a>
-                                </li>
-                                    <li><a class="dropdown-item js-edit-livre" href="#"
-                                      data-id="{{ livre.id }}"
-                                      data-titre="{{ livre.titre|e('html_attr') }}"
-                                      data-description="{{ livre.description|e('html_attr') }}"
-                                      data-categorie="{{ livre.categorie|e('html_attr') }}"
-                                      data-prix="{{ livre.prixLocation is not null ? livre.prixLocation : '' }}"
-                                      data-collection="{{ livre.collection ? livre.collection.id : '' }}">Modifier</a></li>
-                                <li><a class="dropdown-item text-danger js-delete-livre" href="#"
-                                     data-id="{{ livre.id }}"
-                                     data-delete-url-template="{{ path('app_bibliofront_delete', {'id': 0}) }}"
-                                  >Supprimer</a></li>
-                              </ul>
-                            </div>
-                          </div>
+    <div class="row g-3">
+      {% if livres is defined and livres|length > 0 %}
+        {% for livre in livres %}
 
-                          <div class="d-flex flex-column align-items-center text-center">
-                            <img src="{{ livre.id ? path('livre_image', {'id': livre.id}) : asset('assetsfront/images/post/3by2/01.jpg') }}" alt="Couverture {{ livre.titre }}" class="rounded mb-3" style="width:140px;height:200px;object-fit:cover;">
-                            <h5 class="mb-1 fw-semibold">{{ livre.titre }}</h5>
-                            <div class="mb-2 text-muted">Catégorie: <span class="fw-medium text-dark">{{ livre.categorie }}</span></div>
-                            <div class="mb-2"><strong class="text-primary">{{ livre.prixLocation is not null ? livre.prixLocation ~ ' €' : '-' }}</strong> <small class="text-muted">/ jour</small></div>
-                            <div class="mb-2">
-                              {% set isRented = (stats.activeId is defined and stats.activeId) %}
-                              <span class="badge {{ isRented ? 'bg-success' : 'bg-secondary' }}">{{ isRented ? 'Loué' : 'Non loué' }}</span>
-                            </div>
-                            <div class="text-muted small">Collection: <span class="text-dark">{{ livre.collection ? livre.collection.titre : '-' }}</span></div>
-                          </div>
+          <div class="col-12 col-sm-6 col-md-4">
+            <div class="card h-100 shadow-sm border-0 rounded-3 position-relative">
+              <div class="card-body d-flex flex-column p-3">
 
-                        </div>
-                      </div>
-                    </div>
-                  {% endfor %}
-                {% else %}
-                  {# fallback static placeholders when no livres found #}
-                  {% for i in 1..6 %}
-                    <div class="col-12 col-sm-6 col-md-4">
-                      <div class="card h-100 shadow-sm border-0 rounded-3 position-relative">
-                        <div class="card-body d-flex flex-column p-3">
-                          <div style="position:absolute;top:8px;right:8px;z-index:5;">
-                            <div class="dropdown">
-                              <a href="#" class="text-muted" id="cardAction{{ i }}" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></a>
-                              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardAction{{ i }}">
-                                <li>
-                                  <a class="dropdown-item js-show-details" href="#"
-                                     data-id="{{ i }}"
-                                     data-titre="Titre du livre {{ i }}"
-                                     data-date-creation="--/--/----"
-                                     data-description="Ceci est une description statique du livre {{ i }}. Plus de détails à venir lorsque le CRUD sera disponible."
-                                     data-pdf-url=""
-                                     data-image="{{ asset('assetsfront/images/post/3by2/0' ~ (((i - 1) % 3) + 1) ~ '.jpg') }}"
-                                     data-active-id=""
-                                     data-active-date=""
-                                     data-location-count="{{ 2 * i }}"
-                                     data-total-revenue="{{ '%.2f'|format((2 * i) * (6 + i)) }}">
-                                    Détails
-                                  </a>
-                                </li>
-                                <li><a class="dropdown-item" href="#">Modifier</a></li>
-                                <li><a class="dropdown-item text-danger" href="#">Supprimer</a></li>
-                              </ul>
-                            </div>
-                          </div>
+                <div style="position:absolute;top:8px;right:8px;z-index:5;">
+                  <div class="dropdown">
+                    <a href="#" class="text-muted" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
 
-                          <div class="d-flex flex-column align-items-center text-center">
-                            <img src="{{ asset('assetsfront/images/post/3by2/0' ~ (((i - 1) % 3) + 1) ~ '.jpg') }}" alt="Couverture livre {{ i }}" class="rounded mb-3" style="width:140px;height:200px;object-fit:cover;">
-                            <h5 class="mb-1 fw-semibold">Titre du livre {{ i }}</h5>
-                            <div class="mb-2 text-muted">Catégorie: <span class="fw-medium text-dark">Roman</span></div>
-                            <div class="mb-2"><strong class="text-primary">{{ (6 + i) }} €</strong> <small class="text-muted">/ jour</small></div>
-                            <div class="mb-2">
-                              <span class="badge {{ (i % 2) == 0 ? 'bg-success' : 'bg-secondary' }}">{{ (i % 2) == 0 ? 'Loué' : 'Non loué' }}</span>
-                            </div>
-                            <div class="text-muted small">Collection: <span class="text-dark">Collection {{ i }}</span></div>
-                          </div>
+                      <!-- DETAILS -->
+                      <li>
+                        <a class="dropdown-item js-show-details"
+                           href="#"
+                           data-id="{{ livre.id }}"
+                           data-titre="{{ livre.titre|e('html_attr') }}"
+                           data-date-creation="{{ livre.dateCreation ? livre.dateCreation|date('Y-m-d H:i:s') : '' }}"
+                           data-description="{{ livre.description|e('html_attr') }}"
+                           data-pdf-url="{{ path('livre_pdf', {'id': livre.id}) }}"
+                           data-image="{{ path('livre_image', {'id': livre.id}) }}">
+                          Détails
+                        </a>
+                      </li>
 
-                        </div>
-                      </div>
-                    </div>
-                  {% endfor %}
-                {% endif %}
-              </div>
-            </div>
-          </div>
-          <!-- Artist Bibliothèque (static UI) END -->
- 
-          <!-- Book Details Modal (admin-style, static) -->
-          <!-- Offcanvas: Ajouter Livre (static front UI) -->
-          <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddLivreFront" aria-labelledby="offcanvasAddLivreFrontLabel">
-            <div class="offcanvas-header">
-              <h5 id="offcanvasAddLivreFrontLabel">Ajouter Livre</h5>
-              <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body">
-              <form id="addLivreFormFront" method="post" action="{{ path('app_bibliofront_create') }}" enctype="multipart/form-data">
-                <div class="mb-3">
-                  <label class="form-label">Titre</label>
-                  <input type="text" class="form-control" name="titre" placeholder="Titre du livre" required>
+                      <!-- EDIT -->
+                      <li>
+                        <a class="dropdown-item js-edit-livre"
+                           href="#"
+                           data-id="{{ livre.id }}"
+                           data-titre="{{ livre.titre|e('html_attr') }}"
+                           data-description="{{ livre.description|e('html_attr') }}"
+                           data-categorie="{{ livre.categorie|e('html_attr') }}"
+                           data-prix="{{ livre.prixLocation }}"
+                           data-collection="{{ livre.collection ? livre.collection.id : '' }}">
+                          Modifier
+                        </a>
+                      </li>
+
+                      <!-- DELETE -->
+                      <li>
+                        <a class="dropdown-item text-danger js-delete-livre"
+                           href="#"
+                           data-id="{{ livre.id }}">
+                          Supprimer
+                        </a>
+                      </li>
+
+                    </ul>
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label class="form-label">Description</label>
-                  <textarea class="form-control" name="description" rows="3"></textarea>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Image (aperçu)</label>
-                  <input type="file" class="form-control" name="image" accept="image/*">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Fichier PDF</label>
-                  <input type="file" class="form-control" name="fichier_pdf" accept="application/pdf">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Catégorie</label>
-                  <input type="text" class="form-control" name="categorie" placeholder="Catégorie">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Prix location</label>
-                  <input type="number" step="0.01" class="form-control" name="prix_location" placeholder="Prix">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Collection</label>
-                  <select name="collection" class="form-select">
-                    <option value="">Choisir une collection</option>
-                    {% if collections is defined %}
-                      {% for coll in collections %}
-                        <option value="{{ coll.id }}">{{ coll.titre }}</option>
-                      {% endfor %}
-                    {% endif %}
-                  </select>
-                </div>
-                <div class="d-flex justify-content-end mt-3">
-                  <button type="submit" class="btn btn-primary">Enregistrer</button>
-                </div>
-              </form>
-            </div>
-          </div>
-          <!-- Offcanvas: Modifier Livre (front) -->
-          <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditLivreFront" aria-labelledby="offcanvasEditLivreFrontLabel">
-            <div class="offcanvas-header">
-              <h5 id="offcanvasEditLivreFrontLabel">Modifier Livre</h5>
-              <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body">
-              <form id="editLivreFormFront" method="post" action="" enctype="multipart/form-data">
-                <input type="hidden" name="id" value="" />
-                <div class="mb-3">
-                  <label class="form-label">Titre</label>
-                  <input type="text" class="form-control" name="livre[titre]" placeholder="Titre du livre" required>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Description</label>
-                  <textarea class="form-control" name="livre[description]" rows="3"></textarea>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Image (remplacer)</label>
-                  <input type="file" class="form-control" name="livre[image]" accept="image/*">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Fichier PDF (remplacer)</label>
-                  <input type="file" class="form-control" name="livre[fichier_pdf]" accept="application/pdf">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Catégorie</label>
-                  <input type="text" class="form-control" name="livre[categorie]" placeholder="Catégorie">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Prix location</label>
-                  <input type="number" step="0.01" class="form-control" name="livre[prix_location]" placeholder="Prix">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Collection</label>
-                  <select name="livre[collection]" class="form-select">
-                    <option value="">Choisir une collection</option>
-                    {% if collections is defined %}
-                      {% for coll in collections %}
-                        <option value="{{ coll.id }}">{{ coll.titre }}</option>
-                      {% endfor %}
-                    {% endif %}
-                  </select>
-                </div>
-                <div class="d-flex justify-content-end mt-3">
-                  <button type="submit" class="btn btn-primary">Enregistrer</button>
-                </div>
-              </form>
-            </div>
-          </div>
-          <div class="modal fade" id="livreDetailsModal" tabindex="-1" aria-labelledby="livreDetailsLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-              <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="livreDetailsLabel">Détails du livre</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                      <div class="row g-3">
-                        <div class="col-12 col-md-7">
-                          <div class="card mb-3">
-                            <div class="card-body">
-                              <h5 class="card-title" id="detail-titre">—</h5>
-                              <p class="text-muted mb-1"><strong>ID:</strong> <span id="detail-id">—</span></p>
-                              <p class="text-muted mb-1"><strong>Date de création:</strong> <span id="detail-date-creation">—</span></p>
-                              <p id="detail-description">—</p>
-                              <p id="detail-pdf">—</p>
-                            </div>
-                          </div>
-                          <div class="card">
-                            <div class="card-body" id="rental-section">
-                                      <h6>Informations de location <span id="rental-badge"></span></h6>
-                                      <p class="mb-1"><strong>ID location:</strong> <span id="detail-location-id">-</span></p>
-                                      <p class="mb-1"><strong>Date début:</strong> <span id="detail-location-date">-</span></p>
-                                      <p class="mb-1"><strong>Date d'expiration:</strong> <span id="detail-location-expiration">-</span></p>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div class="col-12 col-md-5">
-                                  <div class="card mb-3">
-                                    <div class="card-body text-center">
-                                      <img id="detail-image" src="" alt="" class="img-fluid mb-2" style="max-height:200px;" />
-                                      <div class="small text-muted">Fichier PDF: <span id="detail-pdf-label">—</span></div>
-                                    </div>
-                                  </div>
-                                  <div class="card">
-                                    <div class="card-body">
-                                      <h6>Statistiques</h6>
-                                      <p class="mb-1"><strong>Nombre d’emprunts:</strong> <span id="stat-count">0</span></p>
-                                      <p class="mb-1"><strong>Budget total généré:</strong> <span id="stat-total">0.00</span> </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                            </div>
-                          </div>
-                    </div>
+
+                <div class="d-flex flex-column align-items-center text-center">
+                  <img src="{{ path('livre_image', {'id': livre.id}) }}"
+                       class="rounded mb-3"
+                       style="width:140px;height:200px;object-fit:cover;">
+
+                  <h5 class="mb-1 fw-semibold">{{ livre.titre }}</h5>
+
+                  <div class="mb-2 text-muted">
+                    Catégorie:
+                    <span class="fw-medium text-dark">{{ livre.categorie }}</span>
                   </div>
 
-                  <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                      // delegate clicks on Détails anchors (they carry data- attributes)
-                      document.body.addEventListener('click', function(e){
-                        const el = e.target.closest('.js-show-details');
-                        if (!el) return;
-                        e.preventDefault();
+                  <div class="mb-2">
+                    <strong class="text-primary">
+                      {{ livre.prixLocation }} €
+                    </strong>
+                    <small class="text-muted">/ jour</small>
+                  </div>
 
-                        const modalEl = document.getElementById('livreDetailsModal');
-                        if (!modalEl) return;
+                  <div class="text-muted small mt-2">
+                    Collection:
+                    <span class="text-dark">
+                      {{ livre.collection ? livre.collection.titre : '-' }}
+                    </span>
+                  </div>
+                </div>
 
-                        const dataset = el.dataset;
+              </div>
+            </div>
+          </div>
 
-                        // General
-                        document.getElementById('detail-id').textContent = dataset.id || '-';
-                        document.getElementById('detail-titre').textContent = dataset.titre || '-';
-                        document.getElementById('detail-date-creation').textContent = dataset.dateCreation || '-';
-                        document.getElementById('detail-description').textContent = dataset.description || '-';
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</div>
 
-                        // PDF or image embed + download link — detect MIME via HEAD request
-                        const pdfLabel = document.getElementById('detail-pdf-label');
-                        const pdfUrl = dataset.pdfUrl || '';
-                        if (!pdfUrl) {
-                          pdfLabel.innerHTML = '<span class="badge bg-secondary">Aucun fichier</span>';
-                        } else {
-                          pdfLabel.innerHTML = '<div class="text-muted">Chargement du fichier…</div>';
-                          fetch(pdfUrl, { method: 'HEAD' }).then(function(resp) {
-                            const ct = (resp.headers.get('Content-Type') || '').toLowerCase();
-                            if (ct.startsWith('image/')) {
-                              pdfLabel.innerHTML = '<div class="pdf-embed"><img src="' + pdfUrl + '" style="max-width:100%;height:auto;border:0;" alt="Fichier image" /><div class="mt-2"><a href="' + pdfUrl + '?download=1" class="btn btn-sm btn-primary" target="_blank">Télécharger</a></div></div>';
-                            } else {
-                              pdfLabel.innerHTML = '<div class="pdf-embed"><iframe src="' + pdfUrl + '" style="width:100%;height:320px;border:0;"></iframe><div class="mt-2"><a href="' + pdfUrl + '?download=1" class="btn btn-sm btn-primary" target="_blank">Télécharger</a></div></div>';
-                            }
-                          }).catch(function() {
-                            pdfLabel.innerHTML = '<div class="mt-2"><a href="' + pdfUrl + '?download=1" class="btn btn-sm btn-primary" target="_blank">Télécharger le fichier</a></div>';
-                          });
-                        }
+<!-- ========================= -->
+<!-- DETAILS MODAL -->
+<!-- ========================= -->
+<div class="modal fade" id="livreDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
 
-                        // Image
-                        const img = document.getElementById('detail-image');
-                        if (dataset.image) {
-                          img.src = dataset.image;
-                          img.style.display = '';
-                        } else {
-                          img.src = '';
-                          img.style.display = 'none';
-                        }
+      <div class="modal-header">
+        <h5 class="modal-title">Détails du livre</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-                        // Rental info
-                        const activeId = dataset.activeId || '';
-                        const activeDate = dataset.activeDate || '';
-                        document.getElementById('detail-location-id').textContent = activeId || '-';
-                        document.getElementById('detail-location-date').textContent = activeDate || '-';
+      <div class="modal-body">
+        <h5 id="detail-titre">—</h5>
+        <p><strong>ID:</strong> <span id="detail-id">—</span></p>
+        <p><strong>Date:</strong> <span id="detail-date-creation">—</span></p>
+        <p id="detail-description">—</p>
 
-                        // expiration: add 7 days to activeDate if present
-                        const expEl = document.getElementById('detail-location-expiration');
-                        if (activeDate) {
-                          const d = new Date(activeDate);
-                          d.setDate(d.getDate() + 7);
-                          expEl.textContent = d.toISOString().slice(0,19).replace('T',' ');
-                        } else {
-                          expEl.textContent = '-';
-                        }
+        <img id="detail-image"
+             class="img-fluid mb-3"
+             style="max-height:200px;">
 
-                        // Stats
-                        const count = parseInt(dataset.locationCount || '0', 10);
-                        const total = parseFloat(dataset.totalRevenue || '0');
-                        document.getElementById('stat-count').textContent = count;
-                        document.getElementById('stat-total').textContent = total.toFixed(2);
+        <div id="detail-pdf-label"></div>
+      </div>
 
-                        // rental section styling
-                        const rentalSection = document.getElementById('rental-section');
-                        const rentalBadge = document.getElementById('rental-badge');
-                        if (!activeId) {
-                          rentalSection.style.opacity = '0.5';
-                          rentalSection.style.backgroundColor = '#f5f5f5';
-                          rentalBadge.innerHTML = '<span class="badge bg-secondary ms-2">Aucune location active</span>';
-                        } else {
-                          rentalSection.style.opacity = '';
-                          rentalSection.style.backgroundColor = '';
-                          rentalBadge.innerHTML = '<span class="badge bg-success ms-2">Active</span>';
-                        }
+    </div>
+  </div>
+</div>
 
-                        const modal = new bootstrap.Modal(modalEl);
-                        modal.show();
-                      });
-                    });
-                  </script>
+<!-- ========================= -->
+<!-- OFFCANVAS ADD -->
+<!-- ========================= -->
+<div class="offcanvas offcanvas-end"
+     tabindex="-1"
+     id="offcanvasAddLivreFront">
 
-          <script>
-            // Prefill and open the front edit offcanvas when "Modifier" is clicked
-            document.addEventListener('click', function(e){
-              const btn = e.target.closest('.js-edit-livre');
-              if (!btn) return;
-              e.preventDefault();
+  <div class="offcanvas-header">
+    <h5>Ajouter Livre</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
 
-              const form = document.getElementById('editLivreFormFront');
-              if (!form) return;
+  <div class="offcanvas-body">
 
-              const dataset = btn.dataset;
-              const id = dataset.id || '';
+    {{ form_start(livreForm, {
+      action: path('artiste_livre_create'),
+      attr: {'enctype': 'multipart/form-data'}
+    }) }}
 
-              // set action to the front edit route
-              form.action = id ? ("/user-bibliotheque/livre/" + id + "/edit") : '';
+      {{ form_row(livreForm.titre, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.description, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.image, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.fichier_pdf, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.categorie, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.prix_location, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.collection, {'attr': {'class': 'form-select'}}) }}
 
-              function setField(name, value){
-                const el = form.querySelector('[name="' + name + '"]');
-                if (el) el.value = value || '';
-              }
+      <button type="submit" class="btn btn-primary w-100">
+        Enregistrer
+      </button>
 
-              setField('livre[titre]', dataset.titre);
-              setField('livre[description]', dataset.description);
-              setField('livre[categorie]', dataset.categorie);
-              setField('livre[prix_location]', dataset.prix);
-              setField('livre[collection]', dataset.collection);
+    {{ form_end(livreForm) }}
 
-              // clear file inputs
-              const imgInput = form.querySelector('[name="livre[image]"]'); if (imgInput) imgInput.value = '';
-              const pdfInput = form.querySelector('[name="livre[fichier_pdf]"]'); if (pdfInput) pdfInput.value = '';
+  </div>
+</div>
 
-              const off = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvasEditLivreFront'));
-              off.show();
-            });
-          </script>
+<!-- ========================= -->
+<!-- OFFCANVAS EDIT -->
+<!-- ========================= -->
+<div class="offcanvas offcanvas-end"
+     tabindex="-1"
+     id="offcanvasEditLivreFront">
 
-          <script>
-            // Delete handler: confirmation then POST (mirrors admin logic)
-            document.addEventListener('click', function(e){
-              const btn = e.target.closest('.js-delete-livre');
-              if (!btn) return;
-              e.preventDefault();
+  <div class="offcanvas-header">
+    <h5>Modifier Livre</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
 
-              if (!confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) {
-                return;
-              }
+  <div class="offcanvas-body">
+    <form id="editLivreFormFront"
+          method="post"
+          enctype="multipart/form-data">
 
-              const id = btn.dataset.id;
-              const tmpl = btn.dataset.deleteUrlTemplate || '';
-              const action = tmpl ? tmpl.replace('/0', '/' + id) : ('/user-bibliotheque/livre/' + id + '/delete');
+      <input type="text" name="livre[titre]" class="form-control mb-3">
+      <textarea name="livre[description]" class="form-control mb-3"></textarea>
+      <input type="file" name="livre[image]" class="form-control mb-3">
+      <input type="file" name="livre[fichier_pdf]" class="form-control mb-3">
+      <input type="text" name="livre[categorie]" class="form-control mb-3">
+      <input type="number" step="0.01"
+             name="livre[prix_location]"
+             class="form-control mb-3">
 
-              const f = document.createElement('form');
-              f.method = 'post';
-              f.action = action;
-              f.style.display = 'none';
-              document.body.appendChild(f);
-              f.submit();
-            });
-          </script>
+      <select name="livre[collection]" class="form-select mb-3">
+        {% for coll in collections %}
+          <option value="{{ coll.id }}">{{ coll.titre }}</option>
+        {% endfor %}
+      </select>
 
-          
+      <button type="submit" class="btn btn-primary w-100">
+        Enregistrer
+      </button>
+
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('click', function(e){
+
+  // DETAILS
+  const detailsBtn = e.target.closest('.js-show-details');
+  if (detailsBtn) {
+    e.preventDefault();
+    const d = detailsBtn.dataset;
+
+    document.getElementById('detail-id').textContent = d.id;
+    document.getElementById('detail-titre').textContent = d.titre;
+    document.getElementById('detail-date-creation').textContent = d.dateCreation;
+    document.getElementById('detail-description').textContent = d.description;
+    document.getElementById('detail-image').src = d.image;
+    document.getElementById('detail-pdf-label').innerHTML =
+      '<iframe src="' + d.pdfUrl + '" style="width:100%;height:300px;border:0;"></iframe>';
+
+    new bootstrap.Modal(document.getElementById('livreDetailsModal')).show();
+  }
+
+  // EDIT (FIXED PREFILL)
+  const editBtn = e.target.closest('.js-edit-livre');
+  if (editBtn) {
+    e.preventDefault();
+
+    const d = editBtn.dataset;
+    const form = document.getElementById('editLivreFormFront');
+
+    form.action = "/artiste-bibliotheque/livre/" + d.id + "/edit";
+
+    form.querySelector('[name="livre[titre]"]').value = d.titre || '';
+    form.querySelector('[name="livre[description]"]').value = d.description || '';
+    form.querySelector('[name="livre[categorie]"]').value = d.categorie || '';
+    form.querySelector('[name="livre[prix_location]"]').value = d.prix || '';
+    form.querySelector('[name="livre[collection]"]').value = d.collection || '';
+
+    bootstrap.Offcanvas.getOrCreateInstance(
+      document.getElementById('offcanvasEditLivreFront')
+    ).show();
+  }
+
+  // DELETE
+  const deleteBtn = e.target.closest('.js-delete-livre');
+  if (deleteBtn) {
+    e.preventDefault();
+    if (!confirm('Êtes-vous sûr ?')) return;
+
+    const id = deleteBtn.dataset.id;
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = "/artiste-bibliotheque/livre/" + id + "/delete";
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+});
+</script>
 
 {% endblock %}

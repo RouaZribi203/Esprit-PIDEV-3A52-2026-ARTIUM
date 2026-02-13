@@ -18,7 +18,7 @@ final class CollectionsController extends AbstractController
     #[Route(name: 'app_collections_front')]
     public function index(CollectionsRepository $collectionsRepository): Response
     {   
-        $collections = $collectionsRepository->findAll();
+        $collections = $this->getUser()->getCollections();
         $processedOeuvres = [];
         
         // Detect MIME types for all oeuvre images
@@ -59,7 +59,7 @@ final class CollectionsController extends AbstractController
 
         return $this->render('Front Office/collections_front/collectionsfront.html.twig', [
             'controller_name' => 'CollectionsController',
-            'collections' => $collections,
+            'collections' => $this->getUser()->getCollections(),
             'processedOeuvres' => $processedOeuvres,
             'form' => $form,
             'formEdit' => $formEdit, 
@@ -69,8 +69,13 @@ final class CollectionsController extends AbstractController
     #[Route('/store', name: 'app_collections_store', methods: ['POST'])]
     public function store(Request $request, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
     {
+        $collections = $this->getUser()->getCollections();
+        $formEdit = [];
+        foreach ($collections as $collection) {
+        $formEdit[$collection->getId()] = $this->createForm(CollectionsType::class, $collection)->createView();
+        }
         $collection = new Collections();
-        $artiste = $userRepository->find(1);
+        $artiste = $this->getUser();
         $collection->setArtiste($artiste);
         $form = $this->createForm(CollectionsType::class, $collection);
         $form->handleRequest($request);
@@ -81,7 +86,11 @@ final class CollectionsController extends AbstractController
             return $this->redirectToRoute('app_collections_front', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->redirectToRoute('app_collections_front', [], Response::HTTP_SEE_OTHER);
+        return $this->render('Front Office/collections_front/collectionsfront.html.twig', [
+        'form' => $form->createView(),
+        'formEdit' => $formEdit, 
+        'collections' => $this->getUser()->getCollections(),
+    ]);
     }
 
     #[Route('/search', name: 'collection_search_first')]
@@ -209,7 +218,7 @@ final class CollectionsController extends AbstractController
     #[Route('/{id}/edit', name: 'collection_edit', methods: ['GET', 'POST'])]
     public function edit(Collections $collection, Request $request, EntityManagerInterface $em,CollectionsRepository $collectionsRepository): Response
     {
-        $collections = $collectionsRepository->findAll();
+        $collections = $this->getUser()->getCollections();
         $form = $this->createForm(CollectionsType::class, $collection);
         $form->handleRequest($request);
 

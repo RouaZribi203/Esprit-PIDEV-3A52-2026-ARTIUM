@@ -172,13 +172,13 @@
 									<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt="avatar">
 								</div>
 								<div>
-									<a class="h6 stretched-link" href="#">Lori Ferguson</a>
+									<a class="h6 stretched-link" href="#">{{ app.user ? app.user.nom ~ ' ' ~ app.user.prenom : 'User' }}</a>
 									<p class="small m-0">Amateur d'art</p>
 								</div>
 							</div>
 						</li>
 						<li class="px-3 text-center">
-							<a class="btn btn-outline-primary mb-0 rounded" href="my-profile.html" style="margin-top: 15px;">
+							<a class="btn btn-outline-primary mb-0 rounded" href="{{ path('app_logout') }}" style="margin-top: 15px;">
 								<i class="bi bi-power me-2"></i>Se déconnecter
 							</a>
 						</li>						<!-- Links -->						

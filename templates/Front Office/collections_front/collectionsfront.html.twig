@@ -158,16 +158,7 @@
                 <!-- Photos of you tab START -->
                 <div class="row g-3">
 
-                  <!-- Add photo START -->
-                  <div class="col-sm-6 col-md-4 col-lg-3">
-                    <div class="border border-2 py-5 border-dashed h-100 rounded text-center d-flex align-items-center justify-content-center position-relative">
-                      <a class="stretched-link" href="#!">
-                        <i class="fa-solid fa-camera-retro fs-1"></i>
-                        <h6 class="mt-2">Add photo</h6>
-                      </a>
-                    </div>
-                  </div>
-                  <!-- Add photo END -->
+                  
 
                 </div>
                 <!-- Photos of you tab END -->
@@ -188,13 +179,35 @@
         <div class="modal-body">
           <div class="mb-3">
             {{ form_label(form.titre) }}
-            {{ form_widget(form.titre, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le titre de la collection'}}) }}
+    {{ form_widget(form.titre, {
+        'attr': {
+            'class': 'form-control' ~ (form.titre.vars.errors|length > 0 ? ' is-invalid' : ''),
+            'required': true,
+            'placeholder': 'Entrez le titre'
+        }
+    }) }}
+    {% if form.titre.vars.errors|length > 0 %}
+        <div class="invalid-feedback">
             {{ form_errors(form.titre) }}
+        </div>
+    {% endif %}
           </div>
           <div class="mb-3">
             {{ form_label(form.description) }}
-            {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': '4', 'placeholder': 'Entrez la description de la collection'}}) }}
+    {{ form_widget(form.description, {
+        'attr': {
+            'class': 'form-control' ~ (form.description.vars.errors|length > 0 ? ' is-invalid' : ''),
+            'rows': '4',
+            'required': true,
+            'placeholder': 'Entrez la description (10 caractères minimum)'
+        }
+    }) }}
+    {% if form.description.vars.errors|length > 0 %}
+        <div class="invalid-feedback">
             {{ form_errors(form.description) }}
+        </div>
+    {% endif %}
+
           </div>
           {{ form_rest(form) }}
         </div>
@@ -206,6 +219,12 @@
     </div>
   </div>
 </div>
+{% if form.vars.errors|length > 0 %}
+<script>
+    var myModal = new bootstrap.Modal(document.getElementById('modalCreateAlbum'));
+    myModal.show();
+</script>
+{% endif %}
 <!-- Modal for adding collection END -->
 
 {% for collection in collections %}

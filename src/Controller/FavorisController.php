@@ -18,7 +18,8 @@ final class FavorisController extends AbstractController
     #[Route('/favoris', name: 'app_favoris')]
     public function userFavorites(UserRepository $userRepository): Response
     {
-    $user = $userRepository->find(2);
+    $user = $this->getUser();
+    $currentUser = $this->getUser();
 
     if (!$user) {
         throw $this->createNotFoundException('User not found');

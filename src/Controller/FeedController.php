@@ -23,6 +23,8 @@ final class FeedController extends AbstractController
     #[Route('/feed', name: 'app_feed')]
     public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository): Response
     {
+        $currentUser = $this->getUser();
+        
         $oeuvres = $oeuvreRepository->findAll();
         $peintures = $oeuvreRepository->findBy([
             'type' => TypeOeuvre::PEINTURE
@@ -66,6 +68,7 @@ final class FeedController extends AbstractController
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
+            'currentUser' => $currentUser,
             'oeuvres' => $all,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
@@ -116,7 +119,8 @@ final class FeedController extends AbstractController
 
     #[Route('/feed_sculptures', name: 'app_feed_sculptures')]
     public function indexSculptures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository): Response
-    {
+    {     
+         
         $sculptures = $oeuvreRepository->findBy([
             'type' => TypeOeuvre::SCULPTURE
        ]);
@@ -202,7 +206,7 @@ final class FeedController extends AbstractController
     #[Route('/oeuvre/{id}/favorite', name: 'oeuvre_favorite')]
     public function favorite(Oeuvre $oeuvre, EntityManagerInterface $em, UserRepository $userRepository): Response
     {
-    $user = $userRepository->find(2);
+    $user = $this->getUser();
     if (!$user) {
         throw $this->createNotFoundException('User not found');
     }
@@ -228,7 +232,7 @@ final class FeedController extends AbstractController
         return $this->redirectToRoute('app_feed'); // si vide, on ne fait rien
     }
 
-    $user = $userRepository->find(2); // user fixe
+    $user = $this->getUser();
     if (!$user) {
         throw $this->createNotFoundException('User not found');
     }

@@ -17,9 +17,17 @@ class Collections
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+      #[Assert\NotBlank(message: "Le titre ne peut pas être vide.")]
     private ?string $titre = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: "La description ne peut pas être vide.")]
+    #[Assert\Length(
+        min: 10,
+        max: 5000,
+        minMessage: "La description doit comporter au moins {{ limit }} caractères.",
+        maxMessage: "La description ne peut pas dépasser {{ limit }} caractères."
+    )]
     private ?string $description = null;
 
     #[ORM\ManyToOne(inversedBy: 'collections')]

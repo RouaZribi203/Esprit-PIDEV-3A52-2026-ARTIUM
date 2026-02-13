@@ -46,8 +46,17 @@ class OeuvreType extends AbstractType
                 'class' => Collections::class,
                 'choice_label' => 'titre',
                 'placeholder' => 'Choisir une collection',
-                    'attr' => [
-                    'class' => 'form-select',],
+                'attr' => [
+                    'class' => 'form-select',
+                ],
+                'query_builder' => function ($er) use ($options) {
+                    if (isset($options['user']) && $options['user'] instanceof User) {
+                        return $er->createQueryBuilder('c')
+                            ->where('c.artiste = :user')
+                            ->setParameter('user', $options['user']);
+                    }
+                    return $er->createQueryBuilder('c')->where('1=0'); // aucune collection si pas de user
+                },
             ]);
             if ($options['include_date']) {
             $builder->add('date_creation', DateType::class, [
@@ -64,7 +73,8 @@ class OeuvreType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Oeuvre::class,
-            'include_date' => true, 
+            'include_date' => true,
+            'user' => null,
         ]);
     }
 }

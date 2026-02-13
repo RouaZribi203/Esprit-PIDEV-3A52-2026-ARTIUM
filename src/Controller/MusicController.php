@@ -74,4 +74,26 @@ final class MusicController extends AbstractController
             ], 500);
         }
     }
+    #[Route('/playlist/add-song', name: 'app_playlist_add_song', methods: ['POST'])]
+    public function addSongToPlaylist(Request $request, PlaylistRepository $playlistRepository, MusiqueRepository $musiqueRepository, EntityManagerInterface $entityManager): Response
+    {
+        $playlistId = $request->request->get('playlist_id');
+        $musiqueId = $request->request->get('musique_id');
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('add_to_playlist', $token)) {
+            $this->addFlash('danger', 'Le token CSRF est invalide.');
+            return $this->redirectToRoute('musiques');
+        }
+        $playlist = $playlistRepository->find($playlistId);
+        $musique = $musiqueRepository->find($musiqueId);
+        if (!$playlist || !$musique) {
+            $this->addFlash('danger', 'Playlist ou musique introuvable.');
+            return $this->redirectToRoute('musiques');
+        }
+        $playlist->addMusique($musique);
+        $entityManager->persist($playlist);
+        $entityManager->flush();
+        $this->addFlash('success', 'Musique ajoutée à la playlist !');
+        return $this->redirectToRoute('musiques');
+    }
 }

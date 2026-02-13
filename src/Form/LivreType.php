@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Collections;
 use App\Entity\Livre;
+use App\Repository\CollectionsRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
@@ -17,6 +18,8 @@ class LivreType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $artist = $options['artist'];
+
         $builder
             ->add('titre', TextType::class, [
                 'label' => 'Titre',
@@ -30,7 +33,7 @@ class LivreType extends AbstractType
                 'required' => false,
             ])
             ->add('categorie', TextType::class, [
-                'label' => 'Categorie',
+                'label' => 'Catégorie',
             ])
             ->add('prix_location', NumberType::class, [
                 'label' => 'Prix de location',
@@ -47,14 +50,26 @@ class LivreType extends AbstractType
                 'label' => 'Collection',
                 'placeholder' => 'Choisir une collection',
                 'required' => true,
-            ])
-        ;
+                'query_builder' => function (CollectionsRepository $repo) use ($artist) {
+                    $qb = $repo->createQueryBuilder('c')
+                               ->orderBy('c.titre', 'ASC');
+
+                    // If artist is provided → filter by artist
+                    if ($artist !== null) {
+                        $qb->where('c.artiste = :artist')
+                           ->setParameter('artist', $artist);
+                    }
+
+                    return $qb;
+                },
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Livre::class,
+            'artist' => null, // default = admin mode
         ]);
     }
 }

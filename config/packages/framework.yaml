@@ -23,6 +23,8 @@ framework:
 
     #esi: true
     #fragments: true
+    router:
+        default_uri: 'http://127.0.0.1:8000'
     php_errors:
         log: true
 

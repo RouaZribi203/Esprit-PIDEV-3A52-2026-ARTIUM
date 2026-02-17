@@ -28,8 +28,10 @@
 						<div class="text-center">
 							<!-- Avatar -->
 							<div class="avatar avatar-lg mt-n5 mb-3">
-								<a href="#!"><img class="avatar-img rounded border border-white border-3"
-										src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt=""></a>
+								<a href="#!">
+									<img class="avatar-img rounded border border-white border-3"
+										 src="{{ app.user and app.user.photoProfil ? asset('uploads/' ~ app.user.photoProfil) : asset('assetsfront/images/avatar/07.jpg') }}" alt="">
+								</a>
 							</div>
 							<!-- Info -->
 							<h5 class="mb-0">

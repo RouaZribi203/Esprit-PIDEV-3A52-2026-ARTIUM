@@ -13,46 +13,88 @@
 	{% block offcanvas_body %}
 		<div class="card shadow-sm border-0">
 			<div class="card-body">
-				<form class="row g-3" action="{{ profile_form_action }}" method="post" enctype="multipart/form-data">
-					<div class="col-12">
-						<div class="d-flex align-items-center gap-3">
-							<div class="avatar avatar-xl">
-								<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt="">
-							</div>
-							<div>
-								<label class="form-label mb-1" for="profileAvatar">Photo de profil</label>
-								<input class="form-control" type="file" id="profileAvatar" name="profileAvatar">
-							</div>
-						</div>
-					</div>
-					<div class="col-md-6">
-						<label class="form-label" for="profileName">Nom complet</label>
-						<input class="form-control" type="text" id="profileName" name="profileName" placeholder="Votre nom">
-					</div>
-					<div class="col-md-6">
-						<label class="form-label" for="profileEmail">Email</label>
-						<input class="form-control" type="email" id="profileEmail" name="profileEmail" placeholder="nom@email.com">
-					</div>
-					<div class="col-md-6">
-						<label class="form-label" for="profilePhone">Telephone</label>
-						<input class="form-control" type="tel" id="profilePhone" name="profilePhone" placeholder="+216">
-					</div>
-					<div class="col-md-6">
-						<label class="form-label" for="profileCity">Ville</label>
-						<input class="form-control" type="text" id="profileCity" name="profileCity" placeholder="Ville">
-					</div>
-					<div class="col-md-6">
-						<label class="form-label" for="profileBirth">Date de naissance</label>
-						<input class="form-control" type="date" id="profileBirth" name="profileBirth">
-					</div>
-					<div class="col-12">
-						<label class="form-label" for="profileBio">Bio</label>
-						<textarea class="form-control" id="profileBio" name="profileBio" rows="3" placeholder="Parlez un peu de vous..."></textarea>
-					</div>
-					<div class="col-12 d-flex justify-content-end">
-						<button class="btn btn-primary" type="submit">Enregistrer</button>
-					</div>
-				</form>
+				   {{ form_start(form, {'attr': {'class': 'row g-3', 'enctype': 'multipart/form-data'}, 'action': profile_form_action}) }}
+					   <div class="col-12">
+						   <div class="d-flex align-items-center gap-3">
+							   <div class="avatar avatar-xl">
+								   <img class="avatar-img rounded-circle" src="{{ user.photoProfil ? asset('uploads/' ~ user.photoProfil) : asset('assetsfront/images/avatar/07.jpg') }}" alt="">
+							   </div>
+							   <div>
+								   {{ form_row(form.photoProfil) }}
+							   </div>
+						   </div>
+					   </div>
+					   <div class="col-md-6">
+						   {{ form_row(form.nom) }}
+					   </div>
+					   <div class="col-md-6">
+						   {{ form_row(form.prenom) }}
+					   </div>
+					   <div class="col-md-6">
+						   {{ form_row(form.email) }}
+					   </div>
+					   <div class="col-md-6">
+						   {{ form_row(form.numTel) }}
+					   </div>
+					   <div class="col-md-6">
+						   {{ form_row(form.ville) }}
+					   </div>
+					   <div class="col-md-6">
+						   {{ form_row(form.dateNaissance) }}
+					   </div>
+					   <div class="col-12">
+						   {{ form_row(form.biographie) }}
+					   </div>
+
+
+					   {# Affichage strictement conditionnel selon le rôle #}
+					   <div class="col-12" id="specialite-field" style="display: {% if user and user.role is defined and user.role.value == 'ARTISTE' %}block{% else %}none{% endif %};">
+						   
+						   {{ form_row(form.specialite) }}
+					   </div>
+					   <div class="col-12" id="centreInteret-field" style="display: {% if user and user.role is defined and user.role.value == 'AMATEUR' %}block{% else %}none{% endif %};">
+						  
+						   {{ form_row(form.centreInteret) }}
+					   </div>
+
+					   <script>
+					   document.addEventListener('DOMContentLoaded', function() {
+						   var roleSelect = document.getElementById('user_role');
+						   var specialiteDiv = document.getElementById('specialite-field');
+						   var centreInteretDiv = document.getElementById('centreInteret-field');
+						   function updateFields() {
+							   if (!roleSelect) return;
+							   var role = roleSelect.value ? roleSelect.value.toUpperCase() : '';
+							   if (role.includes('AMATEUR')) {
+								   specialiteDiv.style.display = 'none';
+								   centreInteretDiv.style.display = 'block';
+							   } else if (role.includes('ARTISTE')) {
+								   specialiteDiv.style.display = 'block';
+								   centreInteretDiv.style.display = 'none';
+							   } else {
+								   specialiteDiv.style.display = 'none';
+								   centreInteretDiv.style.display = 'none';
+							   }
+						   }
+						   if (roleSelect) {
+							   roleSelect.addEventListener('change', updateFields);
+							   setTimeout(updateFields, 100); 
+						   }
+					   });
+					   </script>
+
+					   
+					   <div class="col-12"></div>
+					   <div class="col-md-6">
+						   {{ form_row(form.role) }}
+					   </div>
+					   <div class="col-md-6">
+						   {{ form_row(form.statut) }}
+					   </div>
+					   <div class="col-12 d-flex justify-content-end mt-4">
+						   <button class="btn btn-primary px-4 py-2" type="submit">Enregistrer</button>
+					   </div>
+				   {{ form_end(form) }}
 			</div>
 		</div>
 

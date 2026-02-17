@@ -28,6 +28,14 @@ class UserType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $builder->add('photoProfil', FileType::class, [
+            'label' => 'Photo de profil',
+            'mapped' => false,
+            'required' => false,
+            'attr' => [
+                'class' => 'form-control',
+            ],
+        ]);
         $isEdit = $options['is_edit'];
         
         $builder

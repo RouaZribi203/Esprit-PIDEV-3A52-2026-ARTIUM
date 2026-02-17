@@ -23,6 +23,55 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 )]
 class User implements PasswordAuthenticatedUserInterface, UserInterface
 {
+    /**
+     * Nom du fichier de la photo de profil
+     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $photoProfil = null;
+
+    public function getPhotoProfil(): ?string
+    {
+        return $this->photoProfil;
+    }
+
+    public function setPhotoProfil(?string $photoProfil): self
+    {
+        $this->photoProfil = $photoProfil;
+        return $this;
+    }
+    /**
+     * Jeton de réinitialisation du mot de passe
+     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $resetToken = null;
+
+    /**
+     * Date d'expiration du jeton de réinitialisation
+     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $resetTokenExpires = null;
+
+    public function getResetToken(): ?string
+    {
+        return $this->resetToken;
+    }
+
+    public function setResetToken(?string $resetToken): self
+    {
+        $this->resetToken = $resetToken;
+        return $this;
+    }
+
+    public function getResetTokenExpires(): ?\DateTimeInterface
+    {
+        return $this->resetTokenExpires;
+    }
+
+    public function setResetTokenExpires(?\DateTimeInterface $resetTokenExpires): self
+    {
+        $this->resetTokenExpires = $resetTokenExpires;
+        return $this;
+    }
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

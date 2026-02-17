@@ -113,6 +113,16 @@ final class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Gestion de l'upload de la photo de profil
+            $photoFile = $form->get('photoProfil')->getData();
+            if ($photoFile) {
+                $newFilename = uniqid('user_') . '.' . $photoFile->guessExtension();
+                $photoFile->move(
+                    $this->getParameter('kernel.project_dir') . '/public/uploads',
+                    $newFilename
+                );
+                $user->setPhotoProfil($newFilename);
+            }
             // Hash the password
             $plainPassword = $user->getPlainPassword();
             if ($plainPassword) {
@@ -160,6 +170,16 @@ final class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Gestion de l'upload de la photo de profil (édition)
+            $photoFile = $form->get('photoProfil')->getData();
+            if ($photoFile) {
+                $newFilename = uniqid('user_') . '.' . $photoFile->guessExtension();
+                $photoFile->move(
+                    $this->getParameter('kernel.project_dir') . '/public/uploads',
+                    $newFilename
+                );
+                $user->setPhotoProfil($newFilename);
+            }
 
             $entityManager->flush();
 

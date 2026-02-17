@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 
+
 use App\Entity\User;
 use App\Entity\Commentaire;
 use App\Repository\UserRepository;
@@ -11,6 +12,7 @@ use App\Entity\Collections;
 use App\Entity\Oeuvre;
 use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
+use App\Form\UserType;
 use App\Repository\CollectionsRepository;
 use App\Repository\OeuvreRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,44 +22,55 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class FeedController extends AbstractController
 {
+
     #[Route('/feed', name: 'app_feed')]
-    public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository): Response
-    {
+    public function index(
+        OeuvreRepository $oeuvreRepository,
+        CollectionsRepository $collectionsRepository,
+        Request $request,
+        EntityManagerInterface $em
+    ): Response {
         $currentUser = $this->getUser();
-        
+
+        // Création du formulaire de profil
+        $form = null;
+        if ($currentUser) {
+            $form = $this->createForm(UserType::class, $currentUser, ['is_edit' => true]);
+            $form->handleRequest($request);
+
+            if ($form->isSubmitted() && $form->isValid()) {
+                $photoFile = $form->get('photoProfil')->getData();
+                if ($photoFile) {
+                    $newFilename = uniqid('user_') . '.' . $photoFile->guessExtension();
+                    $photoFile->move($this->getParameter('kernel.project_dir') . '/public/uploads', $newFilename);
+                    $currentUser->setPhotoProfil($newFilename);
+                }
+                $em->flush();
+                $this->addFlash('success', 'Profil mis à jour !');
+                return $this->redirectToRoute('app_feed');
+            }
+        }
+
         $oeuvres = $oeuvreRepository->findAll();
-        $peintures = $oeuvreRepository->findBy([
-            'type' => TypeOeuvre::PEINTURE
-       ]);
-
-        $sculptures = $oeuvreRepository->findBy([
-           'type' => TypeOeuvre::SCULPTURE
-       ]);
-
-        $photos = $oeuvreRepository->findBy([
-           'type' => TypeOeuvre::PHOTOGRAPHIE
-        ]);
+        $peintures = $oeuvreRepository->findBy(['type' => TypeOeuvre::PEINTURE]);
+        $sculptures = $oeuvreRepository->findBy(['type' => TypeOeuvre::SCULPTURE]);
+        $photos = $oeuvreRepository->findBy(['type' => TypeOeuvre::PHOTOGRAPHIE]);
         $all = array_merge($peintures, $sculptures, $photos);
-        // Process oeuvre images
+
         $processedOeuvres = [];
         foreach ($oeuvres as $oeuvre) {
             $image = $oeuvre->getImage();
-            
             if ($image) {
-                // Handle resource streams
                 if (is_resource($image)) {
                     rewind($image);
                     $imageData = stream_get_contents($image);
                 } else {
                     $imageData = $image;
                 }
-                
-                // Only process if we have actual image data
                 if ($imageData && strlen($imageData) > 0) {
                     $imageBase64 = base64_encode($imageData);
                     $finfo = new \finfo(FILEINFO_MIME_TYPE);
                     $mimeType = $finfo->buffer($imageData);
-                    
                     $processedOeuvres[$oeuvre->getId()] = [
                         'imageBase64' => $imageBase64,
                         'mimeType' => $mimeType ?: 'image/jpeg',
@@ -73,6 +86,8 @@ final class FeedController extends AbstractController
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
             'processedOeuvres' => $processedOeuvres,
+            'form' => $form ? $form->createView() : null,
+            'user' => $currentUser,
         ]);
     }
     #[Route('/feed_peintures', name: 'app_feed_peintures')]

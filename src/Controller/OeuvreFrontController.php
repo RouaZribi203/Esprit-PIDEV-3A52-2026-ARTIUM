@@ -135,7 +135,7 @@ final class OeuvreFrontController extends AbstractController
            'processedOeuvres' => $processedOeuvres,
        ]);
     }
-    #[Route('/oeuvre/{id}', name: 'app_oeuvre_delete', methods: ['POST'])]
+    #[Route('/oeuvre/{id}', name: 'app_oeuvre_delete_front', methods: ['POST'])]
     public function delete(Request $request, Oeuvre $oeuvre, EntityManagerInterface $em): Response
     {
         $likes = $oeuvre->getLikes(); 

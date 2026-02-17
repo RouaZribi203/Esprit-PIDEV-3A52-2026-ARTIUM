@@ -168,7 +168,7 @@
                                       <i class="fe fe-trash dropdown-item-icon"></i>
                                       Supprimer
                                     </button>
-                                    <form id="deleteForm{{ oeuvre.id }}" method="post" action="{{ path('app_oeuvre_delete', {'id': oeuvre.id}) }}" style="display:none;">
+                                    <form id="deleteForm{{ oeuvre.id }}" method="post" action="{{ path('app_oeuvre_delete_front', {'id': oeuvre.id}) }}" style="display:none;">
                                       <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ oeuvre.id) }}">
                                     </form>
                                   </span>
@@ -190,7 +190,7 @@
                   
                   
                     <!-- Tab -->
-                    <div class="tab-pane fade show active" id="published" role="tabpanel" aria-labelledby="published-tab">
+                    <div class="tab-pane fade" id="published" role="tabpanel" aria-labelledby="published-tab">
                       <div class="table-responsive">
                         <!-- Table -->
                         <table class="table mb-0 text-nowrap table-centered table-hover table-with-checkbox table-centered table-hover">
@@ -319,7 +319,7 @@
                 <!-- SCULPTURE -->
                 
                     <!-- Tab -->
-                    <div class="tab-pane fade show active" id="scheduled" role="tabpanel" aria-labelledby="scheduled-tab">
+                    <div class="tab-pane fade" id="scheduled" role="tabpanel" aria-labelledby="scheduled-tab">
                       <div class="table-responsive">
                         <!-- Table -->
                         <table class="table mb-0 text-nowrap table-centered table-hover table-with-checkbox table-centered table-hover">
@@ -449,7 +449,7 @@
                 
                   
                     <!-- Tab -->
-                    <div class="tab-pane fade show active" id="draft" role="tabpanel" aria-labelledby="draft-tab">
+                    <div class="tab-pane fade" id="draft" role="tabpanel" aria-labelledby="draft-tab">
                       <div class="table-responsive">
                         <!-- Table -->
                         <table class="table mb-0 text-nowrap table-centered table-hover table-with-checkbox table-centered table-hover">

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Collections;
+use App\Entity\User;
 use App\Form\CollectionsType;
 use App\Repository\CollectionsRepository;
 use App\Repository\UserRepository;
@@ -96,16 +97,16 @@ final class CollectionsController extends AbstractController
     #[Route('/search', name: 'collection_search_first')]
     public function search_first(Request $request, CollectionsRepository $collectionsRepository): Response
     {
-        $search = $request->query->get('q');
-        if ($search) {
-            // search collections by title, exact matches first
-            $collections = $collectionsRepository->findAllWithSearchFirst($search);
-        } else {
-            $collections = $collectionsRepository->findAll();
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('You must be logged in.');
         }
 
+        $search = $request->query->get('q');
+        $collections = $collectionsRepository->findByArtisteWithSearchFirst($user, $search);
+
         // Process oeuvre images
-        $processedOeuvres = [];
+        /*$processedOeuvres = [];
         foreach ($collections as $collection) {
             foreach ($collection->getOeuvres() as $oeuvre) {
                 $image = $oeuvre->getImage();
@@ -132,7 +133,7 @@ final class CollectionsController extends AbstractController
                     }
                 }
             }
-        }
+        }*/
 
         // Create empty form for modal display
         $form = $this->createForm(CollectionsType::class, new Collections());
@@ -144,7 +145,6 @@ final class CollectionsController extends AbstractController
         return $this->render('Front Office/collections_front/collectionsfront.html.twig', [
             'collections' => $collections,
             'search' => $search,
-            'processedOeuvres' => $processedOeuvres,
             'form' => $form,
             'formEdit' => $formEdit, 
         ]);

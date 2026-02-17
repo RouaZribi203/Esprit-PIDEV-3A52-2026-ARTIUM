@@ -224,6 +224,84 @@ final class FeedController extends AbstractController
     return $this->redirectToRoute('app_feed'); // or wherever you came from
     }
 
+    #[Route('/oeuvre/{id}/favorite-ajax', name: 'oeuvre_favorite_ajax', methods: ['POST'])]
+    public function favoriteAjax(Oeuvre $oeuvre, EntityManagerInterface $em, Request $request): Response
+    {
+        if (!$request->isXmlHttpRequest()) {
+            return $this->json(['success' => false, 'message' => 'Invalid request'], 400);
+        }
+
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['success' => false, 'message' => 'User not logged in'], 401);
+        }
+
+        // Toggle favorite
+        $isFavorited = $user->getFavUser()->contains($oeuvre);
+        if ($isFavorited) {
+            $user->removeFavUser($oeuvre);
+        } else {
+            $user->addFavUser($oeuvre);
+        }
+
+        $em->persist($user);
+        $em->flush();
+
+        return $this->json([
+            'success' => true,
+            'favorited' => !$isFavorited
+        ]);
+    }
+
+    #[Route('/oeuvre/{id}/like-ajax', name: 'oeuvre_like_ajax', methods: ['POST'])]
+    public function likeAjax(Oeuvre $oeuvre, EntityManagerInterface $em, Request $request): Response
+    {
+        if (!$request->isXmlHttpRequest()) {
+            return $this->json(['success' => false, 'message' => 'Invalid request'], 400);
+        }
+
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['success' => false, 'message' => 'User not logged in'], 401);
+        }
+
+        // Check if user has already liked this oeuvre
+        $existingLike = null;
+        foreach ($oeuvre->getLikes() as $like) {
+            if ($like->getUser() === $user) {
+                $existingLike = $like;
+                break;
+            }
+        }
+
+        if ($existingLike) {
+            // Unlike - remove the like
+            $oeuvre->removeLike($existingLike);
+            $em->remove($existingLike);
+            $isLiked = false;
+        } else {
+            // Like - create new like
+            $like = new \App\Entity\Like();
+            $like->setUser($user);
+            $like->setOeuvre($oeuvre);
+            $like->setLiked(true);
+            $oeuvre->addLike($like);  // Add to collection
+            $em->persist($like);
+            $isLiked = true;
+        }
+
+        $em->flush();
+        
+        // Refresh the entity to get updated collection count
+        $em->refresh($oeuvre);
+
+        return $this->json([
+            'success' => true,
+            'liked' => $isLiked,
+            'likeCount' => $oeuvre->getLikes()->count()
+        ]);
+    }
+
     #[Route('/oeuvre/{id}/commentaire', name: 'oeuvre_commentaire', methods: ['POST'])]
     public function addCommentaire(Oeuvre $oeuvre,Request $request,EntityManagerInterface $em,UserRepository $userRepository): Response
     {

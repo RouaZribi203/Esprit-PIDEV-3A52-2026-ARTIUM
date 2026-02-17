@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Collections;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -27,6 +28,25 @@ class CollectionsRepository extends ServiceEntityRepository
         } else {
             $qb->orderBy('c.titre', 'ASC');
         }
+        return $qb->getQuery()->getResult();
+    }
+
+    public function findByArtisteWithSearchFirst(User $artiste, ?string $search = null): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->andWhere('c.artiste = :artiste')
+            ->setParameter('artiste', $artiste);
+
+        if ($search) {
+            $qb->addSelect("(CASE WHEN LOWER(c.titre) = LOWER(:exact) THEN 2 WHEN c.titre LIKE :search THEN 1 ELSE 0 END) AS HIDDEN searchMatch")
+               ->setParameter('exact', $search)
+               ->setParameter('search', '%' . $search . '%')
+               ->orderBy('searchMatch', 'DESC')
+               ->addOrderBy('c.titre', 'ASC');
+        } else {
+            $qb->orderBy('c.titre', 'ASC');
+        }
+
         return $qb->getQuery()->getResult();
     }
 

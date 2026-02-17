@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Collections;
 use App\Entity\Oeuvre;
+use App\Entity\User;
 use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
 use App\Repository\CollectionsRepository;
@@ -149,7 +150,10 @@ final class OeuvreController extends AbstractController
     #[Route('/{id}/edit', name: 'app_oeuvre_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Oeuvre $oeuvre, EntityManagerInterface $entityManager): Response
     {
-        $form = $this->createForm(OeuvreType::class, $oeuvre);
+        $user = $this->getUser();
+        $form = $this->createForm(OeuvreType::class, $oeuvre, [
+            'user' => $user instanceof User ? $user : null,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -189,6 +193,8 @@ final class OeuvreController extends AbstractController
     #[Route('/{id}', name: 'app_oeuvre_delete', methods: ['POST'])]
     public function delete(Request $request, Oeuvre $oeuvre, EntityManagerInterface $entityManager): Response
     {
+        $likes = $oeuvre->getLikes(); 
+        foreach ($likes as $like) {$entityManager->remove($like);}
         if ($this->isCsrfTokenValid('delete'.$oeuvre->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($oeuvre);
             $entityManager->flush();

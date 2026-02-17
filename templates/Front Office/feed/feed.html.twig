@@ -72,8 +72,16 @@
         <div class="card-body pt-0">
             <ul class="nav nav-stack py-3 small">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#!">
-                        <i class="bi bi-heart pe-1"></i>J'adore ({{ oeuvre.likes ? oeuvre.likes|length : 0 }})</a>
+                    {% set userLiked = false %}
+                    {% for like in oeuvre.likes %}
+                        {% if like.user.id == app.user.id %}
+                            {% set userLiked = true %}
+                        {% endif %}
+                    {% endfor %}
+                    <a class="nav-link like-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
+                        <i class="bi bi-heart{{ userLiked ? '-fill text-danger' : '' }} pe-1"></i>
+                        <span class="like-count">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                    </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#!">
@@ -81,10 +89,13 @@
                 </li>
 				<!-- Card share action START -->
                 <li class="nav-item dropdown ms-sm-auto">
-    <a class="nav-link mb-0" 
-       href="{{ path('oeuvre_favorite', {'id': oeuvre.id}) }}" 
-       id="cardShareAction{{ oeuvre.id }}">
-        <i class="bi bi-star-fill fa-fw pe-2"></i>Ajouter aux Favoris
+    <a class="nav-link mb-0 favorite-toggle" 
+       href="#" 
+       data-oeuvre-id="{{ oeuvre.id }}"
+       data-favorited="{{ app.user.favUser.contains(oeuvre) ? 'true' : 'false' }}"
+       id="favoriteBtn{{ oeuvre.id }}">
+        <i class="bi {% if app.user.favUser.contains(oeuvre) %}bi-star-fill text-warning{% else %}bi-star text-secondary{% endif %} fa-fw pe-2"></i>
+        <span class="favorite-text">{% if app.user.favUser.contains(oeuvre) %}Retirer des favoris{% else %}Ajouter aux Favoris{% endif %}</span>
     </a>
 </li>
                 
@@ -251,8 +262,16 @@
         <div class="card-body pt-0">
             <ul class="nav nav-stack py-3 small">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#!">
-                        <i class="bi bi-heart pe-1"></i>J'adore ({{ oeuvre.likes ? oeuvre.likes|length : 0 }})</a>
+                    {% set userLiked = false %}
+                    {% for like in oeuvre.likes %}
+                        {% if like.user.id == app.user.id %}
+                            {% set userLiked = true %}
+                        {% endif %}
+                    {% endfor %}
+                    <a class="nav-link like-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
+                        <i class="bi bi-heart{{ userLiked ? '-fill text-danger' : '' }} pe-1"></i>
+                        <span class="like-count">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                    </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#!">
@@ -260,10 +279,13 @@
                 </li>
                 <!-- Card share action START -->
                 <li class="nav-item dropdown ms-sm-auto">
-    <a class="nav-link mb-0" 
-       href="{{ path('oeuvre_favorite', {'id': oeuvre.id}) }}" 
-       id="cardShareAction{{ oeuvre.id }}">
-        <i class="bi bi-star-fill fa-fw pe-2"></i>Ajouter aux Favoris
+    <a class="nav-link mb-0 favorite-toggle" 
+       href="#" 
+       data-oeuvre-id="{{ oeuvre.id }}"
+       data-favorited="{{ app.user.favUser.contains(oeuvre) ? 'true' : 'false' }}"
+       id="favoriteBtn{{ oeuvre.id }}">
+        <i class="bi {% if app.user.favUser.contains(oeuvre) %}bi-star-fill text-warning{% else %}bi-star text-secondary{% endif %} fa-fw pe-2"></i>
+        <span class="favorite-text">{% if app.user.favUser.contains(oeuvre) %}Retirer des favoris{% else %}Ajouter aux Favoris{% endif %}</span>
     </a>
 </li>
                 <!-- Card share action END -->
@@ -402,6 +424,86 @@
                 }, 500);
             });
         }
+
+        // Favorite toggle functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.favorite-toggle')) {
+                e.preventDefault();
+                const link = e.target.closest('.favorite-toggle');
+                const oeuvreId = link.dataset.oeuvreId;
+                const isFavorited = link.dataset.favorited === 'true';
+                const icon = link.querySelector('i');
+                const text = link.querySelector('.favorite-text');
+
+                // Send AJAX request
+                fetch(`/oeuvre/${oeuvreId}/favorite-ajax`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Toggle visual state
+                        if (data.favorited) {
+                            icon.classList.remove('bi-star', 'text-secondary');
+                            icon.classList.add('bi-star-fill', 'text-warning');
+                            text.textContent = 'Retirer des favoris';
+                            link.dataset.favorited = 'true';
+                        } else {
+                            icon.classList.remove('bi-star-fill', 'text-warning');
+                            icon.classList.add('bi-star', 'text-secondary');
+                            text.textContent = 'Ajouter aux Favoris';
+                            link.dataset.favorited = 'false';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error toggling favorite:', error);
+                });
+            }
+        });
+
+        // Like toggle functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.like-toggle')) {
+                e.preventDefault();
+                const link = e.target.closest('.like-toggle');
+                const oeuvreId = link.dataset.oeuvreId;
+                const isLiked = link.dataset.liked === 'true';
+                const icon = link.querySelector('i');
+                const countSpan = link.querySelector('.like-count');
+
+                // Send AJAX request
+                fetch(`/oeuvre/${oeuvreId}/like-ajax`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Toggle visual state
+                        if (data.liked) {
+                            icon.classList.add('bi-heart-fill', 'text-danger');
+                            icon.classList.remove('bi-heart');
+                            link.dataset.liked = 'true';
+                        } else {
+                            icon.classList.remove('bi-heart-fill', 'text-danger');
+                            icon.classList.add('bi-heart');
+                            link.dataset.liked = 'false';
+                        }
+                        // Update count
+                        countSpan.textContent = data.likeCount;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error toggling like:', error);
+                });
+            }
+        });
     });
     </script>
 

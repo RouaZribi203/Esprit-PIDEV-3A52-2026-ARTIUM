@@ -22,35 +22,50 @@ final class SignupController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Gestion du mot de passe
-            $plainPassword = $user->getPlainPassword();
-            $user->setMdp($passwordHasher->hashPassword($user, (string) $plainPassword));
-
-            // Date inscription
-            $user->setDateInscription(new \DateTime());
-
-            // Statut par defaut
-            $user->setStatut(Statut::ACTIVE);
-
-            // Personnalisation selon le rôle
-            if ($user->getRole() === \App\Enum\Role::AMATEUR) {
-                $user->setSpecialite(null);
-            } elseif ($user->getRole() === \App\Enum\Role::ARTISTE) {
-                $user->setCentreInteret(null);
-            } elseif ($user->getRole() === \App\Enum\Role::ADMIN) {
-                $user->setSpecialite(null);
-                $user->setCentreInteret(null);
+            // Vérification reCAPTCHA
+            $recaptchaResponse = $request->request->get('g-recaptcha-response');
+            $recaptchaSecret = $_ENV['RECAPTCHA_SECRET_KEY'] ?? getenv('RECAPTCHA_SECRET_KEY');
+            $recaptchaValid = false;
+            if ($recaptchaResponse && $recaptchaSecret) {
+                $verify = file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret=' . urlencode($recaptchaSecret) . '&response=' . urlencode($recaptchaResponse) . '&remoteip=' . $request->getClientIp());
+                $captchaSuccess = json_decode($verify);
+                $recaptchaValid = $captchaSuccess && $captchaSuccess->success;
             }
+            if (!$recaptchaValid) {
+                $form->addError(new \Symfony\Component\Form\FormError("Veuillez valider le captcha 'Je ne suis pas un robot'."));
+            } else {
+                // Gestion du mot de passe
+                $plainPassword = $user->getPlainPassword();
+                $user->setMdp($passwordHasher->hashPassword($user, (string) $plainPassword));
 
-            $em->persist($user);
-            $em->flush();
+                // Date inscription
+                $user->setDateInscription(new \DateTime());
 
-            $this->addFlash('success', "Inscription réussie ! Vous pouvez maintenant vous connecter.");
-            return $this->redirectToRoute('app_signin');
+                // Statut par defaut
+                $user->setStatut(Statut::ACTIVE);
+
+                // Personnalisation selon le rôle
+                if ($user->getRole() === \App\Enum\Role::AMATEUR) {
+                    $user->setSpecialite(null);
+                } elseif ($user->getRole() === \App\Enum\Role::ARTISTE) {
+                    $user->setCentreInteret(null);
+                } elseif ($user->getRole() === \App\Enum\Role::ADMIN) {
+                    $user->setSpecialite(null);
+                    $user->setCentreInteret(null);
+                }
+
+                $em->persist($user);
+                $em->flush();
+
+                $this->addFlash('success', "Inscription réussie ! Vous pouvez maintenant vous connecter.");
+                return $this->redirectToRoute('app_signin');
+            }
         }
 
+        $recaptchaSiteKey = $_ENV['RECAPTCHA_SITE_KEY'] ?? getenv('RECAPTCHA_SITE_KEY');
         return $this->render('signup/signup.html.twig', [
             'form' => $form->createView(),
+            'recaptcha_site_key' => $recaptchaSiteKey,
         ]);
     }
 }

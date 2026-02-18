@@ -8,6 +8,10 @@ use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
 use App\Repository\OeuvreRepository;
 use App\Repository\UserRepository;
+use App\Repository\ReclamationRepository;
+use App\Repository\EvenementRepository;
+use App\Repository\CommentaireRepository;
+use App\Repository\LikeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,7 +26,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 final class OeuvreFrontController extends AbstractController
 {
     #[Route('/mes_oeuvres', name: 'app_oeuvre_front')]
-    public function index(OeuvreRepository $oeuvreRepository, UserRepository $userRepository, Request $request, EntityManagerInterface $entityManager): Response
+    public function index(OeuvreRepository $oeuvreRepository, UserRepository $userRepository, Request $request, EntityManagerInterface $entityManager, ReclamationRepository $reclamationRepository, EvenementRepository $evenementRepository, CommentaireRepository $commentaireRepository, LikeRepository $likeRepository): Response
     {
         $user = $this->getUser();
         $oeuvre = new Oeuvre();
@@ -50,6 +54,13 @@ final class OeuvreFrontController extends AbstractController
                 }
             }
         }
+
+        // Dynamic statistics for sidebar
+        $nbOeuvres = count($oeuvres);
+        $nbReclamations = $user ? count($reclamationRepository->findByUserFilters($user, null, null)) : 0;
+        $nbEvenements = $user ? $evenementRepository->count(['artiste' => $user]) : 0;
+        $nbCommentaires = $user ? $commentaireRepository->countByArtist($user) : 0;
+        $nbLikes = $user ? $likeRepository->countByArtist($user) : 0;
         $processedOeuvres = [];
         $form = $this->createForm(OeuvreType::class, $oeuvre, [
             'include_date' => false,
@@ -82,6 +93,11 @@ final class OeuvreFrontController extends AbstractController
             'typeOeuvres' => TypeOeuvre::cases(),
             'processedOeuvres' => $processedOeuvres,
             'profile_form' => $profileForm->createView(),
+            'nbOeuvres' => $nbOeuvres,
+            'nbReclamations' => $nbReclamations,
+            'nbEvenements' => $nbEvenements,
+            'nbCommentaires' => $nbCommentaires,
+            'nbLikes' => $nbLikes,
         ]);
     }
 

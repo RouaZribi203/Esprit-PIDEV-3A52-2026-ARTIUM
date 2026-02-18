@@ -139,10 +139,10 @@
 				</li>
 				<!-- Notification dropdown END -->
 
-				<li class="nav-item ms-2 dropdown">
-					<a class="nav-link btn icon-md p-0" href="#" id="profileDropdown" role="button" data-bs-auto-close="outside" data-bs-display="static" data-bs-toggle="dropdown" aria-expanded="false">
-						<img class="avatar-img rounded-2" src="{{ app.user.photoProfil ? asset('uploads/' ~ app.user.photoProfil) : '' }}" alt="">
-					</a>
+				   <li class="nav-item ms-2 dropdown d-flex align-items-center">
+					   <a class="nav-link btn p-0 d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-auto-close="outside" data-bs-display="static" data-bs-toggle="dropdown" aria-expanded="false" style="height:40px;width:40px;">
+						<img class="avatar-img rounded-circle border border-2" src="{{ app.user and app.user.photoProfil ? asset('uploads/' ~ app.user.photoProfil) : asset('assetsback/images/default-avatar.png') }}" alt="Profil" style="object-fit:cover;width:38px;height:38px;">
+					   </a>
 					<ul
 						class="dropdown-menu dropdown-animation dropdown-menu-end pt-3 small me-md-n3" aria-labelledby="profileDropdown">
 						<!-- Profile info -->
@@ -151,12 +151,12 @@
 								class="d-flex align-items-center position-relative">
 								<!-- Avatar -->
 								<div class="avatar me-3">
-									<img class="avatar-img rounded-circle" src="{{ app.user.photoProfil ? asset('uploads/' ~ app.user.photoProfil) : '' }}" alt="avatar">
+									<img class="avatar-img rounded-circle" src="{{ app.user and app.user.photoProfil ? asset('uploads/' ~ app.user.photoProfil) : asset('assetsback/images/default-avatar.png') }}" alt="avatar">
 								</div>
 								<div>
-									<a class="h6 stretched-link" href="#">{{ app.user.nom ~ ' ' ~ app.user.prenom }}</a>
+									<a class="h6 stretched-link" href="#">{{ app.user ? (app.user.nom ~ ' ' ~ app.user.prenom) : 'Utilisateur' }}</a>
 									<p class="small m-0">
-										{% if app.user.specialite is defined and app.user.specialite is not null %}
+										{% if app.user and app.user.specialite is defined and app.user.specialite is not null %}
 											{{ app.user.specialite.value }}
 										{% else %}
 											Artiste

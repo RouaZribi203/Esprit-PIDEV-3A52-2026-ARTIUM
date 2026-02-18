@@ -8,7 +8,7 @@
 			<div>
 				<!-- Avatar -->
 				   <div class="avatar avatar-xxl mt-n5 mb-3">
-					   {% if app.user.photoProfil %}
+					   {% if app.user and app.user.photoProfil %}
 						   <img class="avatar-img rounded-circle border border-white border-3" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="Avatar">
 					   {% else %}
 						   <span class="avatar-img rounded-circle border border-white border-3 d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:120px;height:120px;">
@@ -60,7 +60,7 @@
 			</li>
 			<li class="list-inline-item">
 				<i class="bi bi-calendar2-plus me-1"></i>
-				Joined on
+				Inscrit le
 				{{ app.user.dateInscription is defined and app.user.dateInscription ? app.user.dateInscription|date('M d, Y') : '' }}
 			</li>
 		</ul>

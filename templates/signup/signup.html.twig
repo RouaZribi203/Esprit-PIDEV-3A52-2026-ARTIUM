@@ -67,9 +67,18 @@
                 </div>
 
                 <div class="d-flex justify-content-between mt-4">
-                  <button type="button" class="btn btn-outline-secondary" id="signup-prev" style="display:none;">Précédent</button>
-                  <button type="button" class="btn btn-primary" id="signup-next">Suivant</button>
-                  <button type="submit" class="btn btn-primary" id="signup-submit" style="display:none;">S'inscrire</button>
+                  <div class="w-100 d-flex flex-column align-items-center gap-2 mt-2">
+                    <div class="d-flex w-100 gap-2 justify-content-center">
+                      <button type="button" class="btn btn-outline-secondary flex-fill" id="signup-prev" style="display:none; min-width:110px;">Précédent</button>
+                      <button type="button" class="btn btn-primary flex-fill" id="signup-next" style="min-width:110px;">Suivant</button>
+                      <button type="submit" class="btn btn-primary flex-fill" id="signup-submit" style="display:none; min-width:110px;">S'inscrire</button>
+                    </div>
+                    <div id="recaptcha-container" style="display:none; margin-top: 0.5rem; width:100%;">
+                      <div style="display:flex; justify-content:center; align-items:center; width:100%;">
+                        <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" data-theme="light" style="transform:scale(0.80);-webkit-transform:scale(0.80);transform-origin:center;"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 {{ form_end(form) }}
 
@@ -88,6 +97,7 @@
                   const roleSelect = document.getElementById('signup_role');
                   const specialiteRow = document.getElementById('specialite-row');
                   const centreInteretRow = document.getElementById('centreInteret-row');
+                  const recaptchaContainer = document.getElementById('recaptcha-container');
 
                   function showStep(step) {
                     stepDivs.forEach((div, idx) => {
@@ -96,6 +106,7 @@
                     btnPrev.style.display = (step > 1) ? '' : 'none';
                     btnNext.style.display = (step < totalSteps) ? '' : 'none';
                     btnSubmit.style.display = (step === totalSteps) ? '' : 'none';
+                    if (recaptchaContainer) recaptchaContainer.style.display = (step === totalSteps) ? '' : 'none';
                   }
 
                   btnNext.addEventListener('click', function() {
@@ -130,6 +141,7 @@
                   }
                 });
                 </script>
+                <script src="https://www.google.com/recaptcha/api.js" async defer></script>
                 <hr class="my-4" />
                 <div class="mt-4 text-center">
                     <!--Facebook-->

@@ -40,4 +40,18 @@ class CommentaireRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+    /**
+     * Count comments for a given user (as artist, on their works)
+     */
+    public function countByArtist(\App\Entity\User $user): int
+    {
+        return $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->join('c.oeuvre', 'o')
+            ->join('o.collection', 'col')
+            ->where('col.artiste = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

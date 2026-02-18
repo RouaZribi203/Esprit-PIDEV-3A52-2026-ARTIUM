@@ -40,4 +40,19 @@ class LikeRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
+    /**
+     * Count likes for a given user (as artist, on their works)
+     */
+    public function countByArtist(\App\Entity\User $user): int
+    {
+        return $this->createQueryBuilder('l')
+            ->select('COUNT(l.id)')
+            ->join('l.oeuvre', 'o')
+            ->join('o.collection', 'col')
+            ->where('col.artiste = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

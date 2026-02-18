@@ -17,7 +17,13 @@
 					   <div class="col-12">
 						   <div class="d-flex align-items-center gap-3">
 							   <div class="avatar avatar-xl">
-								   <img class="avatar-img rounded-circle" src="{{ user.photoProfil ? asset('uploads/' ~ user.photoProfil) : asset('assetsfront/images/avatar/07.jpg') }}" alt="">
+								{% if user.photoProfil %}
+								    <img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ user.photoProfil) }}" alt="">
+								{% else %}
+								    <span class="avatar-img rounded-circle bg-light d-inline-block border border-secondary" style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;">
+									    
+								    </span>
+								{% endif %}
 							   </div>
 							   <div>
 								   {{ form_row(form.photoProfil) }}
@@ -102,7 +108,11 @@
 			<div class="card shadow-sm border-0 mt-4">
 				<div class="card-body">
 					<h5 class="mb-3">Modifier le mot de passe</h5>
-					<form class="row g-3" action="{{ password_form_action }}" method="post">
+					<div class="alert alert-warning" role="alert">
+						<i class="fe fe-alert-triangle me-2"></i>
+						En modifiant votre mot de passe, vous serez automatiquement déconnecté(e) de la session en cours. Vous devrez vous reconnecter avec le nouveau mot de passe.
+					</div>
+					<form class="row g-3" action="{{ path('app_changer_mot_de_passe') }}" method="post">
 						<div class="col-12">
 							<label class="form-label" for="currentPassword">Mot de passe actuel</label>
 							<input class="form-control" type="password" id="currentPassword" name="currentPassword" placeholder="********">

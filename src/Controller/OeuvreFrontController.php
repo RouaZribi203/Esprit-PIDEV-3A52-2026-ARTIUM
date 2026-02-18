@@ -15,14 +15,31 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+
 
 final class OeuvreFrontController extends AbstractController
 {
     #[Route('/mes_oeuvres', name: 'app_oeuvre_front')]
-    public function index(OeuvreRepository $oeuvreRepository, UserRepository $userRepository): Response
+    public function index(OeuvreRepository $oeuvreRepository, UserRepository $userRepository, Request $request, EntityManagerInterface $entityManager): Response
     {
         $user = $this->getUser();
         $oeuvre = new Oeuvre();
+        // Formulaire de modification de profil artiste
+        $profileForm = $this->createForm(\App\Form\UserType::class, $user, ['is_edit' => true]);
+        $profileForm->handleRequest($request);
+        if ($profileForm->isSubmitted() && $profileForm->isValid()) {
+            $photoFile = $profileForm->get('photoProfil')->getData();
+            if ($photoFile) {
+                $newFilename = uniqid('user_') . '.' . $photoFile->guessExtension();
+                $photoFile->move($this->getParameter('kernel.project_dir') . '/public/uploads', $newFilename);
+                $user->setPhotoProfil($newFilename);
+            }
+            $entityManager->flush();
+            $this->addFlash('success', 'Profil mis à jour !');
+            return $this->redirectToRoute('app_oeuvre_front');
+        }
         $oeuvres = [];
         if ($user && method_exists($user, 'getCollections')) {
             foreach ($user->getCollections() as $collection) {
@@ -64,7 +81,56 @@ final class OeuvreFrontController extends AbstractController
             'oeuvres' => $oeuvres,
             'typeOeuvres' => TypeOeuvre::cases(),
             'processedOeuvres' => $processedOeuvres,
+            'profile_form' => $profileForm->createView(),
         ]);
+    }
+
+    #[Route('/changer-mot-de-passe', name: 'app_changer_mot_de_passe', methods: ['POST'])]
+    public function changerMotDePasse(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            throw new AccessDeniedException('Vous devez être connecté pour changer le mot de passe.');
+        }
+
+        $currentPassword = $request->request->get('currentPassword');
+        $newPassword = $request->request->get('newPassword');
+        $confirmPassword = $request->request->get('confirmPassword');
+
+        if (!$currentPassword || !$newPassword || !$confirmPassword) {
+            $this->addFlash('error', 'Veuillez remplir tous les champs.');
+            return $this->redirectToRoute('app_oeuvre_front');
+        }
+
+        if (!$passwordHasher->isPasswordValid($user, $currentPassword)) {
+            $this->addFlash('error', 'Le mot de passe actuel est incorrect.');
+            return $this->redirectToRoute('app_oeuvre_front');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            $this->addFlash('error', 'Les nouveaux mots de passe ne correspondent pas.');
+            return $this->redirectToRoute('app_oeuvre_front');
+        }
+
+        if (strlen($newPassword) < 6) {
+            $this->addFlash('error', 'Le nouveau mot de passe doit contenir au moins 6 caractères.');
+            return $this->redirectToRoute('app_oeuvre_front');
+        }
+
+        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+        $user->setMdp($hashedPassword);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Mot de passe modifié avec succès. Veuillez vous reconnecter avec votre nouveau mot de passe.');
+
+        // Invalidate session and logout
+        $session = $request->getSession();
+        $session->invalidate();
+
+        // Remove the security token to fully logout
+        $this->container->get('security.token_storage')->setToken(null);
+
+        return $this->redirectToRoute('app_signin');
     }
     #[Route('/new_oeuvre', name: 'app_oeuvre_new', methods: ['GET','POST'])]
     public function new(Request $request,EntityManagerInterface $entityManager,UserRepository $userRepository): Response {

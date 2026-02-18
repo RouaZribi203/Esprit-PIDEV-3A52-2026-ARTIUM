@@ -3,6 +3,7 @@
 {% block title %}{{ 'Fil d’actualités'|trans }}{% endblock %}
 
 {% block amateur_content %}
+   
     <div id="feed-container">
     {% for oeuvre in oeuvres|slice(0, 3) %}
     <!-- Card feed item START -->
@@ -96,7 +97,11 @@
                 <!-- Avatar -->
                 <div class="avatar avatar-xs me-2">
                     <a href="#!">
-                        <img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt="">
+                        {% if app.user and app.user.photoProfil %}
+                            <img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="">
+                        {% else %}
+                            <span class="avatar-img rounded-circle bg-light d-inline-block" style="width:32px;height:32px;"></span>
+                        {% endif %}
                     </a>
                 </div>
 
@@ -366,6 +371,13 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+            // Bootstrap Offcanvas init (si besoin)
+            if (typeof bootstrap !== 'undefined') {
+                var offcanvasEl = document.getElementById('offcanvasProfile');
+                if (offcanvasEl) {
+                    new bootstrap.Offcanvas(offcanvasEl);
+                }
+            }
         const loadMoreBtn = document.getElementById('load-more-btn');
         const feedContainer = document.getElementById('feed-container');
         const hiddenOeuvres = document.querySelectorAll('.hidden-oeuvre');
@@ -406,3 +418,5 @@
     </script>
 
 {% endblock %}
+
+

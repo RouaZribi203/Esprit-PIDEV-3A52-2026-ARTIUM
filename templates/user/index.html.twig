@@ -68,8 +68,13 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <img src="{{ asset('assetsback/images/photodeprofil.png') }}"
-                                         alt="" class="rounded-circle avatar-md" />
+                                     {% if user.photoProfil %}
+                                         <img src="{{ asset('uploads/' ~ user.photoProfil) }}" alt="" class="rounded-circle avatar-md" />
+                                     {% else %}
+                                         <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:48px;height:48px;">
+                                             <i class="bi bi-person fs-3 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+                                         </span>
+                                     {% endif %}
                                     <div>
                                         <h5 class="mb-0">{{ user.nom }} {{ user.prenom }}</h5>
                                     </div>

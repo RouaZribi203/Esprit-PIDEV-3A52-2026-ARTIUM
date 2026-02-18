@@ -29,8 +29,11 @@
 							<!-- Avatar -->
 							<div class="avatar avatar-lg mt-n5 mb-3">
 								<a href="#!">
-									<img class="avatar-img rounded border border-white border-3"
-										 src="{{ app.user and app.user.photoProfil ? asset('uploads/' ~ app.user.photoProfil) : asset('assetsfront/images/avatar/07.jpg') }}" alt="">
+									{% if app.user and app.user.photoProfil %}
+										<img class="avatar-img rounded border border-white border-3" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="">
+									{% else %}
+										<span class="avatar-img rounded border border-white border-3 bg-light d-inline-block" style="width:64px;height:64px;"></span>
+									{% endif %}
 								</a>
 							</div>
 							<!-- Info -->

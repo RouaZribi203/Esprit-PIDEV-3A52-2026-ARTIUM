@@ -21,21 +21,21 @@ class MusiqueType extends AbstractType
         
         $builder
             ->add('titre', TextType::class, [
-                'label' => 'Title',
+                'label' => 'Titre',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Enter music title',
+                    'placeholder' => 'entrez le titre de la musique',
                     'minlength' => 3,
                     'maxlength' => 255,
                     'required' => 'required'
                 ],
                 'constraints' => [
-                    new Assert\NotBlank(['message' => 'Title is required']),
+                    new Assert\NotBlank(['message' => 'Le titre est requis']),
                     new Assert\Length([
                         'min' => 3,
-                        'minMessage' => 'Title must be at least 3 characters long',
+                        'minMessage' => 'Le titre doit comporter au moins 3 caractères',
                         'max' => 255,
-                        'maxMessage' => 'Title cannot exceed 255 characters'
+                        'maxMessage' => 'Le titre ne peut pas dépasser 255 caractères'
                     ])
                 ]
             ])
@@ -43,17 +43,17 @@ class MusiqueType extends AbstractType
                 'label' => 'Description',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Enter music description',
+                    'placeholder' => 'entrez la description de la musique',
                     'rows' => 3,
                     'minlength' => 10,
                     'maxlength' => 5000,
                     'required' => 'required'
                 ],
                 'constraints' => [
-                    new Assert\NotBlank(['message' => 'Description is required']),
+                    new Assert\NotBlank(['message' => 'La description est requise']),
                     new Assert\Length([
                         'min' => 10,
-                        'minMessage' => 'Description must be at least 10 characters long',
+                        'minMessage' => 'La description doit comporter au moins 10 caractères long',
                         'max' => 5000,
                         'maxMessage' => 'Description cannot exceed 5000 characters'
                     ])
@@ -66,20 +66,20 @@ class MusiqueType extends AbstractType
                     'class' => 'form-select',
                     'required' => 'required'
                 ],
-                'placeholder' => 'Select a genre',
+                'placeholder' => 'Sélectionnez un genre',
                 'constraints' => [
-                    new Assert\NotBlank(['message' => 'Genre is required'])
+                    new Assert\NotBlank(['message' => 'Le genre est requis'])
                 ]
             ])
             ->add('imageFile', FileType::class, [
-                'label' => 'Cover Image',
+                'label' => 'Image de Couverture',
                 'mapped' => false,
                 'required' => false,
                 'attr' => [
                     'class' => 'form-control',
                     'accept' => 'image/jpeg,image/png,image/jpg'
                 ],
-                'help' => 'Max 5MB (JPEG, PNG) • Recommended: min 300x300px',
+                'help' => 'Max 5MB (JPEG, PNG) • Recommender: min 300x300px',
                 'constraints' => [
                     new Assert\File([
                         'maxSize' => '5242880', // 5MB in bytes
@@ -88,8 +88,8 @@ class MusiqueType extends AbstractType
                             'image/png',
                             'image/jpg',
                         ],
-                        'mimeTypesMessage' => 'Please upload a valid image file (JPEG or PNG)',
-                        'maxSizeMessage' => 'Image file is too large (max 5MB)',
+                        'mimeTypesMessage' => 'Veuillez télécharger un fichier image valide (JPEG ou PNG).',
+                        'maxSizeMessage' => 'Le fichier image est trop volumineux. (max 5MB)',
                     ]),
                     new ImageDimensions([
                         'minWidth' => 300,
@@ -100,7 +100,7 @@ class MusiqueType extends AbstractType
                 ]
             ])
             ->add('audioFile', FileType::class, [
-                'label' => 'Audio File',
+                'label' => 'Fichier Audio',
                 'mapped' => false,
                 'required' => !$isEdit,
                 'attr' => [

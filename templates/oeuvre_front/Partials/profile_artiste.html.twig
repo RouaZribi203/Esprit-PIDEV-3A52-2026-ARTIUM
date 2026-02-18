@@ -54,6 +54,11 @@
 			{% set specialite = app.user.specialite is defined and app.user.specialite ? app.user.specialite.value|lower : '' %}
 		{% if specialite == 'musicien' %}
 			<li class="nav-item">
+				<a class="nav-link {{ current_route == 'app_collections_front' ? 'active' : '' }}" href="{{ path('app_collections_front') }}">
+					Collections
+				</a>
+			</li>
+			<li class="nav-item">
 				<a class="nav-link {{ current_route == 'app_musiqueartiste' ? 'active' : '' }}" href="{{ path('app_musiqueartiste') }}">
 					Musiques
 				</a>

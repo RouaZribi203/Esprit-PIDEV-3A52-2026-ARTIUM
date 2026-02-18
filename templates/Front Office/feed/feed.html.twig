@@ -6,9 +6,9 @@
     <div id="feed-container">
     {% for oeuvre in oeuvres|slice(0, 3) %}
     <!-- Card feed item START -->
-    <div class="card mb-4">
+    <div class="card mb-4" id="oeuvre-{{ oeuvre.id }}">
         <!-- Card header START -->
-        <div class="card-header border-0 pb-0">
+        <div class="card-header border-0 pb-0" >
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
                     <!-- Avatar -->
@@ -38,7 +38,18 @@
                        id="cardFeedAction{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-three-dots"></i>
                     </a>
-                    
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction{{ oeuvre.id }}">
+                        <li>
+                            <a class="dropdown-item favorite-toggle" 
+                               href="#" 
+                               data-oeuvre-id="{{ oeuvre.id }}"
+                               data-favorited="{{ app.user.favUser.contains(oeuvre) ? 'true' : 'false' }}"
+                               id="favoriteDropdownBtn{{ oeuvre.id }}">
+                                <i class="bi favorite-icon {% if app.user.favUser.contains(oeuvre) %}bi-star-fill text-warning{% else %}bi-star text-secondary{% endif %} pe-2"></i>
+                                <span class="favorite-text">{% if app.user.favUser.contains(oeuvre) %}Retirer des favoris{% else %}Ajouter aux Favoris{% endif %}</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
                 <!-- Card feed action dropdown END -->
             </div>
@@ -61,7 +72,7 @@
         <!-- Card img -->
         {% if oeuvre.image %}
         <div class="overflow-hidden w-100">
-            <img src="data:{{ processedOeuvres[oeuvre.id].mimeType ?? 'image/jpeg' }};base64,{{ processedOeuvres[oeuvre.id].imageBase64 }}" 
+            <img src="{{ path('oeuvre_image', {'id': oeuvre.id}) }}" 
                  class="img-fluid" 
                  alt="{{ oeuvre.titre }}"
                  style="width: 100%; max-height: 600px; object-fit: contain;">
@@ -94,8 +105,8 @@
        data-oeuvre-id="{{ oeuvre.id }}"
        data-favorited="{{ app.user.favUser.contains(oeuvre) ? 'true' : 'false' }}"
        id="favoriteBtn{{ oeuvre.id }}">
-        <i class="bi {% if app.user.favUser.contains(oeuvre) %}bi-star-fill text-warning{% else %}bi-star text-secondary{% endif %} fa-fw pe-2"></i>
-        <span class="favorite-text">{% if app.user.favUser.contains(oeuvre) %}Retirer des favoris{% else %}Ajouter aux Favoris{% endif %}</span>
+        <i class="bi favorite-icon {% if app.user.favUser.contains(oeuvre) %}bi-star-fill text-warning{% else %}bi-star text-secondary{% endif %} fa-fw pe-1"></i>
+        <span class="favorite-count" data-oeuvre-id="{{ oeuvre.id }}">{{ oeuvre.userFav|length }}</span>
     </a>
 </li>
                 
@@ -112,11 +123,15 @@
                 </div>
 
                 <!-- Comment box  -->
-                <form class="input-group" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}" method="post">
-    <textarea name="contenu" data-autoresize class="form-control me-2 bg-light rounded" rows="1"
-              placeholder="Ajouter un commentaire..."></textarea>
-    <button class="btn btn-primary mb-0 rounded" type="submit">Publier</button>
-</form>
+                <form class="w-100" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}#oeuvre-{{ oeuvre.id }}" method="post">
+                    <div class="position-relative">
+                        <textarea name="contenu" data-autoresize class="form-control bg-light rounded pe-5" rows="1"
+                                  placeholder="Ajouter un commentaire..."></textarea>
+                        <button class="btn btn-link text-primary position-absolute top-50 end-0 translate-middle-y me-2 p-0" type="submit" aria-label="Publier le commentaire">
+                            <i class="bi bi-send-fill fs-5"></i>
+                        </button>
+                    </div>
+                </form>
 
             </div>
             
@@ -141,9 +156,52 @@
                                             {{ commentaire.user ? (commentaire.user.nom ~ ' ' ~ commentaire.user.prenom) : 'Utilisateur' }}
                                         </a>
                                     </h6>
-                                    <small class="ms-2">{{ commentaire.dateCommentaire|date('d M') }}</small>
+                                    <div class="d-flex align-items-center">
+                                        <small class="ms-2">{{ commentaire.dateCommentaire|date('d M') }}</small>
+                                        {% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
+                                            <div class="dropdown ms-2">
+                                                <a href="#" class="text-secondary btn btn-sm btn-link p-0" id="commentAction{{ commentaire.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bi bi-three-dots"></i>
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="commentAction{{ commentaire.id }}">
+                                                    <li>
+                                                        <button type="button" class="dropdown-item" data-bs-toggle="collapse" data-bs-target="#editComment{{ commentaire.id }}" aria-expanded="false" aria-controls="editComment{{ commentaire.id }}">
+                                                            <i class="bi bi-pencil-square text-primary pe-2"></i>Modifier
+                                                        </button>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <form method="post" action="{{ path('commentaire_delete', {'id': commentaire.id}) }}" class="m-0">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ commentaire.id) }}">
+                                                            <input type="hidden" name="redirect_path" value="{{ app.request.pathInfo }}">
+                                                            <button type="submit" class="dropdown-item text-danger">
+                                                                <i class="bi bi-trash3 pe-2"></i>Supprimer
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 <p class="small mb-0">{{ commentaire.texte }}</p>
+                                {% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
+                                    <form method="post" action="{{ path('commentaire_edit', {'id': commentaire.id}) }}" class="collapse mt-2" id="editComment{{ commentaire.id }}">
+                                        <div class="position-relative">
+                                            <textarea name="contenu" class="form-control bg-white" rows="2">{{ commentaire.texte }}</textarea>
+                                            <input type="hidden" name="_token" value="{{ csrf_token('edit_comment_' ~ commentaire.id) }}">
+                                            <input type="hidden" name="redirect_path" value="{{ app.request.pathInfo }}">
+                                            <div class="d-flex gap-2 mt-2">
+                                                <button type="submit" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-check2"></i>Enregistrer
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editComment{{ commentaire.id }}">
+                                                    <i class="bi bi-x-lg"></i>Annuler
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                {% endif %}
                             </div>
                             <!-- Comment react -->
                             <ul class="nav nav-divider py-2 small">
@@ -194,7 +252,7 @@
     <div id="hidden-oeuvres" style="display: none;">
     {% for oeuvre in oeuvres|slice(3) %}
     <!-- Card feed item START -->
-    <div class="card mb-4 hidden-oeuvre">
+    <div class="card mb-4 hidden-oeuvre" id="oeuvre-{{ oeuvre.id }}">
         <!-- Card header START -->
         <div class="card-header border-0 pb-0">
             <div class="d-flex align-items-center justify-content-between">
@@ -227,7 +285,18 @@
                        id="cardFeedAction{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-three-dots"></i>
                     </a>
-                    
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction{{ oeuvre.id }}">
+                        <li>
+                            <a class="dropdown-item favorite-toggle" 
+                               href="#" 
+                               data-oeuvre-id="{{ oeuvre.id }}"
+                               data-favorited="{{ app.user.favUser.contains(oeuvre) ? 'true' : 'false' }}"
+                               id="favoriteDropdownBtn{{ oeuvre.id }}">
+                                <i class="bi favorite-icon {% if app.user.favUser.contains(oeuvre) %}bi-star-fill text-warning{% else %}bi-star text-secondary{% endif %} pe-2"></i>
+                                <span class="favorite-text">{% if app.user.favUser.contains(oeuvre) %}Retirer des favoris{% else %}Ajouter aux Favoris{% endif %}</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
                 <!-- Card feed action dropdown END -->
                 
@@ -251,7 +320,7 @@
         <!-- Card img -->
         {% if oeuvre.image %}
         <div class="overflow-hidden w-100">
-            <img src="data:{{ processedOeuvres[oeuvre.id].mimeType ?? 'image/jpeg' }};base64,{{ processedOeuvres[oeuvre.id].imageBase64 }}" 
+            <img src="{{ path('oeuvre_image', {'id': oeuvre.id}) }}" 
                  class="img-fluid" 
                  alt="{{ oeuvre.titre }}"
                  style="width: 100%; max-height: 600px; object-fit: contain;">
@@ -284,8 +353,8 @@
        data-oeuvre-id="{{ oeuvre.id }}"
        data-favorited="{{ app.user.favUser.contains(oeuvre) ? 'true' : 'false' }}"
        id="favoriteBtn{{ oeuvre.id }}">
-        <i class="bi {% if app.user.favUser.contains(oeuvre) %}bi-star-fill text-warning{% else %}bi-star text-secondary{% endif %} fa-fw pe-2"></i>
-        <span class="favorite-text">{% if app.user.favUser.contains(oeuvre) %}Retirer des favoris{% else %}Ajouter aux Favoris{% endif %}</span>
+        <i class="bi favorite-icon {% if app.user.favUser.contains(oeuvre) %}bi-star-fill text-warning{% else %}bi-star text-secondary{% endif %} fa-fw pe-1"></i>
+        <span class="favorite-count" data-oeuvre-id="{{ oeuvre.id }}">{{ oeuvre.userFav|length }}</span>
     </a>
 </li>
                 <!-- Card share action END -->
@@ -302,11 +371,15 @@
                 </div>
 
                 <!-- Comment box  -->
-                <form class="input-group" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}" method="post">
-    <textarea name="contenu" data-autoresize class="form-control me-2 bg-light rounded" rows="1"
-              placeholder="Ajouter un commentaire..."></textarea>
-    <button class="btn btn-primary mb-0 rounded" type="submit">Publier</button>
-</form>
+                <form class="w-100" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}#oeuvre-{{ oeuvre.id }}" method="post">
+                    <div class="position-relative">
+                        <textarea name="contenu" data-autoresize class="form-control bg-light rounded pe-5" rows="1"
+                                  placeholder="Ajouter un commentaire..."></textarea>
+                        <button class="btn btn-link text-primary position-absolute top-50 end-0 translate-middle-y me-2 p-0" type="submit" aria-label="Publier le commentaire">
+                            <i class="bi bi-send-fill fs-5"></i>
+                        </button>
+                    </div>
+                </form>
 
             </div>
             
@@ -331,9 +404,52 @@
                                             {{ commentaire.user ? (commentaire.user.nom ~ ' ' ~ commentaire.user.prenom) : 'Utilisateur' }}
                                         </a>
                                     </h6>
-                                    <small class="ms-2">{{ commentaire.dateCommentaire|date('d M') }}</small>
+                                    <div class="d-flex align-items-center">
+                                        <small class="ms-2">{{ commentaire.dateCommentaire|date('d M') }}</small>
+                                        {% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
+                                            <div class="dropdown ms-2">
+                                                <a href="#" class="text-secondary btn btn-sm btn-link p-0" id="commentAction{{ commentaire.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bi bi-three-dots"></i>
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="commentAction{{ commentaire.id }}">
+                                                    <li>
+                                                        <button type="button" class="dropdown-item" data-bs-toggle="collapse" data-bs-target="#editComment{{ commentaire.id }}" aria-expanded="false" aria-controls="editComment{{ commentaire.id }}">
+                                                            <i class="bi bi-pencil-square text-primary pe-2"></i>Modifier
+                                                        </button>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <form method="post" action="{{ path('commentaire_delete', {'id': commentaire.id}) }}" class="m-0">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ commentaire.id) }}">
+                                                            <input type="hidden" name="redirect_path" value="{{ app.request.pathInfo }}">
+                                                            <button type="submit" class="dropdown-item text-danger">
+                                                                <i class="bi bi-trash3 pe-2"></i>Supprimer
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 <p class="small mb-0">{{ commentaire.texte }}</p>
+                                {% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
+                                    <form method="post" action="{{ path('commentaire_edit', {'id': commentaire.id}) }}" class="collapse mt-2" id="editComment{{ commentaire.id }}">
+                                        <div class="position-relative">
+                                            <textarea name="contenu" class="form-control bg-white" rows="2">{{ commentaire.texte }}</textarea>
+                                            <input type="hidden" name="_token" value="{{ csrf_token('edit_comment_' ~ commentaire.id) }}">
+                                            <input type="hidden" name="redirect_path" value="{{ app.request.pathInfo }}">
+                                            <div class="d-flex gap-2 mt-2">
+                                                <button type="submit" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-check2"></i>Enregistrer
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editComment{{ commentaire.id }}">
+                                                    <i class="bi bi-x-lg"></i>Annuler
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                {% endif %}
                             </div>
                             <!-- Comment react -->
                             <ul class="nav nav-divider py-2 small">
@@ -426,14 +542,48 @@
         }
 
         // Favorite toggle functionality
+        function updateFavoriteVisualState(link, favorited) {
+            const icon = link.querySelector('.favorite-icon') || link.querySelector('i');
+            const text = link.querySelector('.favorite-text');
+
+            if (!icon) {
+                return;
+            }
+
+            if (favorited) {
+                icon.classList.remove('bi-star', 'text-secondary');
+                icon.classList.add('bi-star-fill', 'text-warning');
+                if (text) {
+                    text.textContent = 'Retirer des favoris';
+                }
+                link.dataset.favorited = 'true';
+            } else {
+                icon.classList.remove('bi-star-fill', 'text-warning');
+                icon.classList.add('bi-star', 'text-secondary');
+                if (text) {
+                    text.textContent = 'Ajouter aux Favoris';
+                }
+                link.dataset.favorited = 'false';
+            }
+        }
+
+        function syncFavoriteState(oeuvreId, favorited, favoriteCount = null) {
+            const favoriteLinks = document.querySelectorAll(`.favorite-toggle[data-oeuvre-id="${oeuvreId}"]`);
+            favoriteLinks.forEach((favoriteLink) => updateFavoriteVisualState(favoriteLink, favorited));
+
+            if (favoriteCount !== null) {
+                const favoriteCounts = document.querySelectorAll(`.favorite-count[data-oeuvre-id="${oeuvreId}"]`);
+                favoriteCounts.forEach((favoriteCountElement) => {
+                    favoriteCountElement.textContent = favoriteCount;
+                });
+            }
+        }
+
         document.addEventListener('click', function(e) {
             if (e.target.closest('.favorite-toggle')) {
                 e.preventDefault();
                 const link = e.target.closest('.favorite-toggle');
                 const oeuvreId = link.dataset.oeuvreId;
-                const isFavorited = link.dataset.favorited === 'true';
-                const icon = link.querySelector('i');
-                const text = link.querySelector('.favorite-text');
 
                 // Send AJAX request
                 fetch(`/oeuvre/${oeuvreId}/favorite-ajax`, {
@@ -445,18 +595,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Toggle visual state
-                        if (data.favorited) {
-                            icon.classList.remove('bi-star', 'text-secondary');
-                            icon.classList.add('bi-star-fill', 'text-warning');
-                            text.textContent = 'Retirer des favoris';
-                            link.dataset.favorited = 'true';
-                        } else {
-                            icon.classList.remove('bi-star-fill', 'text-warning');
-                            icon.classList.add('bi-star', 'text-secondary');
-                            text.textContent = 'Ajouter aux Favoris';
-                            link.dataset.favorited = 'false';
-                        }
+                        syncFavoriteState(oeuvreId, data.favorited, data.favoriteCount ?? null);
                     }
                 })
                 .catch(error => {

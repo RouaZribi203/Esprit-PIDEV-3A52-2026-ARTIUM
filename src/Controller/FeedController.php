@@ -38,33 +38,6 @@ final class FeedController extends AbstractController
            'type' => TypeOeuvre::PHOTOGRAPHIE
         ]);
         $all = array_merge($peintures, $sculptures, $photos);
-        // Process oeuvre images
-        $processedOeuvres = [];
-        foreach ($oeuvres as $oeuvre) {
-            $image = $oeuvre->getImage();
-            
-            if ($image) {
-                // Handle resource streams
-                if (is_resource($image)) {
-                    rewind($image);
-                    $imageData = stream_get_contents($image);
-                } else {
-                    $imageData = $image;
-                }
-                
-                // Only process if we have actual image data
-                if ($imageData && strlen($imageData) > 0) {
-                    $imageBase64 = base64_encode($imageData);
-                    $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                    $mimeType = $finfo->buffer($imageData);
-                    
-                    $processedOeuvres[$oeuvre->getId()] = [
-                        'imageBase64' => $imageBase64,
-                        'mimeType' => $mimeType ?: 'image/jpeg',
-                    ];
-                }
-            }
-        }
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
@@ -72,7 +45,6 @@ final class FeedController extends AbstractController
             'oeuvres' => $all,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
-            'processedOeuvres' => $processedOeuvres,
         ]);
     }
     #[Route('/feed_peintures', name: 'app_feed_peintures')]
@@ -81,39 +53,12 @@ final class FeedController extends AbstractController
         $peintures = $oeuvreRepository->findBy([
             'type' => TypeOeuvre::PEINTURE
        ]);
-        $processedOeuvres = [];
-        foreach ($peintures as $oeuvre) {
-            $image = $oeuvre->getImage();
-            
-            if ($image) {
-                // Handle resource streams
-                if (is_resource($image)) {
-                    rewind($image);
-                    $imageData = stream_get_contents($image);
-                } else {
-                    $imageData = $image;
-                }
-                
-                // Only process if we have actual image data
-                if ($imageData && strlen($imageData) > 0) {
-                    $imageBase64 = base64_encode($imageData);
-                    $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                    $mimeType = $finfo->buffer($imageData);
-                    
-                    $processedOeuvres[$oeuvre->getId()] = [
-                        'imageBase64' => $imageBase64,
-                        'mimeType' => $mimeType ?: 'image/jpeg',
-                    ];
-                }
-            }
-        }
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $peintures,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
-            'processedOeuvres' => $processedOeuvres,
         ]);
     }
 
@@ -124,39 +69,12 @@ final class FeedController extends AbstractController
         $sculptures = $oeuvreRepository->findBy([
             'type' => TypeOeuvre::SCULPTURE
        ]);
-        $processedOeuvres = [];
-        foreach ($sculptures as $oeuvre) {
-            $image = $oeuvre->getImage();
-            
-            if ($image) {
-                // Handle resource streams
-                if (is_resource($image)) {
-                    rewind($image);
-                    $imageData = stream_get_contents($image);
-                } else {
-                    $imageData = $image;
-                }
-                
-                // Only process if we have actual image data
-                if ($imageData && strlen($imageData) > 0) {
-                    $imageBase64 = base64_encode($imageData);
-                    $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                    $mimeType = $finfo->buffer($imageData);
-                    
-                    $processedOeuvres[$oeuvre->getId()] = [
-                        'imageBase64' => $imageBase64,
-                        'mimeType' => $mimeType ?: 'image/jpeg',
-                    ];
-                }
-            }
-        }
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $sculptures,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
-            'processedOeuvres' => $processedOeuvres,
         ]);
     }
     #[Route('/feed_photos', name: 'app_feed_photos')]
@@ -165,39 +83,12 @@ final class FeedController extends AbstractController
         $photos = $oeuvreRepository->findBy([
             'type' => TypeOeuvre::PHOTOGRAPHIE
        ]);
-        $processedOeuvres = [];
-        foreach ($photos as $oeuvre) {
-            $image = $oeuvre->getImage();
-            
-            if ($image) {
-                // Handle resource streams
-                if (is_resource($image)) {
-                    rewind($image);
-                    $imageData = stream_get_contents($image);
-                } else {
-                    $imageData = $image;
-                }
-                
-                // Only process if we have actual image data
-                if ($imageData && strlen($imageData) > 0) {
-                    $imageBase64 = base64_encode($imageData);
-                    $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                    $mimeType = $finfo->buffer($imageData);
-                    
-                    $processedOeuvres[$oeuvre->getId()] = [
-                        'imageBase64' => $imageBase64,
-                        'mimeType' => $mimeType ?: 'image/jpeg',
-                    ];
-                }
-            }
-        }
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $photos,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
-            'processedOeuvres' => $processedOeuvres,
         ]);
     }
 
@@ -249,7 +140,8 @@ final class FeedController extends AbstractController
 
         return $this->json([
             'success' => true,
-            'favorited' => !$isFavorited
+            'favorited' => !$isFavorited,
+            'favoriteCount' => $oeuvre->getUserFav()->count()
         ]);
     }
 
@@ -325,6 +217,135 @@ final class FeedController extends AbstractController
 
     return $this->redirectToRoute('app_feed'); // retourne sur le feed après publication
 }
+
+    #[Route('/commentaire/{id}/delete', name: 'commentaire_delete', methods: ['POST'])]
+    public function deleteCommentaire(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('app_feed');
+        }
+
+        // Fetch only the data we need without loading full entities
+        $commentData = $em->createQuery(
+            'SELECT c.id, IDENTITY(c.user) as userId, IDENTITY(c.oeuvre) as oeuvreId 
+             FROM App\Entity\Commentaire c 
+             WHERE c.id = :id'
+        )
+        ->setParameter('id', $id)
+        ->getOneOrNullResult();
+
+        if (!$commentData) {
+            return $this->redirectToRoute('app_feed');
+        }
+
+        if ($commentData['userId'] !== $user->getId()) {
+            $this->addFlash('error', 'Vous ne pouvez pas supprimer ce commentaire.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $submittedToken = (string) $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('delete_comment_'.$id, $submittedToken)) {
+            $this->addFlash('error', 'Requête invalide.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $oeuvreId = $commentData['oeuvreId'];
+
+        // Delete using DQL to avoid entity loading
+        $em->createQuery('DELETE FROM App\Entity\Commentaire c WHERE c.id = :id')
+            ->setParameter('id', $id)
+            ->execute();
+
+        $redirectPath = (string) $request->request->get('redirect_path', '/feed');
+        if ($redirectPath === '' || !str_starts_with($redirectPath, '/')) {
+            $redirectPath = '/feed';
+        }
+
+        $anchor = $oeuvreId ? '#oeuvre-'.$oeuvreId : '';
+
+        return $this->redirect($redirectPath.$anchor);
+    }
+
+    #[Route('/commentaire/{id}/edit', name: 'commentaire_edit', methods: ['POST'])]
+    public function editCommentaire(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $commentRows = $em->createQuery(
+            'SELECT IDENTITY(c.user) as userId, IDENTITY(c.oeuvre) as oeuvreId
+             FROM App\Entity\Commentaire c
+             WHERE c.id = :id'
+        )
+        ->setParameter('id', $id)
+        ->setMaxResults(1)
+        ->getArrayResult();
+
+        $commentData = $commentRows[0] ?? null;
+
+        if (!$commentData) {
+            return $this->redirectToRoute('app_feed');
+        }
+
+        if ((int) $commentData['userId'] !== $user->getId()) {
+            $this->addFlash('error', 'Vous ne pouvez pas modifier ce commentaire.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $submittedToken = (string) $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('edit_comment_'.$id, $submittedToken)) {
+            $this->addFlash('error', 'Requête invalide.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $contenu = trim((string) $request->request->get('contenu'));
+        if ($contenu === '') {
+            $this->addFlash('error', 'Le commentaire ne peut pas être vide.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $em->createQuery('UPDATE App\Entity\Commentaire c SET c.texte = :texte WHERE c.id = :id')
+            ->setParameter('texte', $contenu)
+            ->setParameter('id', $id)
+            ->execute();
+
+        $redirectPath = (string) $request->request->get('redirect_path', '/feed');
+        if ($redirectPath === '' || !str_starts_with($redirectPath, '/')) {
+            $redirectPath = '/feed';
+        }
+
+        $anchor = !empty($commentData['oeuvreId']) ? '#oeuvre-'.$commentData['oeuvreId'] : '';
+
+        return $this->redirect($redirectPath.$anchor);
+    }
+
+    #[Route('/oeuvre/{id}/image', name: 'oeuvre_image', methods: ['GET'])]
+    public function oeuvreImage(Oeuvre $oeuvre): Response
+    {
+        $imageData = $oeuvre->getImage();
+
+        if (!$imageData) {
+            throw $this->createNotFoundException('Image not found');
+        }
+
+        if (is_resource($imageData)) {
+            rewind($imageData);
+            $imageData = stream_get_contents($imageData);
+        }
+
+        // Detect MIME type
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->buffer($imageData) ?: 'image/jpeg';
+
+        return new Response(
+            $imageData,
+            200,
+            ['Content-Type' => $mimeType]
+        );
+    }
 
 
     }

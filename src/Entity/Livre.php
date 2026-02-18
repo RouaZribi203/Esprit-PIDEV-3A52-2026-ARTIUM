@@ -7,14 +7,29 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 #[ORM\Entity(repositoryClass: LivreRepository::class)]
 class Livre extends Oeuvre
 {
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "La catégorie est obligatoire.")]
+    #[Assert\Length(
+    min: 2,
+    max: 255,
+    minMessage: "La catégorie doit contenir au moins {{ limit }} caractères.",
+    maxMessage: "La catégorie ne peut pas dépasser {{ limit }} caractères."
+    )]
     private ?string $categorie = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: "Le prix est obligatoire.")]
+    #[Assert\Type(
+    type: "numeric",
+    message: "Le prix doit être un nombre."
+    )]
+    #[Assert\Positive(message: "Le prix doit être supérieur à 0.")]
     private ?float $prix_location = null;
 
     #[ORM\Column(type: Types::BLOB)]

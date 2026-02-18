@@ -28,7 +28,7 @@
                               <a href="#" class="text-muted" id="cardAction{{ livre.id }}" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></a>
                               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardAction{{ livre.id }}">
                                 <li>
-                                  <a class="dropdown-item js-show-details" href="#"
+                                    <a class="dropdown-item js-show-details" href="#"
                                      data-id="{{ livre.id }}"
                                      data-titre="{{ livre.titre|e('html_attr') }}"
                                      data-date-creation="{{ livre.dateCreation ? livre.dateCreation|date('Y-m-d H:i:s') : '' }}"
@@ -38,7 +38,9 @@
                                      data-active-id="{{ stats.activeId is defined ? stats.activeId : '' }}"
                                      data-active-date="{{ stats.activeDate is defined ? stats.activeDate : '' }}"
                                      data-location-count="{{ stats.count is defined ? stats.count : 0 }}"
-                                     data-total-revenue="{{ stats.total is defined ? '%.2f'|format(stats.total) : '0.00' }}">
+                                     data-total-revenue="{{ stats.total is defined ? '%.2f'|format(stats.total) : '0.00' }}"
+                                     data-active-user="{{ stats.activeUserId is defined ? stats.activeUserId : '' }}"
+                                     data-current-user="{{ app.user ? app.user.id : '' }}">
                                     Détails
                                   </a>
                                 </li>
@@ -85,7 +87,7 @@
                               <a href="#" class="text-muted" id="cardAction{{ i }}" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></a>
                               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardAction{{ i }}">
                                 <li>
-                                  <a class="dropdown-item js-show-details" href="#"
+                                    <a class="dropdown-item js-show-details" href="#"
                                      data-id="{{ i }}"
                                      data-titre="Titre du livre {{ i }}"
                                      data-date-creation="--/--/----"
@@ -95,7 +97,9 @@
                                      data-active-id=""
                                      data-active-date=""
                                      data-location-count="{{ 2 * i }}"
-                                     data-total-revenue="{{ '%.2f'|format((2 * i) * (6 + i)) }}">
+                                     data-total-revenue="{{ '%.2f'|format((2 * i) * (6 + i)) }}"
+                                     data-active-user=""
+                                     data-current-user="{{ app.user ? app.user.id : '' }}">
                                     Détails
                                   </a>
                                 </li>
@@ -134,14 +138,26 @@
               <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body">
-              <form id="addLivreFormFront" method="post" action="{{ path('artiste_livre_create') }}" enctype="multipart/form-data">
+              <form id="addLivreFormFront" class="needs-validation" novalidate method="post" action="{{ path('artiste_livre_create') }}" enctype="multipart/form-data">
                 <div class="mb-3">
                   <label class="form-label">Titre</label>
-                  <input type="text" class="form-control" name="titre" placeholder="Titre du livre" required>
+                  <input type="text" class="form-control" name="titre" placeholder="Titre du livre" required minlength="2" maxlength="255">
+                  <div class="invalid-feedback">
+                  Le titre est obligatoire (2 à 255 caractères).
+                  </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Description</label>
-                  <textarea class="form-control" name="description" rows="3"></textarea>
+                  <textarea class="form-control"
+                      name="description"
+                      rows="3"
+                      required
+                      minlength="1"
+                      maxlength="500"></textarea>
+                  <div class="invalid-feedback">
+                    La description doit contenir entre 1 et 500 caractères.
+                  </div>
+
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Image (aperçu)</label>
@@ -153,15 +169,31 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Catégorie</label>
-                  <input type="text" class="form-control" name="categorie" placeholder="Catégorie">
+                  <input type="text"
+                    class="form-control"
+                    name="categorie"
+                    placeholder="Catégorie"
+                    required>
+                  <div class="invalid-feedback">
+                    La catégorie est obligatoire.
+                  </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Prix location</label>
-                  <input type="number" step="0.01" class="form-control" name="prix_location" placeholder="Prix">
+                  <input type="text"
+                    class="form-control"
+                    name="prix_location"
+                    placeholder="Prix"
+                    required
+                    pattern="^\d+(\.\d{1,2})?$">
+                  <div class="invalid-feedback">
+                    Le prix doit être un nombre valide (ex: 10 ou 10.50).
+                  </div>
+
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Collection</label>
-                  <select name="collection" class="form-select">
+                  <select name="collection" class="form-select" required>
                     <option value="">Choisir une collection</option>
                     {% if collections is defined %}
                       {% for coll in collections %}
@@ -169,6 +201,9 @@
                       {% endfor %}
                     {% endif %}
                   </select>
+                  <div class="invalid-feedback">
+                    Veuillez choisir une collection.
+                  </div>
                 </div>
                 <div class="d-flex justify-content-end mt-3">
                   <button type="submit" class="btn btn-primary">Enregistrer</button>
@@ -183,15 +218,22 @@
               <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body">
-              <form id="editLivreFormFront" method="post" action="" enctype="multipart/form-data">
+              <form id="editLivreFormFront" class="needs-validation" novalidate method="post" action="" enctype="multipart/form-data">
+
                 <input type="hidden" name="id" value="" />
                 <div class="mb-3">
                   <label class="form-label">Titre</label>
                   <input type="text" class="form-control" name="livre[titre]" placeholder="Titre du livre" required>
+                  <div class="invalid-feedback">
+                    Le titre est obligatoire (2 à 255 caractères).
+                  </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Description</label>
-                  <textarea class="form-control" name="livre[description]" rows="3"></textarea>
+                  <textarea class="form-control" name="livre[description]" rows="3" required></textarea>
+                  <div class="invalid-feedback">
+                    La description doit contenir entre 1 et 500 caractères.
+                  </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Image (remplacer)</label>
@@ -203,15 +245,21 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Catégorie</label>
-                  <input type="text" class="form-control" name="livre[categorie]" placeholder="Catégorie">
+                  <input type="text" class="form-control" name="livre[categorie]" placeholder="Catégorie" required>
+                  <div class="invalid-feedback">
+                    La catégorie est obligatoire.
+                  </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Prix location</label>
-                  <input type="number" step="0.01" class="form-control" name="livre[prix_location]" placeholder="Prix">
+                  <input type="number" step="0.01" class="form-control" name="livre[prix_location]" placeholder="Prix" required>
+                  <div class="invalid-feedback">
+                    Le prix doit être un nombre valide (ex: 10 ou 10.50).
+                  </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Collection</label>
-                  <select name="livre[collection]" class="form-select">
+                  <select name="livre[collection]" class="form-select" required>
                     <option value="">Choisir une collection</option>
                     {% if collections is defined %}
                       {% for coll in collections %}
@@ -219,9 +267,12 @@
                       {% endfor %}
                     {% endif %}
                   </select>
+                  <div class="invalid-feedback">
+                    Veuillez choisir une collection.
+                  </div>
                 </div>
                 <div class="d-flex justify-content-end mt-3">
-                  <button type="submit" class="btn btn-primary">Enregistrer</button>
+                  <button type="submit" class="btn btn-primary">Publier</button>
                 </div>
               </form>
             </div>
@@ -297,12 +348,16 @@
                         document.getElementById('detail-date-creation').textContent = dataset.dateCreation || '-';
                         document.getElementById('detail-description').textContent = dataset.description || '-';
 
-                        // PDF or image embed + download link — detect MIME via HEAD request
+                        // PDF or image embed + download link — only allow if current user is renter
                         const pdfLabel = document.getElementById('detail-pdf-label');
                         const pdfUrl = dataset.pdfUrl || '';
+                        const activeUser = dataset.activeUser || '';
+                        const currentUser = dataset.currentUser || '';
+
                         if (!pdfUrl) {
                           pdfLabel.innerHTML = '<span class="badge bg-secondary">Aucun fichier</span>';
-                        } else {
+                        } else if (activeUser && currentUser && activeUser === currentUser) {
+                          // allowed: perform HEAD probe and show embed/download
                           pdfLabel.innerHTML = '<div class="text-muted">Chargement du fichier…</div>';
                           fetch(pdfUrl, { method: 'HEAD' }).then(function(resp) {
                             const ct = (resp.headers.get('Content-Type') || '').toLowerCase();
@@ -314,6 +369,9 @@
                           }).catch(function() {
                             pdfLabel.innerHTML = '<div class="mt-2"><a href="' + pdfUrl + '?download=1" class="btn btn-sm btn-primary" target="_blank">Télécharger le fichier</a></div>';
                           });
+                        } else {
+                          // not allowed: show greyed/disabled notice
+                          pdfLabel.innerHTML = '<div class="text-muted">Fichier réservé au locataire actuel.</div><div class="mt-2"><button class="btn btn-sm btn-secondary" disabled style="pointer-events:none;">Accès restreint</button></div>';
                         }
 
                         // Image
@@ -430,5 +488,26 @@
           </script>
 
           
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const forms = document.querySelectorAll('.needs-validation');
+
+  forms.forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      form.classList.add('was-validated');
+
+    }, false);
+  });
+
+});
+</script>
+
 
 {% endblock %}

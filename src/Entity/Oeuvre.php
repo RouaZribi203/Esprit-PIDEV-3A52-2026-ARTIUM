@@ -26,9 +26,25 @@ class Oeuvre
 
     #[ORM\Column(length: 255)]
     private ?string $titre = null;
+    #[Assert\NotBlank(message: "Le titre est obligatoire.")]
+    #[Assert\Length(
+    min: 2,
+    max: 255,
+    minMessage: "Le titre doit contenir au moins {{ limit }} caractères.",
+    maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères."
+    )]
+
 
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
+    #[Assert\NotBlank(message: "La description est obligatoire.")]
+    #[Assert\Length(
+    min: 1,
+    max: 500,
+    minMessage: "La description doit contenir au moins {{ limit }} caractère.",
+    maxMessage: "La description ne peut pas dépasser {{ limit }} caractères."
+    )]
+
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTime $date_creation = null;

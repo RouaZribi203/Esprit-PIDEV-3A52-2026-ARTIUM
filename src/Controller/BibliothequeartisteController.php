@@ -164,91 +164,163 @@ final class BibliothequeartisteController extends AbstractController
         return $this->redirectToRoute('app_bibliothequeartiste');
     }
 
-    #[Route('/artiste-bibliotheque/livre/{id}/edit', name: 'artiste_livre_edit', methods: ['POST'])]
-    public function edit(Livre $livre, Request $request, EntityManagerInterface $em, CollectionsRepository $collectionsRepository, UserRepository $userRepository): Response
-    {
-        // TODO: Replace test artist with $this->getUser() when authentication module is merged
-        $artist = $this->getUser();
-        if (!$artist) {
-            $this->addFlash('error', 'Artiste de test introuvable.');
-            return $this->redirectToRoute('app_bibliothequeartiste');
+  #[Route('/artiste-bibliotheque/livre/{id}/edit', name: 'artiste_livre_edit', methods: ['POST'])]
+public function edit(
+    Livre $livre,
+    Request $request,
+    EntityManagerInterface $em,
+    CollectionsRepository $collectionsRepository,
+    LocationLivreRepository $locationLivreRepository
+): Response {
+
+    $artist = $this->getUser();
+
+    if (!$artist) {
+        $this->addFlash('error', 'Artiste introuvable.');
+        return $this->redirectToRoute('app_bibliothequeartiste');
+    }
+
+    // 🔒 Ensure the book belongs to this artist
+    if (
+        !$livre->getCollection() ||
+        !$livre->getCollection()->getArtiste() ||
+        $livre->getCollection()->getArtiste()->getId() !== $artist->getId()
+    ) {
+        throw $this->createAccessDeniedException();
+    }
+
+    // 🔎 Check if book is currently rented
+    $activeLocation = $locationLivreRepository->findOneBy([
+        'livre' => $livre,
+        'etat' => EtatLocation::ACTIVE
+    ]);
+
+    $isRented = $activeLocation ? true : false;
+
+    // 📥 Get submitted data
+    $all = $request->request->all();
+    $data = (isset($all['livre']) && is_array($all['livre'])) ? $all['livre'] : [];
+
+    $restrictedChangeAttempted = false;
+
+    // =========================
+    // ✅ ALWAYS ALLOWED
+    // =========================
+
+    if (isset($data['titre'])) {
+        $livre->setTitre($data['titre']);
+    }
+
+    if (isset($data['description'])) {
+        $livre->setDescription($data['description']);
+    }
+
+    // =========================
+    // 🔒 IF RENTED → BLOCK STRUCTURAL CHANGES
+    // =========================
+
+    if ($isRented) {
+
+        // Detect forbidden changes
+
+        if (isset($data['categorie']) && $data['categorie'] !== $livre->getCategorie()) {
+            $restrictedChangeAttempted = true;
         }
 
-        // read submitted 'livre' array safely by using ->all() to avoid InputBag scalar checks
-        $all = $request->request->all();
-        $data = (isset($all['livre']) && \is_array($all['livre'])) ? $all['livre'] : [];
+        if (isset($data['prix_location']) && 
+            $data['prix_location'] !== '' &&
+            (float)$data['prix_location'] !== (float)$livre->getPrixLocation()) {
+            $restrictedChangeAttempted = true;
+        }
 
-        // ensure the livre's collection belongs to the artist (prevent reassigning to other artists)
-        $collectionId = $data['collection'] ?? null;
-        if ($collectionId) {
-            $collection = $collectionsRepository->find((int)$collectionId);
-            if (!$collection ||!$collection->getArtiste() ||$collection->getArtiste()->getId() !== $artist->getId()) 
-            {
+        if (isset($data['collection']) && 
+            (int)$data['collection'] !== (int)$livre->getCollection()?->getId()) {
+            $restrictedChangeAttempted = true;
+        }
+
+        if ($restrictedChangeAttempted) {
+            $this->addFlash(
+                'warning',
+                'Certaines modifications ne sont pas autorisées pendant une location active.'
+            );
+        } else {
+            $this->addFlash('success', 'Livre mis à jour avec succès.');
+        }
+
+    } else {
+
+        // =========================
+        // ✅ FULL EDIT ALLOWED
+        // =========================
+
+        if (isset($data['categorie'])) {
+            $livre->setCategorie($data['categorie']);
+        }
+
+        if (isset($data['prix_location']) && $data['prix_location'] !== '') {
+            $livre->setPrixLocation((float)$data['prix_location']);
+        }
+
+        if (isset($data['collection'])) {
+
+            $collection = $collectionsRepository->find((int)$data['collection']);
+
+            if (
+                !$collection ||
+                !$collection->getArtiste() ||
+                $collection->getArtiste()->getId() !== $artist->getId()
+            ) {
                 $this->addFlash('error', 'Collection invalide.');
                 return $this->redirectToRoute('app_bibliothequeartiste');
             }
-            if (method_exists($livre, 'setCollection')) {
-                $livre->setCollection($collection);
-            }
-        }
 
-        // scalar fields (from the 'livre' array)
-        $titre = $data['titre'] ?? null;
-        if ($titre !== null) {
-            $livre->setTitre($titre);
+            $livre->setCollection($collection);
         }
-
-        $description = $data['description'] ?? null;
-        if ($description !== null) {
-            $livre->setDescription($description);
-        }
-
-        $categorie = $data['categorie'] ?? null;
-        if ($categorie !== null) {
-            $livre->setCategorie($categorie);
-        }
-
-        $prix = $data['prix_location'] ?? null;
-        if ($prix !== null && $prix !== '') {
-            $livre->setPrixLocation((float) $prix);
-        }
-
-        // handle replacing image/pdf via the 'livre' files array
-        try {
-            $allFiles = $request->files->all();
-            $files = (isset($allFiles['livre']) && \is_array($allFiles['livre'])) ? $allFiles['livre'] : [];
-            $imageFile = array_key_exists('image', $files) ? $files['image'] : null;
-            if ($imageFile) {
-                $path = $imageFile->getPathname();
-                if (is_readable($path)) {
-                    $livre->setImage(file_get_contents($path));
-                }
-            }
-        } catch (\Throwable $e) {
-            // ignore image errors
-        }
-
-        try {
-            $allFiles = $request->files->all();
-            $files = (isset($allFiles['livre']) && \is_array($allFiles['livre'])) ? $allFiles['livre'] : [];
-            $pdfFile = array_key_exists('fichier_pdf', $files) ? $files['fichier_pdf'] : null;
-            if ($pdfFile) {
-                $path = $pdfFile->getPathname();
-                if (is_readable($path)) {
-                    $livre->setFichierPdf(file_get_contents($path));
-                }
-            }
-        } catch (\Throwable $e) {
-            // ignore pdf errors
-        }
-
-        $em->persist($livre);
-        $em->flush();
 
         $this->addFlash('success', 'Livre mis à jour avec succès.');
-
-        return $this->redirectToRoute('app_bibliothequeartiste');
     }
+
+    // =========================
+    // 🖼 IMAGE UPDATE (always allowed)
+    // =========================
+
+    try {
+        $files = $request->files->get('livre', []);
+        $imageFile = $files['image'] ?? null;
+
+        if ($imageFile) {
+            $path = $imageFile->getPathname();
+            if (is_readable($path)) {
+                $livre->setImage(file_get_contents($path));
+            }
+        }
+    } catch (\Throwable $e) {
+        // ignore
+    }
+
+    // =========================
+    // 📄 PDF UPDATE (always allowed)
+    // =========================
+
+    try {
+        $files = $request->files->get('livre', []);
+        $pdfFile = $files['fichier_pdf'] ?? null;
+
+        if ($pdfFile) {
+            $path = $pdfFile->getPathname();
+            if (is_readable($path)) {
+                $livre->setFichierPdf(file_get_contents($path));
+            }
+        }
+    } catch (\Throwable $e) {
+        // ignore
+    }
+
+    $em->persist($livre);
+    $em->flush();
+
+    return $this->redirectToRoute('app_bibliothequeartiste');
+}
 
 #[Route('/artiste-bibliotheque/livre/{id}/delete', name: 'artiste_livre_delete', methods: ['POST'])]
 public function delete(

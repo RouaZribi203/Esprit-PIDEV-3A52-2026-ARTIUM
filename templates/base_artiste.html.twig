@@ -122,6 +122,15 @@
 				<!-- Main content START -->
 				<div class="col-lg-8 vstack gap-4">
 				{% include 'oeuvre_front/Partials/profile_artiste.html.twig' %}
+				{% for label, messages in app.flashes %}
+    			{% for message in messages %}
+        		<div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+            	{{ message }}
+           		 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        		</div>
+    			{% endfor %}
+				{% endfor %}
+
 				
 				{% block artiste_content %}{% endblock %}
 				</div>

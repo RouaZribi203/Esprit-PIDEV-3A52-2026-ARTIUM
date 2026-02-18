@@ -44,6 +44,7 @@
                                 </li>
                                     <li><a class="dropdown-item js-edit-livre" href="#"
                                       data-id="{{ livre.id }}"
+                                      data-edit-url-template="{{ path('artiste_livre_edit', {'id': 0}) }}"
                                       data-titre="{{ livre.titre|e('html_attr') }}"
                                       data-description="{{ livre.description|e('html_attr') }}"
                                       data-categorie="{{ livre.categorie|e('html_attr') }}"
@@ -51,7 +52,7 @@
                                       data-collection="{{ livre.collection ? livre.collection.id : '' }}">Modifier</a></li>
                                 <li><a class="dropdown-item text-danger js-delete-livre" href="#"
                                      data-id="{{ livre.id }}"
-                                     data-delete-url-template="{{ path('app_bibliofront_delete', {'id': 0}) }}"
+                                     data-delete-url-template="{{ path('artiste_livre_delete', {'id': 0}) }}"
                                   >Supprimer</a></li>
                               </ul>
                             </div>
@@ -133,7 +134,7 @@
               <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body">
-              <form id="addLivreFormFront" method="post" action="{{ path('app_bibliofront_create') }}" enctype="multipart/form-data">
+              <form id="addLivreFormFront" method="post" action="{{ path('artiste_livre_create') }}" enctype="multipart/form-data">
                 <div class="mb-3">
                   <label class="form-label">Titre</label>
                   <input type="text" class="form-control" name="titre" placeholder="Titre du livre" required>
@@ -380,7 +381,9 @@
               const id = dataset.id || '';
 
               // set action to the front edit route
-              form.action = id ? ("/user-bibliotheque/livre/" + id + "/edit") : '';
+              const tmpl = btn.dataset.editUrlTemplate || '';
+              form.action = tmpl ? tmpl.replace('/0', '/' + id) : '';
+
 
               function setField(name, value){
                 const el = form.querySelector('[name="' + name + '"]');
@@ -415,7 +418,7 @@
 
               const id = btn.dataset.id;
               const tmpl = btn.dataset.deleteUrlTemplate || '';
-              const action = tmpl ? tmpl.replace('/0', '/' + id) : ('/user-bibliotheque/livre/' + id + '/delete');
+              const action = tmpl ? tmpl.replace('/0', '/' + id) : ('/artiste-bibliotheque/livre/' + id + '/delete');
 
               const f = document.createElement('form');
               f.method = 'post';

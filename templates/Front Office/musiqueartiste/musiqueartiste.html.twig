@@ -21,9 +21,9 @@
 <!-- Header with title and upload button START -->
 <div class="card">
   <div class="card-header d-sm-flex align-items-center text-center justify-content-sm-between border-0 pb-0">
-    <h1 class="h4 card-title">My Music</h1>
+    <h1 class="h4 card-title">Mes pièces musicales</h1>
     <button type="button" class="btn btn-primary-soft" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddMusic">
-      <i class="bi bi-plus-circle pe-2"></i>Add Music
+      <i class="bi bi-plus-circle pe-2"></i>Ajouter une musique
     </button>
   </div>
   <!-- Card body START -->
@@ -33,15 +33,15 @@
       <div class="col-md-6">
         <div class="d-flex gap-2">
           <div class="flex-grow-1">
-            <label for="searchInput" class="form-label small mb-2">Search by name or description</label>
-            <input type="text" class="form-control" id="searchInput" placeholder="Search songs..." value="{{ searchTerm }}">
+            <label for="searchInput" class="form-label small mb-2">Rechercher par nom ou description</label>
+            <input type="text" class="form-control" id="searchInput" placeholder="Rechercher des chansons..." value="{{ searchTerm }}">
           </div>
           <button type="button" class="btn btn-outline-primary align-self-end" id="searchBtn">
-            <i class="bi bi-search"></i> Search
+            <i class="bi bi-search"></i> Rechercher
           </button>
           {% if searchTerm %}
             <button type="button" class="btn btn-outline-secondary align-self-end" id="clearSearchBtn">
-              <i class="bi bi-x-circle"></i> Clear
+              <i class="bi bi-x-circle"></i> Effacer
             </button>
           {% endif %}
         </div>
@@ -50,10 +50,10 @@
       <div class="col-md-6">
         <div class="d-flex gap-2">
           <div class="flex-grow-1">
-            <label for="sortBy" class="form-label small mb-2">Sort by</label>
+            <label for="sortBy" class="form-label small mb-2">Trier par</label>
             <select class="form-select" id="sortBy">
-              <option value="date" {% if sortBy == 'date' %}selected{% endif %}>Date Added</option>
-              <option value="titre" {% if sortBy == 'titre' %}selected{% endif %}>Title (A-Z)</option>
+              <option value="date" {% if sortBy == 'date' %}selected{% endif %}>Date d'ajout</option>
+              <option value="titre" {% if sortBy == 'titre' %}selected{% endif %}>Titre (A-Z)</option>
               <option value="genre" {% if sortBy == 'genre' %}selected{% endif %}>Genre</option>
             </select>
           </div>
@@ -62,7 +62,7 @@
             <label class="form-label small mb-2">&nbsp;</label>
             <button type="button" class="btn btn-outline-primary w-100" id="toggleSortBtn">
               <i class="bi {% if sortOrder == 'DESC' %}bi-sort-down{% else %}bi-sort-up{% endif %}"></i>
-              <span id="sortOrderText">{{ sortOrder == 'DESC' ? 'Descending' : 'Ascending' }}</span>
+              <span id="sortOrderText">{{ sortOrder == 'DESC' ? 'Descendant' : 'Ascendant' }}</span>
             </button>
           </div>
         </div>
@@ -75,8 +75,8 @@
       {% if searchTerm %}
         <p class="text-muted small">
           <i class="bi bi-info-circle"></i> 
-          Found <strong>{{ musiques|length }}</strong> song(s) matching "{{ searchTerm }}"
-          <a href="#" onclick="clearSearch(); return false;" class="ms-2">View all songs</a>
+          Trouvé <strong>{{ musiques|length }}</strong> chanson(s) correspondant à "{{ searchTerm }}"
+          <a href="#" onclick="clearSearch(); return false;" class="ms-2">Afficher toutes les chansons</a>
         </p>
       {% endif %}
     </div>
@@ -85,8 +85,8 @@
       <!-- No music message START -->
       <div class="text-center py-5" id="emptyMessage">
         <i class="bi bi-music-note-beamed display-1 text-muted"></i>
-        <h5 class="mt-3">No music found</h5>
-        <p class="text-muted">{% if searchTerm %}No songs match your search. Try a different keyword.{% else %}Start by uploading your first music piece!{% endif %}</p>
+        <h5 class="mt-3">Aucune musique trouvée</h5>
+        <p class="text-muted">{% if searchTerm %}Aucune chanson ne correspond à votre recherche. Essayez un mot-clé différent.{% else %}Commencez par télécharger votre première pièce musicale !{% endif %}</p>
       </div>
       <!-- No music message END -->
     {% else %}
@@ -133,9 +133,9 @@
                 <!-- Like and action buttons -->
                 <div class="d-flex mt-3 gap-2">
                   <button class="btn btn-sm btn-primary flex-grow-1 play-btn">
-                    <i class="bi bi-play-fill pe-1"></i> Play
+                    <i class="bi bi-play-fill pe-1"></i> Lecture
                   </button>
-                  <button class="btn btn-sm btn-outline-primary" title="Add to favorites">
+                  <button class="btn btn-sm btn-outline-primary" title="Ajouter aux favoris">
                     <i class="bi bi-heart"></i>
                   </button>
                   <!-- More options dropdown -->
@@ -152,7 +152,7 @@
                            data-music-genre="{{ musique.genre }}"
                            data-bs-toggle="offcanvas" 
                            data-bs-target="#offcanvasEditMusic">
-                          <i class="bi bi-pencil pe-2"></i>Edit
+                          <i class="bi bi-pencil pe-2"></i>Modifier
                         </a>
                       </li>
                       <li>
@@ -162,11 +162,11 @@
                               style="display: inline;">
                           <input type="hidden" name="confirm_delete" value="1">
                           <button type="submit" class="dropdown-item text-danger delete-music-submit" style="border: none; background: none; cursor: pointer; width: 100%; text-align: left;">
-                            <i class="bi bi-trash pe-2"></i>Delete
+                            <i class="bi bi-trash pe-2"></i>Supprimer
                           </button>
                         </form>
                       </li>
-                      <li><a class="dropdown-item" href="#"> <i class="bi bi-share pe-2"></i>Share</a></li>
+                      <li><a class="dropdown-item" href="#"> <i class="bi bi-share pe-2"></i>Partager</a></li>
                     </ul>
                   </div>
                 </div>
@@ -206,7 +206,7 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddMusic" style="width: 600px">
   <div class="offcanvas-body" data-simplebar>
     <div class="offcanvas-header px-2 pt-0">
-      <h3 class="offcanvas-title" id="offcanvasAddMusicLabel">Add New Music</h3>
+      <h3 class="offcanvas-title" id="offcanvasAddMusicLabel">Ajouter une nouvelle musique</h3>
       <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <!-- Form body -->
@@ -219,7 +219,7 @@
             {% for message in messages %}
               <div class="col-12 mb-3">
                 <div class="alert alert-danger alert-dismissible fade show">
-                  <strong><i class="bi bi-exclamation-circle pe-2"></i>Error:</strong>
+                  <strong><i class="bi bi-exclamation-circle pe-2"></i>Erreur:</strong>
                   {{ message }}
                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -240,7 +240,7 @@
               {% endfor %}
             </div>
           {% endif %}
-          <small class="form-text text-muted d-block mt-1">3-255 characters</small>
+          <small class="form-text text-muted d-block mt-1">3-255 caractères</small>
         </div>
 
         <!-- Description -->
@@ -255,7 +255,7 @@
               {% endfor %}
             </div>
           {% endif %}
-          <small class="form-text text-muted d-block mt-1">10-5000 characters <span id="descriptionCounter">(0/5000)</span></small>
+          <small class="form-text text-muted d-block mt-1">10-5000 caractères <span id="descriptionCounter">(0/5000)</span></small>
         </div>
 
         <!-- Genre -->
@@ -291,7 +291,7 @@
               {% endfor %}
             </div>
           {% endif %}
-          <small class="text-muted d-block mt-2">Optional • Max 5MB • Formats: JPEG, PNG • Recommended: min 300x300px</small>
+          <small class="text-muted d-block mt-2">Optionnel • Max 5MB • Formats: JPEG, PNG • Recommender: min 300x300px</small>
         </div>
 
         <!-- Audio File -->
@@ -310,15 +310,15 @@
               {% endfor %}
             </div>
           {% endif %}
-          <small class="text-muted d-block mt-2">Required • Max 20MB • Audio formats supported</small>
+          <small class="text-muted d-block mt-2">Requis • Max 20MB • Formats audio supportés</small>
         </div>
 
         <!-- Buttons -->
         <div class="col-12">
           <button class="btn btn-primary" type="submit" id="submitBtn">
-            <i class="bi bi-upload pe-2"></i><span id="submitBtnText">Upload Music</span>
+            <i class="bi bi-upload pe-2"></i><span id="submitBtnText">Ajouter Musique</span>
           </button>
-          <button type="button" class="btn btn-outline-primary ms-2" data-bs-dismiss="offcanvas" aria-label="Close">Cancel</button>
+          <button type="button" class="btn btn-outline-primary ms-2" data-bs-dismiss="offcanvas" aria-label="Close">Annuler</button>
         </div>
 
       {{ form_end(form) }}
@@ -331,7 +331,7 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditMusic" style="width: 600px">
   <div class="offcanvas-body" data-simplebar>
     <div class="offcanvas-header px-2 pt-0">
-      <h3 class="offcanvas-title">Edit Music</h3>
+      <h3 class="offcanvas-title">Modifier la musique</h3>
       <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <!-- Form body -->
@@ -341,12 +341,12 @@
         
         <!-- Title -->
         <div class="mb-3 col-12">
-          <label for="editTitre" class="form-label">Title</label>
+          <label for="editTitre" class="form-label">Titre</label>
           <span class="text-danger">*</span>
           <input type="text" class="form-control" id="editTitre" name="titre" 
                  required minlength="3" maxlength="255">
-          <div class="invalid-feedback">Title must be 3-255 characters.</div>
-          <small class="form-text text-muted d-block mt-1">3-255 characters</small>
+          <div class="invalid-feedback">Le titre doit contenir entre 3 et 255 caractères.</div>
+          <small class="form-text text-muted d-block mt-1">3-255 caractères</small>
         </div>
 
         <!-- Description -->
@@ -355,8 +355,8 @@
           <span class="text-danger">*</span>
           <textarea class="form-control" id="editDescription" name="description" rows="3" 
                     required minlength="10" maxlength="5000" data-counter="editDescriptionCounter"></textarea>
-          <div class="invalid-feedback">Description must be 10-5000 characters.</div>
-          <small class="form-text text-muted d-block mt-1">10-5000 characters <span id="editDescriptionCounter">(0/5000)</span></small>
+          <div class="invalid-feedback">La description doit contenir entre 10 et 5000 caractères.</div>
+          <small class="form-text text-muted d-block mt-1">10-5000 caractères <span id="editDescriptionCounter">(0/5000)</span></small>
         </div>
 
         <!-- Genre -->
@@ -364,18 +364,18 @@
           <label for="editGenre" class="form-label">Genre</label>
           <span class="text-danger">*</span>
           <select class="form-select" id="editGenre" name="genre" required>
-            <option value="">Select genre</option>
+            <option value="">Sélectionner un genre</option>
             <option value="Rock">Rock</option>
             <option value="Jazz">Jazz</option>
             <option value="Classique">Classique</option>
             <option value="Pop">Pop</option>
           </select>
-          <div class="invalid-feedback">Please select a genre.</div>
+          <div class="invalid-feedback">Veuillez sélectionner un genre.</div>
         </div>
 
         <!-- Cover Image -->
         <div class="mb-3 col-12">
-          <h5 class="mb-3">Update Cover Image (optional)</h5>
+          <h5 class="mb-3">Modifier l'image de couverture (optionnel)</h5>
           <div class="icon-shape icon-xxl border rounded position-relative">
             <span class="position-absolute"><i class="bi bi-image fs-3"></i></span>
             <input type="file" class="form-control border-0 opacity-0" id="editImageFileInput" name="imageFile" accept="image/jpeg,image/png,image/jpg">
@@ -385,15 +385,15 @@
             <img id="editImagePreviewImg" src="" alt="Preview" class="img-thumbnail" style="max-width: 200px;">
           </div>
           <div id="editImageValidation" class="small mt-2"></div>
-          <small class="text-muted d-block mt-2">Optional • Leave empty to keep current • Max 5MB • JPEG, PNG • Recommended: min 300x300px</small>
+          <small class="text-muted d-block mt-2">optionnel • Laisser vide pour conserver le contenu actuel • Taille maximale : 5 Mo • Format : JPEG, PNG • Format recommandé: min 300x300px</small>
         </div>
 
         <!-- Buttons -->
         <div class="col-12">
           <button class="btn btn-primary" type="submit">
-            <i class="bi bi-check-circle pe-2"></i>Update Music
+            <i class="bi bi-check-circle pe-2"></i>Modifier la musique
           </button>
-          <button type="button" class="btn btn-outline-primary ms-2" data-bs-dismiss="offcanvas" aria-label="Close">Cancel</button>
+          <button type="button" class="btn btn-outline-primary ms-2" data-bs-dismiss="offcanvas" aria-label="Close">Annuler</button>
         </div>
       </form>
     </div>
@@ -708,10 +708,10 @@ function updateSortButton() {
   
   if (currentSortOrder === 'DESC') {
     icon.className = 'bi bi-sort-down';
-    text.textContent = 'Descending';
+    text.textContent = 'Descendant';
   } else {
     icon.className = 'bi bi-sort-up';
-    text.textContent = 'Ascending';
+    text.textContent = 'Ascendant';
   }
 }
 

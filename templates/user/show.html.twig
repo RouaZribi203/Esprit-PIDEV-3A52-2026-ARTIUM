@@ -35,8 +35,13 @@
     <div class="col-lg-4">
         <div class="card mb-4">
             <div class="card-body text-center">
-                <img src="{{ asset('assetsback/images/photodeprofil.png') }}" 
-                     class="rounded-circle avatar-xxl mb-3" alt="{{ user.nom }}" style="width: 150px; height: 150px;" />
+                {% if user.photoProfil %}
+                    <img src="{{ asset('uploads/' ~ user.photoProfil) }}" class="rounded-circle avatar-xxl mb-3" alt="{{ user.nom }}" style="width: 150px; height: 150px;" />
+                {% else %}
+                    <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative mb-3" style="width:150px;height:150px;">
+                        <i class="bi bi-person fs-1 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+                    </span>
+                {% endif %}
                 <h3 class="mb-1">{{ user.nom }} {{ user.prenom }}</h3>
                 <p class="text-muted mb-3">{{ user.email }}</p>
                 

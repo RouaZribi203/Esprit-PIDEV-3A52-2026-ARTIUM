@@ -173,7 +173,13 @@
                 <li class="dropdown ms-2">
                     <a class="rounded-circle" href="#" role="button" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="avatar avatar-md avatar-indicators avatar-online">
-                            <img alt="avatar" src="{{ asset('assetsback/images/photodeprofil.png') }}" class="rounded-circle" />
+                            {% if app.user.photoProfil %}
+                                <img alt="avatar" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" class="rounded-circle" />
+                            {% else %}
+                                <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:48px;height:48px;">
+                                    <i class="bi bi-person fs-3 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+                                </span>
+                            {% endif %}
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownUser">
@@ -191,9 +197,9 @@
                         <div class="dropdown-divider"></div>
                         <ul class="list-unstyled">
                             <li>
-                                <a class="dropdown-item" href="../profile-edit.html">
+                                <a class="dropdown-item" href="{{ path('app_user_show', {'id': app.user.id}) }}">
                                     <i class="fe fe-user me-2"></i>
-                                    Profile
+                                    Profil
                                 </a>
                             </li>   
                         </ul>

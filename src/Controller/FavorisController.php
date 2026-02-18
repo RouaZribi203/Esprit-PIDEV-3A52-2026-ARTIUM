@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controller;
+use App\Entity\Oeuvre;
 use App\Repository\UserRepository; 
 use App\Enum\TypeOeuvre;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -26,28 +27,6 @@ final class FavorisController extends AbstractController
     }
 
     $favoriteOeuvres = $user->getFavUser()->toArray();
-    $processedOeuvres = [];
-    foreach ($favoriteOeuvres as $oeuvre) {
-        $image = $oeuvre->getImage();
-        if ($image) {
-            if (is_resource($image)) {
-                rewind($image);
-                $imageData = stream_get_contents($image);
-            } else {
-                $imageData = $image;
-            }
-
-            if ($imageData && strlen($imageData) > 0) {
-                $imageBase64 = base64_encode($imageData);
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                $mimeType = $finfo->buffer($imageData);
-                $processedOeuvres[$oeuvre->getId()] = [
-                    'imageBase64' => $imageBase64,
-                    'mimeType' => $mimeType ?: 'image/jpeg',
-                ];
-            }
-        }
-    }
 
     $favoritesPeintures = [];
     $favoritesSculptures = [];
@@ -69,8 +48,31 @@ final class FavorisController extends AbstractController
         'favoritesPeintures' => $favoritesPeintures,
         'favoritesSculptures' => $favoritesSculptures,
         'favoritesPhotographies' => $favoritesPhotographies,
-        'processedOeuvres' => $processedOeuvres,
     ]);
+    }
+
+    #[Route('/favoris/oeuvre/{id}/image', name: 'favoris_oeuvre_image', methods: ['GET'])]
+    public function oeuvreImage(Oeuvre $oeuvre): Response
+    {
+        $imageData = $oeuvre->getImage();
+
+        if (!$imageData) {
+            throw $this->createNotFoundException('Image not found');
+        }
+
+        if (is_resource($imageData)) {
+            rewind($imageData);
+            $imageData = stream_get_contents($imageData);
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->buffer($imageData) ?: 'image/jpeg';
+
+        return new Response(
+            $imageData,
+            200,
+            ['Content-Type' => $mimeType]
+        );
     }
 
 }

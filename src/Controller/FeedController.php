@@ -13,6 +13,7 @@ use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
 use App\Repository\CollectionsRepository;
 use App\Repository\OeuvreRepository;
+use Doctrine\DBAL\ParameterType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,8 +21,51 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class FeedController extends AbstractController
 {
+    private function getInitialDisplayCount(array $oeuvres, Request $request): int
+    {
+        $defaultCount = 3;
+        $focusOeuvreId = (int) $request->query->get('focus_oeuvre', 0);
+
+        if ($focusOeuvreId <= 0) {
+            return $defaultCount;
+        }
+
+        foreach ($oeuvres as $index => $oeuvre) {
+            if ($oeuvre instanceof Oeuvre && $oeuvre->getId() === $focusOeuvreId) {
+                return max($defaultCount, $index + 1);
+            }
+        }
+
+        return $defaultCount;
+    }
+
+    private function buildRedirectWithFocus(string $redirectPath, int $oeuvreId): string
+    {
+        if ($redirectPath === '' || !str_starts_with($redirectPath, '/')) {
+            $redirectPath = '/feed';
+        }
+
+        $parts = parse_url($redirectPath);
+        $path = $parts['path'] ?? '/feed';
+        $query = [];
+
+        if (!empty($parts['query'])) {
+            parse_str($parts['query'], $query);
+        }
+
+        if ($oeuvreId > 0) {
+            $query['focus_oeuvre'] = $oeuvreId;
+        }
+
+        $queryString = http_build_query($query);
+        $base = $path.($queryString !== '' ? '?'.$queryString : '');
+        $anchor = $oeuvreId > 0 ? '#oeuvre-'.$oeuvreId : '';
+
+        return $base.$anchor;
+    }
+
     #[Route('/feed', name: 'app_feed')]
-    public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository): Response
+    public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
     {
         $currentUser = $this->getUser();
         
@@ -38,55 +82,63 @@ final class FeedController extends AbstractController
            'type' => TypeOeuvre::PHOTOGRAPHIE
         ]);
         $all = array_merge($peintures, $sculptures, $photos);
+        $initialDisplayCount = $this->getInitialDisplayCount($all, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'currentUser' => $currentUser,
             'oeuvres' => $all,
+            'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
         ]);
     }
     #[Route('/feed_peintures', name: 'app_feed_peintures')]
-    public function indexPeintures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository): Response
+    public function indexPeintures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
     {
         $peintures = $oeuvreRepository->findBy([
             'type' => TypeOeuvre::PEINTURE
        ]);
+        $initialDisplayCount = $this->getInitialDisplayCount($peintures, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $peintures,
+            'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
         ]);
     }
 
     #[Route('/feed_sculptures', name: 'app_feed_sculptures')]
-    public function indexSculptures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository): Response
+    public function indexSculptures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
     {     
          
         $sculptures = $oeuvreRepository->findBy([
             'type' => TypeOeuvre::SCULPTURE
        ]);
+        $initialDisplayCount = $this->getInitialDisplayCount($sculptures, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $sculptures,
+            'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
         ]);
     }
     #[Route('/feed_photos', name: 'app_feed_photos')]
-    public function indexPhotos(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository): Response
+    public function indexPhotos(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
     {
         $photos = $oeuvreRepository->findBy([
             'type' => TypeOeuvre::PHOTOGRAPHIE
        ]);
+        $initialDisplayCount = $this->getInitialDisplayCount($photos, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $photos,
+            'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
         ]);
@@ -199,7 +251,8 @@ final class FeedController extends AbstractController
     {
     $contenu = $request->request->get('contenu'); // récupère le texte du textarea
     if (!$contenu) {
-        return $this->redirectToRoute('app_feed'); // si vide, on ne fait rien
+        $redirectPath = (string) $request->request->get('redirect_path', '/feed');
+        return $this->redirect($this->buildRedirectWithFocus($redirectPath, $oeuvre->getId())); // si vide, on ne fait rien
     }
 
     $user = $this->getUser();
@@ -215,7 +268,8 @@ final class FeedController extends AbstractController
     $em->persist($commentaire);
     $em->flush();
 
-    return $this->redirectToRoute('app_feed'); // retourne sur le feed après publication
+    $redirectPath = (string) $request->request->get('redirect_path', '/feed');
+    return $this->redirect($this->buildRedirectWithFocus($redirectPath, $oeuvre->getId())); // retourne sur le feed après publication
 }
 
     #[Route('/commentaire/{id}/delete', name: 'commentaire_delete', methods: ['POST'])]
@@ -258,69 +312,54 @@ final class FeedController extends AbstractController
             ->execute();
 
         $redirectPath = (string) $request->request->get('redirect_path', '/feed');
-        if ($redirectPath === '' || !str_starts_with($redirectPath, '/')) {
-            $redirectPath = '/feed';
-        }
-
-        $anchor = $oeuvreId ? '#oeuvre-'.$oeuvreId : '';
-
-        return $this->redirect($redirectPath.$anchor);
+        return $this->redirect($this->buildRedirectWithFocus($redirectPath, (int) $oeuvreId));
     }
 
-    #[Route('/commentaire/{id}/edit', name: 'commentaire_edit', methods: ['POST'])]
-    public function editCommentaire(int $id, Request $request, EntityManagerInterface $em): Response
-    {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->redirectToRoute('app_feed');
-        }
-
-        $commentRows = $em->createQuery(
-            'SELECT IDENTITY(c.user) as userId, IDENTITY(c.oeuvre) as oeuvreId
-             FROM App\Entity\Commentaire c
-             WHERE c.id = :id'
-        )
-        ->setParameter('id', $id)
-        ->setMaxResults(1)
-        ->getArrayResult();
-
-        $commentData = $commentRows[0] ?? null;
-
-        if (!$commentData) {
-            return $this->redirectToRoute('app_feed');
-        }
-
-        if ((int) $commentData['userId'] !== $user->getId()) {
-            $this->addFlash('error', 'Vous ne pouvez pas modifier ce commentaire.');
-            return $this->redirectToRoute('app_feed');
-        }
-
-        $submittedToken = (string) $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('edit_comment_'.$id, $submittedToken)) {
-            $this->addFlash('error', 'Requête invalide.');
-            return $this->redirectToRoute('app_feed');
-        }
-
-        $contenu = trim((string) $request->request->get('contenu'));
-        if ($contenu === '') {
-            $this->addFlash('error', 'Le commentaire ne peut pas être vide.');
-            return $this->redirectToRoute('app_feed');
-        }
-
-        $em->createQuery('UPDATE App\Entity\Commentaire c SET c.texte = :texte WHERE c.id = :id')
-            ->setParameter('texte', $contenu)
-            ->setParameter('id', $id)
-            ->execute();
-
-        $redirectPath = (string) $request->request->get('redirect_path', '/feed');
-        if ($redirectPath === '' || !str_starts_with($redirectPath, '/')) {
-            $redirectPath = '/feed';
-        }
-
-        $anchor = !empty($commentData['oeuvreId']) ? '#oeuvre-'.$commentData['oeuvreId'] : '';
-
-        return $this->redirect($redirectPath.$anchor);
+    
+        #[Route('/feed/commentaire/{id}/edit', name: 'commentaire_edit', methods: ['POST'])]
+public function editCommentaire(int $id, Request $request, EntityManagerInterface $em): Response
+{
+    $user = $this->getUser();
+    if (!$user) {
+        return $this->redirectToRoute('app_feed');
     }
+
+    $submittedToken = (string) $request->request->get('_token');
+    if (!$this->isCsrfTokenValid('edit_comment_'.$id, $submittedToken)) {
+        $this->addFlash('error', 'Requête invalide.');
+        return $this->redirectToRoute('app_feed');
+    }
+
+    $contenu = trim((string) $request->request->get('contenu'));
+    if ($contenu === '') {
+        $this->addFlash('error', 'Le commentaire ne peut pas être vide.');
+        return $this->redirectToRoute('app_feed');
+    }
+
+    $connection = $em->getConnection();
+    $updatedRows = $connection->executeStatement(
+        'UPDATE commentaire SET texte = :texte WHERE id = :id AND user_id = :userId',
+        [
+            'texte' => $contenu,
+            'id' => $id,
+            'userId' => $user->getId(),
+        ],
+        [
+            'id' => ParameterType::INTEGER,
+            'userId' => ParameterType::INTEGER,
+        ]
+    );
+
+    if ($updatedRows === 0) {
+        $this->addFlash('error', 'Vous ne pouvez pas modifier ce commentaire.');
+        return $this->redirectToRoute('app_feed');
+    }
+
+    $redirectPath = (string) $request->request->get('redirect_path', '/feed');
+    $oeuvreId = (int) $request->request->get('oeuvre_id', 0);
+
+    return $this->redirect($this->buildRedirectWithFocus($redirectPath, $oeuvreId));
+}
 
     #[Route('/oeuvre/{id}/image', name: 'oeuvre_image', methods: ['GET'])]
     public function oeuvreImage(Oeuvre $oeuvre): Response

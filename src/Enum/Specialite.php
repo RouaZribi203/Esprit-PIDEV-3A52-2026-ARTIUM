@@ -9,4 +9,5 @@ enum Specialite: string
     case PHOTOGRAPHE = 'Photographe';
     case MUSICIEN = 'Musicien';
     case AUTEUR = 'Auteur';
+
 }

@@ -1,7 +1,8 @@
 {{ form_start(form, {
     'attr': {
         'id': 'offcanvasOeuvreFormFields',
-        'class': 'offcanvas-form'
+        'class': 'offcanvas-form',
+        'novalidate': 'novalidate'
     }
 }) }}
 
@@ -10,19 +11,15 @@
     {# Titre #}
     <div class="mb-3">
         {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
-        {{ form_widget(form.titre, {'attr': {'class': 'form-control'}}) }}
-        {{ form_errors(form.titre) }}
+        {{ form_widget(form.titre, {'attr': {'class': (form.titre.vars.errors|length > 0) ? 'form-control is-invalid' : 'form-control'}}) }}
+        {% if form.titre.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">{{ form_errors(form.titre) }}</div>
+        {% endif %}
     </div>
 
-    {# Type + Date in same row #}
+    {# Date #}
     <div class="row">
-        <div class="col-md-6 mb-3">
-            {{ form_label(form.type, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
-            {{ form_widget(form.type, {'attr': {'class': 'form-select'}}) }}
-            {{ form_errors(form.type) }}
-        </div>
-
-        <div class="col-md-6 mb-3">
+        <div class="col-md-12 mb-3">
             {{ form_label(form.date_creation, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
             {{ form_widget(form.date_creation, {'attr': {'class': 'form-control'}}) }}
             {{ form_errors(form.date_creation) }}
@@ -32,23 +29,26 @@
     {# Description #}
     <div class="mb-3">
         {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
-        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4}}) }}
-        {{ form_errors(form.description) }}
+        {{ form_widget(form.description, {'attr': {'class': (form.description.vars.errors|length > 0) ? 'form-control is-invalid' : 'form-control', 'rows': 4}}) }}
+        {% if form.description.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">{{ form_errors(form.description) }}</div>
+        {% endif %}
     </div>
 
     {# Image Upload #}
     <div class="mb-3">
         {{ form_label(form.image, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
         {{ form_widget(form.image, {'attr': {'class': 'form-control'}}) }}
-        {{ form_errors(form.image) }}
         <div class="form-text">Formats acceptés : JPG, PNG</div>
     </div>
 
     {# Collection #}
     <div class="mb-4">
         {{ form_label(form.collection, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
-        {{ form_widget(form.collection, {'attr': {'class': 'form-select'}}) }}
-        {{ form_errors(form.collection) }}
+        {{ form_widget(form.collection, {'attr': {'class': (form.collection.vars.errors|length > 0) ? 'form-select is-invalid' : 'form-select'}}) }}
+        {% if form.collection.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">{{ form_errors(form.collection) }}</div>
+        {% endif %}
     </div>
 
     {# Buttons #}

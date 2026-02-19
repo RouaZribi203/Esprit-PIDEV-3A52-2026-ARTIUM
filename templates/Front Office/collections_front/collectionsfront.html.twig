@@ -196,16 +196,16 @@
             {{ form_label(form.description) }}
     {{ form_widget(form.description, {
         'attr': {
-            'class': 'form-control' ~ (form.description.vars.errors|length > 0 ? ' is-invalid' : ''),
+      'class': 'form-control' ~ (form.description.vars.errors|length > 0 ? ' is-invalid' : ''),
             'rows': '4',
-            'required': true,
-            'placeholder': 'Entrez la description (10 caractères minimum)'
+      'required': true,
+        'placeholder': 'Entrez la description'
         }
     }) }}
     {% if form.description.vars.errors|length > 0 %}
-        <div class="invalid-feedback">
-            {{ form_errors(form.description) }}
-        </div>
+      <div class="invalid-feedback">
+        {{ form_errors(form.description) }}
+      </div>
     {% endif %}
 
           </div>
@@ -219,10 +219,26 @@
     </div>
   </div>
 </div>
-{% if form.vars.errors|length > 0 %}
+{% if form.titre.vars.errors|length > 0 or form.description.vars.errors|length > 0 %}
 <script>
-    var myModal = new bootstrap.Modal(document.getElementById('modalCreateAlbum'));
-    myModal.show();
+  document.addEventListener('DOMContentLoaded', function () {
+    var modalElement = document.getElementById('modalCreateAlbum');
+    if (modalElement) {
+      var myModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+      myModal.show();
+    }
+  });
+</script>
+{% endif %}
+{% if editErrorCollectionId is defined and editErrorCollectionId %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var modalElement = document.getElementById('modalEditCollection{{ editErrorCollectionId }}');
+    if (modalElement) {
+      var myModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+      myModal.show();
+    }
+  });
 </script>
 {% endif %}
 <!-- Modal for adding collection END -->
@@ -236,17 +252,20 @@
           <h5 class="modal-title" id="modalEditCollectionLabel{{ collection.id }}">Modifier Collection</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form method="POST" action="{{ path('collection_edit', {'id': collection.id}) }}">
+        <form method="POST" action="{{ path('collection_edit', {'id': collection.id}) }}" novalidate>
           <div class="modal-body">
             <div class="mb-3">
               {{ form_label(formEdit[collection.id].titre) }}
-              {{ form_widget(formEdit[collection.id].titre, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le titre de la collection'}}) }}
-              {{ form_errors(formEdit[collection.id].titre) }}
+              {{ form_widget(formEdit[collection.id].titre, {'attr': {'class': 'form-control' ~ (formEdit[collection.id].titre.vars.errors|length > 0 ? ' is-invalid' : ''), 'placeholder': 'Entrez le titre de la collection'}}) }}
+              {% if formEdit[collection.id].titre.vars.errors|length > 0 %}
+                <div class="invalid-feedback">
+                  {{ form_errors(formEdit[collection.id].titre) }}
+                </div>
+              {% endif %}
             </div>
             <div class="mb-3">
               {{ form_label(formEdit[collection.id].description) }}
               {{ form_widget(formEdit[collection.id].description, {'attr': {'class': 'form-control', 'rows': '4', 'placeholder': 'Entrez la description de la collection'}}) }}
-              {{ form_errors(formEdit[collection.id].description) }}
             </div>
             {{ form_rest(formEdit[collection.id]) }}
           </div>

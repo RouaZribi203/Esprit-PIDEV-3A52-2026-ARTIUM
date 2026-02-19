@@ -219,16 +219,16 @@ final class CollectionsController extends AbstractController
     public function edit(Collections $collection, Request $request, EntityManagerInterface $em,CollectionsRepository $collectionsRepository): Response
     {
         $collections = $this->getUser()->getCollections();
-        $form = $this->createForm(CollectionsType::class, $collection);
-        $form->handleRequest($request);
+        $editForm = $this->createForm(CollectionsType::class, $collection);
+        $editForm->handleRequest($request);
 
-    if ($form->isSubmitted() && $form->isValid()) {
+    if ($editForm->isSubmitted() && $editForm->isValid()) {
         $em->flush();
         return $this->redirectToRoute('app_collections_front', [], Response::HTTP_SEE_OTHER);
     }
     $processedOeuvres = [];
-        foreach ($collections as $collection) {
-            foreach ($collection->getOeuvres() as $oeuvre) {
+        foreach ($collections as $artistCollection) {
+            foreach ($artistCollection->getOeuvres() as $oeuvre) {
                 $image = $oeuvre->getImage();
                 
                 if ($image) {
@@ -255,10 +255,23 @@ final class CollectionsController extends AbstractController
             }
         }
 
+    $form = $this->createForm(CollectionsType::class, new Collections());
+    $formEdit = [];
+    foreach ($collections as $artistCollection) {
+        if ($artistCollection->getId() === $collection->getId() && $editForm->isSubmitted()) {
+            $formEdit[$artistCollection->getId()] = $editForm->createView();
+            continue;
+        }
+
+        $formEdit[$artistCollection->getId()] = $this->createForm(CollectionsType::class, $artistCollection)->createView();
+    }
+
     return $this->render('Front Office/collections_front/collectionsfront.html.twig', [
         'form' => $form->createView(),
-        'collection' => $collection,
+        'formEdit' => $formEdit,
+        'collections' => $collections,
         'processedOeuvres' => $processedOeuvres,
+        'editErrorCollectionId' => $editForm->isSubmitted() && !$editForm->isValid() ? $collection->getId() : null,
 
     ]);
     }
@@ -266,6 +279,22 @@ final class CollectionsController extends AbstractController
     public function delete(Collections $collection, EntityManagerInterface $em): Response
     {
     if ($collection) {
+        foreach ($collection->getOeuvres()->toArray() as $oeuvre) {
+            foreach ($oeuvre->getLikes()->toArray() as $like) {
+                $em->remove($like);
+            }
+
+            foreach ($oeuvre->getCommentaires()->toArray() as $commentaire) {
+                $em->remove($commentaire);
+            }
+
+            foreach ($oeuvre->getUserFav()->toArray() as $user) {
+                $oeuvre->removeUserFav($user);
+            }
+
+            $em->remove($oeuvre);
+        }
+
         $em->remove($collection);
         $em->flush();
         $this->addFlash('success', 'Collection supprimée avec succès !');

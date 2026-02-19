@@ -28,7 +28,7 @@
 
 							<!-- Toutes les oeuvres tab START -->
 							<div class="tab-pane fade show active" id="tab-0">
-								<div class="row g-3">
+								<div class="row g-3 align-items-start">
 									{% if favorites is not empty %}
 										{% for oeuvre in favorites %}
 											<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
@@ -47,15 +47,14 @@
 													</div>
 												</div>
 												{% if oeuvre.image %}
-													<a href="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" data-gallery="favorites" data-glightbox="description: .custom-desc-all-{{ oeuvre.id }}; descPosition: left;">
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
 														<img class="rounded img-fluid" src="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
 													</a>
 												{% else %}
-													<a href="{{ asset('assetsfront/images/albums/01.jpg') }}" data-gallery="favorites" data-glightbox="description: .custom-desc-all-{{ oeuvre.id }}; descPosition: left;">
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
 														<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="{{ oeuvre.titre }}">
 													</a>
 												{% endif %}
-												{% include 'Front Office/favoris/_glightbox_post_desc.html.twig' with { oeuvre: oeuvre, descClass: 'custom-desc-all-' ~ oeuvre.id } %}
 										</div>
 									{% endfor %}
 								{% else %}
@@ -67,7 +66,7 @@
 
 							<!-- Peintures tab START -->
 							<div class="tab-pane fade" id="tab-1">
-								<div class="row g-3">
+								<div class="row g-3 align-items-start">
 									{% if favoritesPeintures is not empty %}
 										{% for oeuvre in favoritesPeintures %}
 											<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
@@ -86,15 +85,14 @@
 													</div>
 												</div>
 												{% if oeuvre.image %}
-													<a href="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" data-gallery="favorites" data-glightbox="description: .custom-desc-{{ oeuvre.id }}; descPosition: left;">
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
 														<img class="rounded img-fluid" src="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
 													</a>
 												{% else %}
-													<a href="{{ asset('assetsfront/images/albums/01.jpg') }}" data-gallery="favorites" data-glightbox="description: .custom-desc-{{ oeuvre.id }}; descPosition: left;">
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
 														<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="{{ oeuvre.titre }}">
 													</a>
 												{% endif %}
-												{% include 'Front Office/favoris/_glightbox_post_desc.html.twig' with { oeuvre: oeuvre, descClass: 'custom-desc-' ~ oeuvre.id } %}
 											</div>
 										{% endfor %}
 								{% else %}
@@ -107,7 +105,7 @@
 
 							<!-- Sculptures tab START -->
 							<div class="tab-pane fade" id="tab-2">
-								<div class="row g-3">
+								<div class="row g-3 align-items-start">
 								{% if favoritesSculptures is not empty %}
 									{% for oeuvre in favoritesSculptures %}
 										<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
@@ -126,15 +124,14 @@
 												</div>
 											</div>
 											{% if oeuvre.image %}
-												<a href="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" data-gallery="favorites" data-glightbox="description: .custom-desc-{{ oeuvre.id }}; descPosition: left;">
+												<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
 													<img class="rounded img-fluid" src="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
 												</a>
 											{% else %}
-												<a href="{{ asset('assetsfront/images/albums/01.jpg') }}" data-gallery="favorites" data-glightbox="description: .custom-desc-{{ oeuvre.id }}; descPosition: left;">
+												<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
 													<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="{{ oeuvre.titre }}">
 												</a>
 											{% endif %}
-											{% include 'Front Office/favoris/_glightbox_post_desc.html.twig' with { oeuvre: oeuvre, descClass: 'custom-desc-' ~ oeuvre.id } %}
 										</div>
 									{% endfor %}
 								{% else %}
@@ -146,7 +143,7 @@
 							
 							<!-- Photographies tab START -->
 							<div class="tab-pane fade" id="tab-3">
-								<div class="row g-3">
+								<div class="row g-3 align-items-start">
 									{% if favoritesPhotographies is not empty %}
 										{% for oeuvre in favoritesPhotographies %}
 											<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
@@ -165,15 +162,14 @@
 													</div>
 												</div>
 												{% if oeuvre.image %}
-													<a href="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" data-gallery="favorites" data-glightbox="description: .custom-desc-{{ oeuvre.id }}; descPosition: left;">
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
 														<img class="rounded img-fluid" src="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
 													</a>
 												{% else %}
-													<a href="{{ asset('assetsfront/images/albums/01.jpg') }}" data-gallery="favorites" data-glightbox="description: .custom-desc-{{ oeuvre.id }}; descPosition: left;">
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
 														<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="{{ oeuvre.titre }}">
 													</a>
 												{% endif %}
-												{% include 'Front Office/favoris/_glightbox_post_desc.html.twig' with { oeuvre: oeuvre, descClass: 'custom-desc-' ~ oeuvre.id } %}
 											</div>
 										{% endfor %}
 									{% else %}
@@ -190,6 +186,13 @@
 				<!-- Card body END -->
 				</div>
 			<!-- Card END -->
+
+			{% if favorites is not empty %}
+				{% for oeuvre in favorites %}
+					{% set oeuvreImageUrl = oeuvre.image ? path('favoris_oeuvre_image', {'id': oeuvre.id}) : asset('assetsfront/images/albums/01.jpg') %}
+					{% include 'Front Office/favoris/_favoris_post_modal.html.twig' with { oeuvre: oeuvre, imageUrl: oeuvreImageUrl } %}
+				{% endfor %}
+			{% endif %}
 
 <script>
 document.addEventListener('click', function (event) {
@@ -214,7 +217,8 @@ document.addEventListener('click', function (event) {
 		setTimeout(() => {
 			const scope = commentsBtn.closest('.fav-comments-container')
 				|| commentsBtn.closest('.glightbox-desc')
-				|| commentsBtn.closest('.gdesc-inner');
+				|| commentsBtn.closest('.gdesc-inner')
+				|| commentsBtn.closest('.favoris-post-details');
 			if (!scope) {
 				commentsBtn.classList.remove('active');
 				if (loader) {
@@ -370,7 +374,7 @@ document.addEventListener('click', function (event) {
 
 // Reload page when GLightbox closes
 document.addEventListener('keydown', function(e) {
-	if (e.key === 'Escape') {
+	if (e.key === 'Escape' && document.querySelector('.glightbox-container:not(.inactive)')) {
 		setTimeout(() => {
 			location.reload();
 		}, 100);
@@ -378,6 +382,10 @@ document.addEventListener('keydown', function(e) {
 });
 
 document.addEventListener('click', function(e) {
+	if (!document.querySelector('.glightbox-container:not(.inactive)')) {
+		return;
+	}
+
 	const overlay = e.target.closest('.goverlay');
 	if (overlay) {
 		setTimeout(() => {
@@ -398,6 +406,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	const storedOeuvreId = sessionStorage.getItem('reopenGlightboxOeuvreId');
 	if (storedOeuvreId) {
 		sessionStorage.removeItem('reopenGlightboxOeuvreId');
+
+		const modalElement = document.getElementById(`favorisPostModal${storedOeuvreId}`);
+		if (modalElement && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+			setTimeout(() => {
+				bootstrap.Modal.getOrCreateInstance(modalElement).show();
+			}, 200);
+			return;
+		}
 		
 		// Find and click the gallery link for this oeuvre
 		setTimeout(() => {
@@ -466,36 +482,96 @@ document.addEventListener('click', function(e) {
 </script>
 
 <style>
-	.glightbox-container .gslide-inner-content {
-		max-width: 1100px;
-		width: 90vw;
-		max-height: 85vh;
-		margin: 0 auto;
+	.favoris-post-modal .modal-dialog {
+		max-width: min(1240px, calc(100vw - 48px));
+		margin: 24px auto;
 	}
 
-	.glightbox-container .gslide-media {
-		max-height: 85vh;
-		max-width: 60vw;
+	.favoris-post-modal .modal-content {
+		border-radius: 0.9rem;
+		overflow: hidden;
+		max-height: calc(100vh - 48px);
 	}
 
-	.glightbox-container .gslide-image img {
-		max-height: 85vh;
-		max-width: 60vw;
+	.favoris-post-close {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		z-index: 3;
+		background-color: rgba(255, 255, 255, 0.9);
+		border-radius: 50%;
+	}
+
+	.favoris-post-modal .modal-body {
+		padding: 0;
+	}
+
+	.favoris-post-modal .row {
+		min-height: min(760px, calc(100vh - 110px));
+	}
+
+	.favoris-post-media-wrap {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--bs-light);
+		padding: 18px;
+	}
+
+	.favoris-post-media-wrap img {
+		max-width: 100%;
+		max-height: min(700px, calc(100vh - 150px));
 		width: auto;
 		height: auto;
 		object-fit: contain;
 	}
 
-	.glightbox-container .gdesc-inner,
-	.glightbox-container .glightbox-desc {
-		max-height: 85vh;
+	.favoris-post-details {
+		height: min(760px, calc(100vh - 110px));
+		overflow: hidden;
+		overflow-x: hidden;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.favoris-post-scroll {
+		flex: 1 1 auto;
+		min-height: 0;
 		overflow-y: auto;
+		padding-right: 6px;
+	}
+
+	.favoris-post-modal .fav-comments-container .comment-item {
+		margin-bottom: 0.9rem;
+	}
+
+	.favoris-post-modal .fav-comments-container .comment-item:last-child {
+		margin-bottom: 0;
 	}
 
 	@media (max-width: 991px) {
-		.glightbox-container .gslide-media,
-		.glightbox-container .gslide-image img {
-			max-width: 90vw;
+		.favoris-post-modal .modal-dialog {
+			max-width: calc(100vw - 20px);
+			margin: 10px auto;
+		}
+
+		.favoris-post-modal .modal-content {
+			max-height: calc(100vh - 20px);
+		}
+
+		.favoris-post-modal .row,
+		.favoris-post-details {
+			height: auto;
+		}
+
+		.favoris-post-scroll {
+			overflow: visible;
+			padding-right: 0;
+		}
+
+		.favoris-post-media-wrap img {
+			max-height: 48vh;
 		}
 	}
 </style>

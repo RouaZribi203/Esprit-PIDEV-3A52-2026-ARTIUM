@@ -59,19 +59,13 @@
         <div>
           <div class="nav nav-divider">
             <h6 class="nav-item card-title mb-0">
-              <a href="#!">{{ oeuvre.collection.artiste.nom ?? 'Unknown Author' }}</a>
+              <a href="#!">
+                {{ (oeuvre.collection and oeuvre.collection.artiste) ? (oeuvre.collection.artiste.nom ~ ' ' ~ oeuvre.collection.artiste.prenom) : 'Artiste Inconnu' }}
+              </a>
             </h6>
-
-            <span class="nav-item small">
-              {{ oeuvre.dateCreation ? oeuvre.dateCreation|date('d M Y H:i') : '' }}
-            </span>
+            <span class="nav-item small">{{ oeuvre.dateCreation ? oeuvre.dateCreation|date('d F Y') : '' }}</span>
           </div>
-
-          <p class="mb-0 small">
-            {% if oeuvre.type.value in ['Peinture', 'Sculpture', 'Photographie'] %}
-              {{ oeuvre.type.value }}
-            {% endif %}
-          </p>
+          <p class="mb-0 small">{{ (oeuvre.collection and oeuvre.collection.artiste and oeuvre.collection.artiste.specialite) ? oeuvre.collection.artiste.specialite.value : 'Spécialité non renseignée' }}</p>
         </div>
       </div>
 
@@ -119,47 +113,60 @@
   </div>
 
   <!-- Card Body -->
-  <div class="card-body">
+  <div class="card-body pb-0">
+    <h5 class="mb-2">{{ oeuvre.titre }}</h5>
+    <p>{{ oeuvre.description|raw }}
+      {% if oeuvre.type %}
+        <a href="#!" class="ms-2">#{{ oeuvre.type.value }}</a>
+      {% endif %}
+      {% if oeuvre.collection %}
+        <a href="#!" class="ms-1">#{{ oeuvre.collection.titre }}</a>
+      {% endif %}
+    </p>
+  </div>
 
-    <!-- Title -->
-    <h5>{{ oeuvre.titre }}</h5>
+  <!-- Card img -->
+  {% if oeuvre.image %}
+  <div class="overflow-hidden mx-3 mb-2 rounded-3 border">
+    <img src="data:{{ processedOeuvres[oeuvre.id].mimeType ?? 'image/jpeg' }};base64,{{ processedOeuvres[oeuvre.id].imageBase64 }}" 
+         class="img-fluid" 
+         alt="{{ oeuvre.titre }}"
+         style="width: 100%; max-height: 600px; object-fit: contain;">
+  </div>
+  {% endif %}
 
-    <!-- Description -->
-    <p>{{ oeuvre.description }}</p>
-
-    <!-- Image -->
-    {% if oeuvre.image %}
-    <img class="card-img mb-3" src="data:{{ processedOeuvres[oeuvre.id].mimeType ?? 'image/jpeg' }};base64,{{ processedOeuvres[oeuvre.id].imageBase64 }}" 
-                 class="img-fluid" 
-                 alt="{{ oeuvre.titre }}"
-                 style="width: 100%; max-height: 600px; object-fit: contain;" >
-      
-    {% endif %}
+  <!-- Feed react START -->
+  <div class="card-body pt-0">
 
     <!-- Likes & Comments Count -->
     <ul class="nav nav-stack py-3 small">
       <li class="nav-item">
         <a class="nav-link active" href="#">
           <i class="bi bi-heart-fill pe-1 text-danger"></i>
-           ({{ oeuvre.likes ? oeuvre.likes|length : 0 }})
+          <span class="like-count">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
         </a>
       </li>
-
       <li class="nav-item">
         <a class="nav-link" href="#">
-          <i class="bi bi-chat-fill pe-1"></i>
-          Comments ({{ oeuvre.commentaires|length }})
+          <i class="bi bi-chat-fill pe-1"></i>Commentaires ({{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }})
         </a>
       </li>
+      <li class="nav-item ms-sm-auto d-flex align-items-center">
+        <i class="bi bi-star-fill text-warning fa-fw pe-1"></i>
+        <span>{{ oeuvre.userFav|length }}</span>
+        <span class="ms-1">favoris</span>
+      </li>
     </ul>
+    <!-- Feed react END -->
 
     
 
-    <!-- Comments List -->
+    <!-- Comment wrap START -->
+    {% if oeuvre.commentaires and oeuvre.commentaires|length > 0 %}
     <ul class="comment-wrap list-unstyled">
-
       {% for commentaire in oeuvre.commentaires %}
-      <li class="comment-item mb-2">
+      <!-- Comment item START -->
+      <li class="comment-item{% if loop.index > 3 %} hidden-comment d-none{% endif %} mb-2">
         <div class="d-flex">
           <div class="avatar avatar-xs">
             <img class="avatar-img rounded-circle"
@@ -174,8 +181,8 @@
                   {{ commentaire.user.nom ?? 'User' }}
                 </h6>
 
-                <small>
-                  {{ commentaire.dateCommentaire ? commentaire.dateCommentaire|date('d M Y H:i') : '' }}
+                <small class="ms-2">
+                  {{ commentaire.dateCommentaire ? commentaire.dateCommentaire|date('d F Y') : '' }}
                 </small>
               </div>
 
@@ -186,13 +193,30 @@
           </div>
         </div>
       </li>
-      {% else %}
-        <li class="text-muted small">Aucun commentaire pour le moment.</li>
+      <!-- Comment item END -->
       {% endfor %}
-
     </ul>
-
+    {% endif %}
+    <!-- Comment wrap END -->
   </div>
+  <!-- Card body END -->
+  
+  <!-- Card footer START -->
+  {% if oeuvre.commentaires and oeuvre.commentaires|length > 3 %}
+  <div class="card-footer border-0 pt-0">
+    <!-- Load more comments -->
+    <a href="#" role="button"
+       class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center comments-load-more">
+      <div class="spinner-dots me-2 comments-loader" style="display: none;">
+        <span class="spinner-dot"></span>
+        <span class="spinner-dot"></span>
+        <span class="spinner-dot"></span>
+      </div>
+      <span class="comments-load-text">Voir plus de commentaires</span>
+    </a>
+  </div>
+  {% endif %}
+  <!-- Card footer END -->
 </div>
 
 {% else %}
@@ -281,4 +305,55 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endif %}
+
+<script>
+// Load more comments per post
+document.addEventListener('click', function(e) {
+    const commentsBtn = e.target.closest('.comments-load-more');
+    if (!commentsBtn) {
+        return;
+    }
+
+    e.preventDefault();
+
+    const card = commentsBtn.closest('.card');
+    if (!card) {
+        return;
+    }
+
+    const loadText = commentsBtn.querySelector('.comments-load-text');
+    const loader = commentsBtn.querySelector('.comments-loader');
+
+    if (loadText) {
+        loadText.style.display = 'none';
+    }
+    if (loader) {
+        loader.style.display = 'inline-flex';
+    }
+
+    setTimeout(() => {
+        const hiddenComments = card.querySelectorAll('.comment-item.hidden-comment.d-none');
+        const revealCount = Math.min(3, hiddenComments.length);
+
+        for (let i = 0; i < revealCount; i++) {
+            hiddenComments[i].classList.remove('d-none');
+        }
+
+        if (loadText) {
+            loadText.style.display = 'inline';
+        }
+        if (loader) {
+            loader.style.display = 'none';
+        }
+
+        const remaining = card.querySelectorAll('.comment-item.hidden-comment.d-none').length;
+        if (remaining === 0) {
+            const footer = commentsBtn.closest('.card-footer');
+            if (footer) {
+                footer.style.display = 'none';
+            }
+        }
+    }, 400);
+});
+</script>
 {% endblock %}

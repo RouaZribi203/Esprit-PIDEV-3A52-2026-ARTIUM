@@ -20,27 +20,42 @@
               <div style="margin-top: 20px; padding: 0 20px;">
                 {% for collection in collections %}
                   <div class="mb-3">
-                    <button class="btn btn-link w-100 text-start p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ collection.id }}" aria-expanded="false" aria-controls="collapse-{{ collection.id }}" style="text-decoration: none; border: none; background: none;">
-                      <div class="d-flex align-items-center justify-content-between">
-                        <div class="flex-grow-1" >
-                          <div div class="d-flex align-items-center gap-2">
-                          <h5 class="mb-1 fw-bold" style="color: #333; font-size: 1.1rem;">{{ collection.titre }}</h5> 
+                    <div class="d-flex align-items-center justify-content-between p-2">
+                      <button class="btn btn-link flex-grow-1 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ collection.id }}" aria-expanded="false" aria-controls="collapse-{{ collection.id }}" style="text-decoration: none; border: none; background: none;">
+                        <div class="flex-grow-1">
+                          <div class="d-flex align-items-center gap-2">
+                            <h5 class="mb-1 fw-bold" style="color: #333; font-size: 1.1rem;">{{ collection.titre }}</h5> 
                           </div>                   
-                           {% if collection.description %}
+                          {% if collection.description %}
                             <p class="text-muted mb-0" style="font-size: 0.9rem; line-height: 1.5; word-wrap: break-word; white-space: normal; max-width: 100%; color: #777;">{{ collection.description }}</p>
                           {% endif %}
                         </div>
-                        <i class="bi bi-chevron-down ms-3" id="chevron-{{ collection.id }}" style="transition: transform 0.3s ease; font-size: 1rem;"></i>
+                      </button>
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="dropdown">
+                          <a href="#" class="text-secondary" id="collectionAction{{ collection.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots"></i>
+                          </a>
+                          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="collectionAction{{ collection.id }}">
+                            <li>
+                              <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalEditCollection{{ collection.id }}">
+                                <i class="fa-solid fa-edit pe-2"></i>Modifier
+                              </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                              <form method="POST" action="{{ path('collection_delete', {'id': collection.id}) }}" class="m-0">
+                                <button type="submit" class="dropdown-item text-danger">
+                                  <i class="fa-solid fa-trash pe-2"></i>Supprimer
+                                </button>
+                              </form>
+                            </li>
+                          </ul>
+                        </div>
+                        <i class="bi bi-chevron-down" id="chevron-{{ collection.id }}" style="transition: transform 0.3s ease; font-size: 1rem; cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#collapse-{{ collection.id }}"></i>
                       </div>
-                    </button>
+                    </div>
                     <div class="collapse" id="collapse-{{ collection.id }}">
-                      <a class="btn btn-sm btn-primary-soft" href="#" data-bs-toggle="modal" data-bs-target="#modalEditCollection{{ collection.id }}">
-                          <i class="fa-solid fa-edit pe-1"></i> Modifier </a>
-                          <form method="POST" action="{{ path('collection_delete', {'id': collection.id}) }}" style="display:inline">
-                          <button type="submit" class="btn btn-sm btn-danger">
-                          <i class="fa-solid fa-trash pe-1"></i> Supprimer
-                          </button>
-                          </form>  
                       <div class="ps-3 pt-2 pb-3" style="border-left: 3px solid #ddd;">
                         {% if collection.oeuvres|length > 0 %}
                           <div class="row g-3">
@@ -53,8 +68,9 @@
                                   {% if processed and processed.imageBase64 %}
                                     {% set mimeType = processed.mimeType %}
                                     {% set imageBase64 = processed.imageBase64 %}
-                                    <a href="data:{{ mimeType }};base64,{{ imageBase64 }}" data-gallery="collection-{{ collection.id }}" data-glightbox="description: .custom-desc-{{ oeuvre.id }}; descPosition: left;">
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#collectionPostModal{{ oeuvre.id }}">
                                       <img class="rounded img-fluid" src="data:{{ mimeType }};base64,{{ imageBase64 }}" alt="{{ oeuvre.titre }}" >
+                                    </a>
                                     </a>
                                   {% else %}
                                     <div class="bg-light rounded" style="height: 200px; display: flex; align-items: center; justify-content: center;">
@@ -75,63 +91,6 @@
                                     <a class="nav-link" href="#!"> <i class="bi bi-chat-left-text-fill pe-1"></i>{{ oeuvre.commentaires is defined ? (oeuvre.commentaires|length) : 0 }} </a>
                                   </li>
                                 </ul>
-                                
-                                <!-- Glightbox description START -->
-                                <div class="glightbox-desc custom-desc-{{ oeuvre.id }}">
-                                  <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                      <h6 class="nav-item card-title mb-1">{{ oeuvre.titre }}</h6>
-                                      <div class="small text-muted">
-                                        <p class="mb-1">{{ oeuvre.dateCreation ? oeuvre.dateCreation|date('d M Y') : 'Date unknown' }}</p>
-                                        {% if oeuvre.collection %}
-                                          <p class="mb-1"><strong>Collection:</strong> {{ oeuvre.collection.titre }}</p>
-                                        {% endif %}
-                                        {% if oeuvre.type %}
-                                          <p class="mb-2"><strong>Type:</strong> {{ oeuvre.type.value }}</p>
-                                        {% endif %}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  
-                                  {% if oeuvre.description %}
-                                    <p class="mt-3 mb-3 small">{{ oeuvre.description }}</p>
-                                  {% endif %}
-                                  
-                                  <div class="mt-3">
-                                    <h6 class="small mb-2">Likes et Commentaires:</h6>
-                                    <ul class="nav nav-stack py-2 small">
-                                      <li class="nav-item">
-                                        <a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Likes ({{ oeuvre.likes is defined ? (oeuvre.likes|length) : 0 }})</a>
-                                      </li>
-                                      <li class="nav-item">
-                                        <a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments ({{ oeuvre.commentaires is defined ? (oeuvre.commentaires|length) : 0 }})</a>
-                                      </li>
-                                    </ul>
-                                  </div>
-
-                                  {% if oeuvre.commentaires is defined and oeuvre.commentaires|length > 0 %}
-                                    <div class="mt-3">
-                                      <h6 class="small mb-2">Recent Comments:</h6>
-                                      <ul class="comment-wrap list-unstyled">
-                                        {% for comment in oeuvre.commentaires|slice(0, 3) %}
-                                          <li class="comment-item mb-2">
-                                            <div class="d-flex">
-                                              <div class="ms-2">
-                                                <div class="bg-light p-2 rounded small">
-                                                  <div>
-                                                    <h6 class="mb-1 small"> {{ comment.user ? (comment.user.nom ~ ' ' ~ comment.user.prenom) : 'Anonymous' }} </h6>
-                                                    <p class="mb-0 small">{{ comment.texte }}</p>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </li>
-                                        {% endfor %}
-                                      </ul>
-                                    </div>
-                                  {% endif %}
-                                </div>
-                                <!-- Glightbox description END -->
                               </div>
                               <!-- Oeuvre Photo item END -->
                             {% endfor %}
@@ -143,6 +102,23 @@
                     </div>
                     <hr class="my-2" style="border: none; border-top: 1px solid #ddd;">
                   </div>
+                  
+                  <!-- Include modals for oeuvres in this collection -->
+                  {% if collection.oeuvres|length > 0 %}
+                    {% for oeuvre in collection.oeuvres %}
+                      {% if oeuvre.image %}
+                        {% set processed = processedOeuvres[oeuvre.id]|default(null) %}
+                        {% if processed and processed.imageBase64 %}
+                          {% set imageUrl = 'data:' ~ processed.mimeType ~ ';base64,' ~ processed.imageBase64 %}
+                          {% include 'Front Office/favoris/_favoris_post_modal.html.twig' with { 
+                            oeuvre: oeuvre, 
+                            imageUrl: imageUrl,
+                            modalId: 'collectionPostModal' ~ oeuvre.id
+                          } %}
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
                 {% endfor %}
               </div>
 
@@ -150,6 +126,8 @@
                 .btn-link:hover { background-color: #f9f9f9; }
                 .collapse { animation: slideDown 0.3s ease; }
                 .collapse.show ~ hr { border-top: 1px solid #ccc; }
+                .dropdown > a { font-size: 1.2rem; text-decoration: none; }
+                .dropdown > a:hover { color: #0d6efd !important; }
               </style>
 
               <!-- Card header END -->
@@ -279,5 +257,171 @@
   </div>
 {% endfor %}
 
+<script>
+// Load more comments per post
+document.addEventListener('click', function(e) {
+    const commentsBtn = e.target.closest('.comments-load-more');
+    if (!commentsBtn) {
+        return;
+    }
+
+    e.preventDefault();
+
+    const modal = commentsBtn.closest('.modal');
+    if (!modal) {
+        return;
+    }
+
+    const loadText = commentsBtn.querySelector('.comments-load-text');
+    const loader = commentsBtn.querySelector('.comments-loader');
+
+    if (loadText) {
+        loadText.style.display = 'none';
+    }
+    if (loader) {
+        loader.style.display = 'inline-flex';
+    }
+
+    setTimeout(() => {
+        const hiddenComments = modal.querySelectorAll('.comment-item.hidden-comment.d-none');
+        const revealCount = Math.min(3, hiddenComments.length);
+
+        for (let i = 0; i < revealCount; i++) {
+            hiddenComments[i].classList.remove('d-none');
+        }
+
+        if (loadText) {
+            loadText.style.display = 'inline';
+        }
+        if (loader) {
+            loader.style.display = 'none';
+        }
+
+        const remaining = modal.querySelectorAll('.comment-item.hidden-comment.d-none').length;
+        if (remaining === 0) {
+            const btnContainer = commentsBtn.closest('.pt-2');
+            if (btnContainer) {
+                btnContainer.style.display = 'none';
+            }
+        }
+    }, 400);
+});
+
+// Chevron rotation for collections
+document.addEventListener('DOMContentLoaded', function() {
+    const collapseElements = document.querySelectorAll('[id^="collapse-"]');
+    collapseElements.forEach(function(collapseElement) {
+        const collectionId = collapseElement.id.replace('collapse-', '');
+        const chevron = document.getElementById('chevron-' + collectionId);
+        
+        collapseElement.addEventListener('show.bs.collapse', function() {
+            if (chevron) {
+                chevron.style.transform = 'rotate(180deg)';
+            }
+        });
+        
+        collapseElement.addEventListener('hide.bs.collapse', function() {
+            if (chevron) {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        });
+    });
+});
+</script>
+
+<style>
+	.favoris-post-modal .modal-dialog {
+		max-width: min(1240px, calc(100vw - 48px));
+		margin: 24px auto;
+	}
+
+	.favoris-post-modal .modal-content {
+		border-radius: 0.9rem;
+		overflow: hidden;
+		max-height: calc(100vh - 48px);
+	}
+
+	.favoris-post-close {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		z-index: 3;
+		background-color: rgba(255, 255, 255, 0.9);
+		border-radius: 50%;
+	}
+
+	.favoris-post-modal .modal-body {
+		padding: 0;
+	}
+
+	.favoris-post-modal .row {
+		min-height: min(760px, calc(100vh - 110px));
+	}
+
+	.favoris-post-media-wrap {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--bs-light);
+		padding: 18px;
+	}
+
+	.favoris-post-media-wrap img {
+		max-width: 100%;
+		max-height: min(700px, calc(100vh - 150px));
+		width: auto;
+		height: auto;
+		object-fit: contain;
+	}
+
+	.favoris-post-details {
+		height: min(760px, calc(100vh - 110px));
+		overflow: hidden;
+		overflow-x: hidden;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.favoris-post-scroll {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-y: auto;
+		padding-right: 6px;
+	}
+
+	.favoris-post-modal .fav-comments-container .comment-item {
+		margin-bottom: 0.9rem;
+	}
+
+	.favoris-post-modal .fav-comments-container .comment-item:last-child {
+		margin-bottom: 0;
+	}
+
+	@media (max-width: 991px) {
+		.favoris-post-modal .modal-dialog {
+			max-width: calc(100vw - 20px);
+			margin: 10px auto;
+		}
+
+		.favoris-post-modal .modal-content {
+			max-height: calc(100vh - 20px);
+		}
+
+		.favoris-post-modal .row,
+		.favoris-post-details {
+			height: auto;
+		}
+
+		.favoris-post-scroll {
+			overflow: visible;
+			padding-right: 0;
+		}
+
+		.favoris-post-media-wrap img {
+			max-height: 48vh;
+		}
+	}
+</style>
 
 {% endblock %}

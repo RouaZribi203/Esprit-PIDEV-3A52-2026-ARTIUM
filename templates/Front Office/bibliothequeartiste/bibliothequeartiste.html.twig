@@ -3,245 +3,273 @@
 {% block title %}{{ 'Bibliothèque'|trans }}{% endblock %}
 
 {% block artiste_content %}
-<!-- Share feed START -->
-          
-          <!-- Share feed END -->
 
-          <!-- Card feed item START -->
-          <div class="card">
-            <!-- Card header START -->
-            <div class="card-header border-0 pb-0">
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                  <!-- Avatar -->
-                  <div class="avatar avatar-story me-2">
-                    <a href="#!"> <img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt=""> </a>
-                  </div>
-                  <!-- Info -->
-                  <div>
-                    <div class="nav nav-divider">
-                      <h6 class="nav-item card-title mb-0"> <a href="#!"> Lori Ferguson </a></h6>
-                      <span class="nav-item small"> 2hr</span>
-                    </div>
-                    <p class="mb-0 small">Web Developer at Webestica</p>
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="mb-0">Ma Bibliothèque</h4>
+      <button class="btn btn-success"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#offcanvasAddLivreFront">
+        Ajouter un Livre
+      </button>
+    </div>
+
+    <div class="row g-3">
+      {% if livres is defined and livres|length > 0 %}
+        {% for livre in livres %}
+
+          <div class="col-12 col-sm-6 col-md-4">
+            <div class="card h-100 shadow-sm border-0 rounded-3 position-relative">
+              <div class="card-body d-flex flex-column p-3">
+
+                <div style="position:absolute;top:8px;right:8px;z-index:5;">
+                  <div class="dropdown">
+                    <a href="#" class="text-muted" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+
+                      <!-- DETAILS -->
+                      <li>
+                        <a class="dropdown-item js-show-details"
+                           href="#"
+                           data-id="{{ livre.id }}"
+                           data-titre="{{ livre.titre|e('html_attr') }}"
+                           data-date-creation="{{ livre.dateCreation ? livre.dateCreation|date('Y-m-d H:i:s') : '' }}"
+                           data-description="{{ livre.description|e('html_attr') }}"
+                           data-pdf-url="{{ path('livre_pdf', {'id': livre.id}) }}"
+                           data-image="{{ path('livre_image', {'id': livre.id}) }}">
+                          Détails
+                        </a>
+                      </li>
+
+                      <!-- EDIT -->
+                      <li>
+                        <a class="dropdown-item js-edit-livre"
+                           href="#"
+                           data-id="{{ livre.id }}"
+                           data-titre="{{ livre.titre|e('html_attr') }}"
+                           data-description="{{ livre.description|e('html_attr') }}"
+                           data-categorie="{{ livre.categorie|e('html_attr') }}"
+                           data-prix="{{ livre.prixLocation }}"
+                           data-collection="{{ livre.collection ? livre.collection.id : '' }}">
+                          Modifier
+                        </a>
+                      </li>
+
+                      <!-- DELETE -->
+                      <li>
+                        <a class="dropdown-item text-danger js-delete-livre"
+                           href="#"
+                           data-id="{{ livre.id }}">
+                          Supprimer
+                        </a>
+                      </li>
+
+                    </ul>
                   </div>
                 </div>
-                <!-- Card feed action dropdown START -->
-                <div class="dropdown">
-                  <a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction1" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-three-dots"></i>
-                  </a>
-                  <!-- Card feed action dropdown menu -->
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction1">
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-                  </ul>
+
+                <div class="d-flex flex-column align-items-center text-center">
+                  <img src="{{ path('livre_image', {'id': livre.id}) }}"
+                       class="rounded mb-3"
+                       style="width:140px;height:200px;object-fit:cover;">
+
+                  <h5 class="mb-1 fw-semibold">{{ livre.titre }}</h5>
+
+                  <div class="mb-2 text-muted">
+                    Catégorie:
+                    <span class="fw-medium text-dark">{{ livre.categorie }}</span>
+                  </div>
+
+                  <div class="mb-2">
+                    <strong class="text-primary">
+                      {{ livre.prixLocation }} €
+                    </strong>
+                    <small class="text-muted">/ jour</small>
+                  </div>
+
+                  <div class="text-muted small mt-2">
+                    Collection:
+                    <span class="text-dark">
+                      {{ livre.collection ? livre.collection.titre : '-' }}
+                    </span>
+                  </div>
                 </div>
-                <!-- Card feed action dropdown END -->
+
               </div>
             </div>
-            <!-- Card header END -->
-            <!-- Card body START -->
-            <div class="card-body">
-              <p>I'm thrilled to share that I've completed a graduate certificate course in project management with the president's honor roll.</p>
-              <!-- Card img -->
-              <img class="card-img" src="{{ asset('assetsfront/images/post/3by2/01.jpg') }}" alt="Post">
-              <!-- Feed react START -->
-              <ul class="nav nav-stack py-3 small">
-                <li class="nav-item">
-                  <a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-                </li>
-                <!-- Card share action START -->
-                <li class="nav-item dropdown ms-sm-auto">
-                  <a class="nav-link mb-0" href="#" id="cardShareAction8" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-reply-fill flip-horizontal ps-1"></i>Share (3)
-                  </a>
-                  <!-- Card share action dropdown menu -->
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction8">
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-                  </ul>
-                </li>
-                <!-- Card share action END -->
-              </ul>
-              <!-- Feed react END -->
-
-              <!-- Add comment -->
-              <div class="d-flex mb-3">
-                <!-- Avatar -->
-                <div class="avatar avatar-xs me-2">
-                  <a href="#!"> <img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/12.jpg') }}" alt=""> </a>
-                </div>
-                <!-- Comment box  -->
-                <form class="position-relative w-100">
-                  <textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-                </form>
-              </div>
-              <!-- Comment wrap START -->
-              <ul class="comment-wrap list-unstyled">
-                <!-- Comment item START -->
-                <li class="comment-item">
-                  <div class="d-flex position-relative">
-                    <!-- Avatar -->
-                    <div class="avatar avatar-xs">
-                      <a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt=""></a>
-                    </div>
-                    <div class="ms-2">
-                      <!-- Comment by -->
-                      <div class="bg-light rounded-start-top-0 p-3 rounded">
-                        <div class="d-flex justify-content-between">
-                          <h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-                          <small class="ms-2">5hr</small>
-                        </div>
-                        <p class="small mb-0">Removed demands expense account in outward tedious do. Particular way thoroughly unaffected projection.</p>
-                      </div>
-                      <!-- Comment react -->
-                      <ul class="nav nav-divider py-2 small">
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> Like (3)</a>
-                        </li>
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> Reply</a>
-                        </li>
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> View 5 replies</a>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                  <!-- Comment item nested START -->
-                  <ul class="comment-item-nested list-unstyled">
-                    <!-- Comment item START -->
-                    <li class="comment-item">
-                      <div class="d-flex">
-                        <!-- Avatar -->
-                        <div class="avatar avatar-xs">
-                          <a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/06.jpg') }}" alt=""></a>
-                        </div>
-                        <!-- Comment by -->
-                        <div class="ms-2">
-                          <div class="bg-light p-3 rounded">
-                            <div class="d-flex justify-content-between">
-                              <h6 class="mb-1"> <a href="#!"> Lori Stevens </a> </h6>
-                              <small class="ms-2">2hr</small>
-                            </div>
-                            <p class="small mb-0">See resolved goodness felicity shy civility domestic had but Drawings offended yet answered Jennings perceive.</p>
-                          </div>
-                          <!-- Comment react -->
-                          <ul class="nav nav-divider py-2 small">
-                            <li class="nav-item">
-                              <a class="nav-link" href="#!"> Like (5)</a>
-                            </li>
-                            <li class="nav-item">
-                              <a class="nav-link" href="#!"> Reply</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </li>
-                    <!-- Comment item END -->
-                    <!-- Comment item START -->
-                    <li class="comment-item">
-                      <div class="d-flex">
-                        <!-- Avatar -->
-                        <div class="avatar avatar-story avatar-xs">
-                          <a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt=""></a>
-                        </div>
-                        <!-- Comment by -->
-                        <div class="ms-2">
-                          <div class="bg-light p-3 rounded">
-                            <div class="d-flex justify-content-between">
-                              <h6 class="mb-1"> <a href="#!"> Billy Vasquez </a> </h6>
-                              <small class="ms-2">15min</small>
-                            </div>
-                            <p class="small mb-0">Wishing calling is warrant settled was lucky.</p>
-                          </div>
-                          <!-- Comment react -->
-                          <ul class="nav nav-divider py-2 small">
-                            <li class="nav-item">
-                              <a class="nav-link" href="#!"> Like</a>
-                            </li>
-                            <li class="nav-item">
-                              <a class="nav-link" href="#!"> Reply</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </li>
-                    <!-- Comment item END -->
-                  </ul>
-                  <!-- Load more replies -->
-                  <a href="#!" role="button" class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center mb-3 ms-5" data-bs-toggle="button" aria-pressed="true">
-                    <div class="spinner-dots me-2">
-                      <span class="spinner-dot"></span>
-                      <span class="spinner-dot"></span>
-                      <span class="spinner-dot"></span>
-                    </div>
-                    Load more replies 
-                  </a>
-                  <!-- Comment item nested END -->
-                </li>
-                <!-- Comment item END -->
-                <!-- Comment item START -->
-                <li class="comment-item">
-                  <div class="d-flex">
-                    <!-- Avatar -->
-                    <div class="avatar avatar-xs">
-                    <a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt=""></a>
-                    </div>
-                    <!-- Comment by -->
-                    <div class="ms-2">
-                      <div class="bg-light p-3 rounded">
-                        <div class="d-flex justify-content-between">
-                          <h6 class="mb-1"> <a href="#!"> Frances Guerrero </a> </h6>
-                          <small class="ms-2">4min</small>
-                        </div>
-                        <p class="small mb-0">Removed demands expense account in outward tedious do. Particular way thoroughly unaffected projection.</p>
-                      </div>
-                      <!-- Comment react -->
-                      <ul class="nav nav-divider pt-2 small">
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> Like (1)</a>
-                        </li>
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> Reply</a>
-                        </li>
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> View 6 replies</a>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </li>
-                <!-- Comment item END -->
-              </ul>
-              <!-- Comment wrap END -->
-            </div>
-            <!-- Card body END -->
-            <!-- Card footer START -->
-            <div class="card-footer border-0 pt-0">
-              <!-- Load more comments -->
-              <a href="#!" role="button" class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center" data-bs-toggle="button" aria-pressed="true">
-                <div class="spinner-dots me-2">
-                  <span class="spinner-dot"></span>
-                  <span class="spinner-dot"></span>
-                  <span class="spinner-dot"></span>
-                </div>
-                Load more comments 
-              </a>
-            </div>
-            <!-- Card footer END -->
           </div>
-          <!-- Card feed item END -->
+
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ========================= -->
+<!-- DETAILS MODAL -->
+<!-- ========================= -->
+<div class="modal fade" id="livreDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Détails du livre</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <h5 id="detail-titre">—</h5>
+        <p><strong>ID:</strong> <span id="detail-id">—</span></p>
+        <p><strong>Date:</strong> <span id="detail-date-creation">—</span></p>
+        <p id="detail-description">—</p>
+
+        <img id="detail-image"
+             class="img-fluid mb-3"
+             style="max-height:200px;">
+
+        <div id="detail-pdf-label"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================= -->
+<!-- OFFCANVAS ADD -->
+<!-- ========================= -->
+<div class="offcanvas offcanvas-end"
+     tabindex="-1"
+     id="offcanvasAddLivreFront">
+
+  <div class="offcanvas-header">
+    <h5>Ajouter Livre</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+
+  <div class="offcanvas-body">
+
+    {{ form_start(livreForm, {
+      action: path('artiste_livre_create'),
+      attr: {'enctype': 'multipart/form-data'}
+    }) }}
+
+      {{ form_row(livreForm.titre, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.description, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.image, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.fichier_pdf, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.categorie, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.prix_location, {'attr': {'class': 'form-control'}}) }}
+      {{ form_row(livreForm.collection, {'attr': {'class': 'form-select'}}) }}
+
+      <button type="submit" class="btn btn-primary w-100">
+        Enregistrer
+      </button>
+
+    {{ form_end(livreForm) }}
+
+  </div>
+</div>
+
+<!-- ========================= -->
+<!-- OFFCANVAS EDIT -->
+<!-- ========================= -->
+<div class="offcanvas offcanvas-end"
+     tabindex="-1"
+     id="offcanvasEditLivreFront">
+
+  <div class="offcanvas-header">
+    <h5>Modifier Livre</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+
+  <div class="offcanvas-body">
+    <form id="editLivreFormFront"
+          method="post"
+          enctype="multipart/form-data">
+
+      <input type="text" name="livre[titre]" class="form-control mb-3">
+      <textarea name="livre[description]" class="form-control mb-3"></textarea>
+      <input type="file" name="livre[image]" class="form-control mb-3">
+      <input type="file" name="livre[fichier_pdf]" class="form-control mb-3">
+      <input type="text" name="livre[categorie]" class="form-control mb-3">
+      <input type="number" step="0.01"
+             name="livre[prix_location]"
+             class="form-control mb-3">
+
+      <select name="livre[collection]" class="form-select mb-3">
+        {% for coll in collections %}
+          <option value="{{ coll.id }}">{{ coll.titre }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn btn-primary w-100">
+        Enregistrer
+      </button>
+
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('click', function(e){
+
+  // DETAILS
+  const detailsBtn = e.target.closest('.js-show-details');
+  if (detailsBtn) {
+    e.preventDefault();
+    const d = detailsBtn.dataset;
+
+    document.getElementById('detail-id').textContent = d.id;
+    document.getElementById('detail-titre').textContent = d.titre;
+    document.getElementById('detail-date-creation').textContent = d.dateCreation;
+    document.getElementById('detail-description').textContent = d.description;
+    document.getElementById('detail-image').src = d.image;
+    document.getElementById('detail-pdf-label').innerHTML =
+      '<iframe src="' + d.pdfUrl + '" style="width:100%;height:300px;border:0;"></iframe>';
+
+    new bootstrap.Modal(document.getElementById('livreDetailsModal')).show();
+  }
+
+  // EDIT (FIXED PREFILL)
+  const editBtn = e.target.closest('.js-edit-livre');
+  if (editBtn) {
+    e.preventDefault();
+
+    const d = editBtn.dataset;
+    const form = document.getElementById('editLivreFormFront');
+
+    form.action = "/artiste-bibliotheque/livre/" + d.id + "/edit";
+
+    form.querySelector('[name="livre[titre]"]').value = d.titre || '';
+    form.querySelector('[name="livre[description]"]').value = d.description || '';
+    form.querySelector('[name="livre[categorie]"]').value = d.categorie || '';
+    form.querySelector('[name="livre[prix_location]"]').value = d.prix || '';
+    form.querySelector('[name="livre[collection]"]').value = d.collection || '';
+
+    bootstrap.Offcanvas.getOrCreateInstance(
+      document.getElementById('offcanvasEditLivreFront')
+    ).show();
+  }
+
+  // DELETE
+  const deleteBtn = e.target.closest('.js-delete-livre');
+  if (deleteBtn) {
+    e.preventDefault();
+    if (!confirm('Êtes-vous sûr ?')) return;
+
+    const id = deleteBtn.dataset.id;
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = "/artiste-bibliotheque/livre/" + id + "/delete";
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+});
+</script>
+
 {% endblock %}

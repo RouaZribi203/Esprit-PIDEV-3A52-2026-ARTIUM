@@ -3,245 +3,255 @@
 {% block title %}{{ 'Réclamations'|trans }}{% endblock %}
 
 {% block artiste_content %}
-<!-- Share feed START -->
-          
-          <!-- Share feed END -->
+	<!-- Card START -->
+	<div class="card h-100">
+		<!-- Card header START -->
+		<div class="card-header d-sm-flex align-items-center text-center justify-content-sm-between border-0 pb-0">
+			<h1 class="h4 card-title">Réclamations</h1>
+		</div>
+		<!-- Card header END -->
+		<!-- Card body START -->
+		<div class="card-body">
+			<!-- Tab nav line -->
+			<ul class="nav nav-tabs nav-bottom-line justify-content-center justify-content-md-start">
+				<li class="nav-item"> <a class="nav-link {% if (search_query|default('')) is empty and (selected_statut|default('')) is empty %}active{% endif %}" data-bs-toggle="tab" href="#tab-1"> <i class="bi bi-pencil-square pe-1"></i>Envoyer Réclamation </a> </li>
+				<li class="nav-item"> <a class="nav-link {% if (search_query|default('')) is not empty or (selected_statut|default('')) is not empty %}active{% endif %}" data-bs-toggle="tab" href="#tab-2"> <i class="bi bi-list-check pe-1"></i>Mes Réclamations </a> </li>
+			</ul>
 
-          <!-- Card feed item START -->
-          <div class="card">
-            <!-- Card header START -->
-            <div class="card-header border-0 pb-0">
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                  <!-- Avatar -->
-                  <div class="avatar avatar-story me-2">
-                    <a href="#!"> <img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt=""> </a>
-                  </div>
-                  <!-- Info -->
-                  <div>
-                    <div class="nav nav-divider">
-                      <h6 class="nav-item card-title mb-0"> <a href="#!"> Lori Ferguson </a></h6>
-                      <span class="nav-item small"> 2hr</span>
-                    </div>
-                    <p class="mb-0 small">Web Developer at Webestica</p>
-                  </div>
-                </div>
-                <!-- Card feed action dropdown START -->
-                <div class="dropdown">
-                  <a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction1" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-three-dots"></i>
-                  </a>
-                  <!-- Card feed action dropdown menu -->
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction1">
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-                  </ul>
-                </div>
-                <!-- Card feed action dropdown END -->
-              </div>
-            </div>
-            <!-- Card header END -->
-            <!-- Card body START -->
-            <div class="card-body">
-              <p>I'm thrilled to share that I've completed a graduate certificate course in project management with the president's honor roll.</p>
-              <!-- Card img -->
-              <img class="card-img" src="{{ asset('assetsfront/images/post/3by2/01.jpg') }}" alt="Post">
-              <!-- Feed react START -->
-              <ul class="nav nav-stack py-3 small">
-                <li class="nav-item">
-                  <a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-                </li>
-                <!-- Card share action START -->
-                <li class="nav-item dropdown ms-sm-auto">
-                  <a class="nav-link mb-0" href="#" id="cardShareAction8" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-reply-fill flip-horizontal ps-1"></i>Share (3)
-                  </a>
-                  <!-- Card share action dropdown menu -->
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction8">
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-                  </ul>
-                </li>
-                <!-- Card share action END -->
-              </ul>
-              <!-- Feed react END -->
+			<!-- Tab content START -->
+			<div class="tab-content mb-0 pb-0">
+                
+				<!-- Submit Reclamation Tab START -->
+				<div class="tab-pane fade {% if (search_query|default('')) is empty and (selected_statut|default('')) is empty %}show active{% endif %}" id="tab-1">
+					<div class="card mt-4">
+						<!-- Title START -->
+						<div class="card-header border-0 pb-0">
+							<h5 class="card-title mb-0">Soumettre une Réclamation</h5>
+						</div>
+						<!-- Title END -->
+						<!-- Form START -->
+						<div class="card-body">
+							{{ form_start(form, {'attr': {'class': 'row g-3', 'novalidate': 'novalidate'}}) }}
+								<div class="col-12">
+									{{ form_errors(form) }}
+								</div>
 
-              <!-- Add comment -->
-              <div class="d-flex mb-3">
-                <!-- Avatar -->
-                <div class="avatar avatar-xs me-2">
-                  <a href="#!"> <img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/12.jpg') }}" alt=""> </a>
-                </div>
-                <!-- Comment box  -->
-                <form class="position-relative w-100">
-                  <textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-                </form>
-              </div>
-              <!-- Comment wrap START -->
-              <ul class="comment-wrap list-unstyled">
-                <!-- Comment item START -->
-                <li class="comment-item">
-                  <div class="d-flex position-relative">
-                    <!-- Avatar -->
-                    <div class="avatar avatar-xs">
-                      <a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt=""></a>
-                    </div>
-                    <div class="ms-2">
-                      <!-- Comment by -->
-                      <div class="bg-light rounded-start-top-0 p-3 rounded">
-                        <div class="d-flex justify-content-between">
-                          <h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-                          <small class="ms-2">5hr</small>
-                        </div>
-                        <p class="small mb-0">Removed demands expense account in outward tedious do. Particular way thoroughly unaffected projection.</p>
-                      </div>
-                      <!-- Comment react -->
-                      <ul class="nav nav-divider py-2 small">
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> Like (3)</a>
-                        </li>
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> Reply</a>
-                        </li>
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> View 5 replies</a>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                  <!-- Comment item nested START -->
-                  <ul class="comment-item-nested list-unstyled">
-                    <!-- Comment item START -->
-                    <li class="comment-item">
-                      <div class="d-flex">
-                        <!-- Avatar -->
-                        <div class="avatar avatar-xs">
-                          <a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/06.jpg') }}" alt=""></a>
-                        </div>
-                        <!-- Comment by -->
-                        <div class="ms-2">
-                          <div class="bg-light p-3 rounded">
-                            <div class="d-flex justify-content-between">
-                              <h6 class="mb-1"> <a href="#!"> Lori Stevens </a> </h6>
-                              <small class="ms-2">2hr</small>
+								<div class="col-12">
+									{{ form_label(form.type, 'Type') }}
+									{% set type_has_errors = form.type.vars.errors|length > 0 %}
+									{{ form_widget(form.type, {'attr': {'class': 'form-select' ~ (type_has_errors ? ' is-invalid' : '')}}) }}
+									{% for error in form.type.vars.errors %}
+										<div class="invalid-feedback d-block">{{ error.message }}</div>
+									{% endfor %}
+								</div>
+
+								<div class="col-12">
+									{{ form_label(form.texte, 'Description') }}
+									{% set texte_has_errors = form.texte.vars.errors|length > 0 %}
+									{{ form_widget(form.texte, {
+										'attr': {
+											'class': 'form-control' ~ (texte_has_errors ? ' is-invalid' : ''),
+											'rows': 5,
+											'placeholder': 'Decrivez votre probleme en detail...'
+										}
+									}) }}
+									{% for error in form.texte.vars.errors %}
+										<div class="invalid-feedback d-block">{{ error.message }}</div>
+									{% endfor %}
+								</div>
+
+
+								<div class="col-12 text-end">
+									<button type="reset" class="btn btn-outline-secondary me-2">Reinitialiser</button>
+									<button type="submit" class="btn btn-primary">Envoyer la reclamation</button>
+								</div>
+							{{ form_end(form) }}
+						</div>
+						<!-- Form END -->
+					</div>
+				</div>
+				<!-- Submit Reclamation Tab END -->
+
+				<!-- My Reclamations Tab START -->
+				<div class="tab-pane fade {% if (search_query|default('')) is not empty or (selected_statut|default('')) is not empty %}show active{% endif %}" id="tab-2">
+					<div class="mt-4">
+						<!-- Search and Filter -->
+						<form class="row g-3 mb-4" method="get" id="filterForm">
+                            <div class="col-md-6">
+                                <input type="search" name="q" id="searchInput" class="form-control" placeholder="Rechercher une reclamation..." value="{{ search_query|default('') }}">
                             </div>
-                            <p class="small mb-0">See resolved goodness felicity shy civility domestic had but Drawings offended yet answered Jennings perceive.</p>
-                          </div>
-                          <!-- Comment react -->
-                          <ul class="nav nav-divider py-2 small">
-                            <li class="nav-item">
-                              <a class="nav-link" href="#!"> Like (5)</a>
-                            </li>
-                            <li class="nav-item">
-                              <a class="nav-link" href="#!"> Reply</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </li>
-                    <!-- Comment item END -->
-                    <!-- Comment item START -->
-                    <li class="comment-item">
-                      <div class="d-flex">
-                        <!-- Avatar -->
-                        <div class="avatar avatar-story avatar-xs">
-                          <a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt=""></a>
-                        </div>
-                        <!-- Comment by -->
-                        <div class="ms-2">
-                          <div class="bg-light p-3 rounded">
-                            <div class="d-flex justify-content-between">
-                              <h6 class="mb-1"> <a href="#!"> Billy Vasquez </a> </h6>
-                              <small class="ms-2">15min</small>
+                            <div class="col-md-6">
+                                <select name="statut" id="statutSelect" class="form-select">
+                                    <option value="" {% if (selected_statut|default('')) is empty %}selected{% endif %}>Filtrer par statut</option>
+                                    <option value="Traitée" {% if (selected_statut|default('')) == 'Traitée' %}selected{% endif %}>Traite</option>
+                                    <option value="Non traitée" {% if (selected_statut|default('')) == 'Non traitée' %}selected{% endif %}>Non traitee</option>
+                                </select>
                             </div>
-                            <p class="small mb-0">Wishing calling is warrant settled was lucky.</p>
-                          </div>
-                          <!-- Comment react -->
-                          <ul class="nav nav-divider py-2 small">
-                            <li class="nav-item">
-                              <a class="nav-link" href="#!"> Like</a>
-                            </li>
-                            <li class="nav-item">
-                              <a class="nav-link" href="#!"> Reply</a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </li>
-                    <!-- Comment item END -->
-                  </ul>
-                  <!-- Load more replies -->
-                  <a href="#!" role="button" class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center mb-3 ms-5" data-bs-toggle="button" aria-pressed="true">
-                    <div class="spinner-dots me-2">
-                      <span class="spinner-dot"></span>
-                      <span class="spinner-dot"></span>
-                      <span class="spinner-dot"></span>
-                    </div>
-                    Load more replies 
-                  </a>
-                  <!-- Comment item nested END -->
-                </li>
-                <!-- Comment item END -->
-                <!-- Comment item START -->
-                <li class="comment-item">
-                  <div class="d-flex">
-                    <!-- Avatar -->
-                    <div class="avatar avatar-xs">
-                    <a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt=""></a>
-                    </div>
-                    <!-- Comment by -->
-                    <div class="ms-2">
-                      <div class="bg-light p-3 rounded">
-                        <div class="d-flex justify-content-between">
-                          <h6 class="mb-1"> <a href="#!"> Frances Guerrero </a> </h6>
-                          <small class="ms-2">4min</small>
-                        </div>
-                        <p class="small mb-0">Removed demands expense account in outward tedious do. Particular way thoroughly unaffected projection.</p>
-                      </div>
-                      <!-- Comment react -->
-                      <ul class="nav nav-divider pt-2 small">
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> Like (1)</a>
-                        </li>
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> Reply</a>
-                        </li>
-                        <li class="nav-item">
-                          <a class="nav-link" href="#!"> View 6 replies</a>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </li>
-                <!-- Comment item END -->
-              </ul>
-              <!-- Comment wrap END -->
-            </div>
-            <!-- Card body END -->
-            <!-- Card footer START -->
-            <div class="card-footer border-0 pt-0">
-              <!-- Load more comments -->
-              <a href="#!" role="button" class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center" data-bs-toggle="button" aria-pressed="true">
-                <div class="spinner-dots me-2">
-                  <span class="spinner-dot"></span>
-                  <span class="spinner-dot"></span>
-                  <span class="spinner-dot"></span>
-                </div>
-                Load more comments 
-              </a>
-            </div>
-            <!-- Card footer END -->
-          </div>
-          <!-- Card feed item END -->
+                        </form>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const searchInput = document.getElementById('searchInput');
+                                const statutSelect = document.getElementById('statutSelect');
+                                const filterForm = document.getElementById('filterForm');
+
+                                // Auto-submit on select change
+                                statutSelect.addEventListener('change', function() {
+                                    filterForm.submit();
+                                });
+
+                                // Auto-submit on input with debounce
+                                let searchTimeout;
+                                searchInput.addEventListener('input', function() {
+                                    clearTimeout(searchTimeout);
+                                    searchTimeout = setTimeout(function() {
+                                        filterForm.submit();
+                                    }, 500);
+                                });
+                            });
+                        </script>
+                        
+						<!-- Reclamations List -->
+						<div class="row g-3">
+							{% if reclamations is not defined or reclamations is empty %}
+								<div class="col-12">
+									<div class="text-center py-5">
+										<i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+										<h6 class="mt-3 text-muted">Aucune reclamation trouvee</h6>
+										<p class="small text-muted">Vous n'avez pas encore soumis de reclamation.</p>
+									</div>
+								</div>
+							{% else %}
+								{% for reclamation in reclamations %}
+									<div class="col-12">
+										<div class="card">
+											<div class="card-body">
+												<div class="row align-items-center">
+													<div class="col-md-8">
+														<div class="d-flex align-items-start gap-3">
+															<div>
+																{% if reclamation.statut and reclamation.statut.value == 'Non traitée' %}
+																	<span class="badge bg-warning text-dark">Non traitee</span>
+																{% elseif reclamation.statut and reclamation.statut.value == 'En cours' %}
+																	<span class="badge bg-info text-dark">En cours</span>
+																{% else %}
+																	<span class="badge bg-success">Traitee</span>
+																{% endif %}
+															</div>
+															<div class="w-100">
+																<h6 class="mb-1">{{ reclamation.texte|slice(0, 60) }}{% if reclamation.texte|length > 60 %}...{% endif %}</h6>
+																<p class="mb-2 small text-muted">Type: <strong>{{ reclamation.type ? reclamation.type.value : '-' }}</strong></p>
+																<p class="mb-0 small">{{ reclamation.texte }}</p>
+															</div>
+														</div>
+													</div>
+													<div class="col-md-4 text-md-end">
+														<div class="d-flex justify-content-md-end align-items-start gap-2">
+															<div class="me-auto">
+																<small class="text-muted">Creee le: <strong>{{ reclamation.dateCreation ? reclamation.dateCreation|date('d M Y') : '-' }}</strong></small>
+																{% if reclamation.reponses|length > 0 %}
+																	<div class="mt-1">
+																		<span class="badge bg-success-soft text-success">
+																			<i class="bi bi-chat-dots"></i> {{ reclamation.reponses|length }} reponse{{ reclamation.reponses|length > 1 ? 's' : '' }}
+																		</span>
+																	</div>
+																{% endif %}
+															</div>
+															<div class="dropdown">
+																<button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions">
+																	<i class="bi bi-three-dots"></i>
+																</button>
+																<ul class="dropdown-menu dropdown-menu-end">
+																	<li>
+																		<a class="dropdown-item" href="{{ path('app_reclamationartiste_show', {'id': reclamation.id}) }}">
+																			<i class="bi bi-chat-dots"></i> Voir reponses
+																			{% if reclamation.reponses|length > 0 %}
+																				<span class="badge bg-success ms-1">{{ reclamation.reponses|length }}</span>
+																			{% endif %}
+																		</a>
+																	</li>
+																	<li>
+																		<a class="dropdown-item" href="#offcanvasEditReclamation-{{ reclamation.id }}" data-bs-toggle="offcanvas" data-bs-dismiss="dropdown" role="button" aria-controls="offcanvasEditReclamation-{{ reclamation.id }}">
+																			Editer reclamation
+																		</a>
+																	</li>
+																	<li><hr class="dropdown-divider"></li>
+																	<li>
+																		<form method="post" action="{{ path('app_reclamationartiste_delete', {'id': reclamation.id}) }}" onsubmit="return confirm('Supprimer cette reclamation ?');">
+																			<input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reclamation.id) }}">
+																			<button class="dropdown-item text-danger" type="submit">Supprimer reclamation</button>
+																		</form>
+																	</li>
+																</ul>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+
+										{% set edit_form = edit_forms[reclamation.id] ?? null %}
+										{% set edit_errors = edit_form is not null and (edit_form.texte.vars.errors|length > 0 or edit_form.type.vars.errors|length > 0) %}
+										<div class="offcanvas offcanvas-end{{ edit_errors ? ' show' : '' }}" tabindex="-1" id="offcanvasEditReclamation-{{ reclamation.id }}" style="width: 600px">
+											<div class="offcanvas-body" data-simplebar>
+												<div class="offcanvas-header px-2 pt-0">
+													<h3 class="offcanvas-title">Editer reclamation</h3>
+													<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+												</div>
+												<div class="container">
+												{% if edit_form %}
+													{{ form_start(edit_form, { attr: { class: 'row g-3', 'novalidate': 'novalidate' } }) }}
+														<div class="col-12">
+															{{ form_errors(edit_form) }}
+														</div>
+
+														<div class="col-12">
+															{{ form_label(edit_form.type, 'Type') }}
+															{% set edit_type_has_errors = edit_form.type.vars.errors|length > 0 %}
+															{{ form_widget(edit_form.type, {'attr': {'class': 'form-select' ~ (edit_type_has_errors ? ' is-invalid' : '')}}) }}
+															{% for error in edit_form.type.vars.errors %}
+																<div class="invalid-feedback d-block">{{ error.message }}</div>
+															{% endfor %}
+														</div>
+
+														<div class="col-12">
+															{{ form_label(edit_form.texte, 'Description') }}
+															{% set edit_texte_has_errors = edit_form.texte.vars.errors|length > 0 %}
+															{{ form_widget(edit_form.texte, {
+																'attr': {
+																	'class': 'form-control' ~ (edit_texte_has_errors ? ' is-invalid' : ''),
+																	'rows': 5,
+																	'placeholder': 'Decrivez votre probleme en detail...'
+																}
+															}) }}
+															{% for error in edit_form.texte.vars.errors %}
+																<div class="invalid-feedback d-block">{{ error.message }}</div>
+															{% endfor %}
+														</div>
+
+														<div class="col-12 d-flex gap-2">
+															<button class="btn btn-primary" type="submit">Enregistrer</button>
+															<button type="button" class="btn btn-outline-primary" data-bs-dismiss="offcanvas" aria-label="Close">Fermer</button>
+														</div>
+													{{ form_end(edit_form) }}
+												{% else %}
+													<div class="alert alert-warning mb-0">Formulaire indisponible.</div>
+												{% endif %}
+											</div>
+										</div>
+									</div>
+								{% endfor %}
+							{% endif %}
+						</div>
+					</div>
+				</div>
+				<!-- My Reclamations Tab END -->
+			</div>
+			<!-- Tab content END -->
+		</div>
+		<!-- Card body END -->
+	</div>
+	<!-- Card END -->
 {% endblock %}
+

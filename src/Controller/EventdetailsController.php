@@ -10,9 +10,13 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\SvgWriter;
+use Psr\Log\LoggerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class EventdetailsController extends AbstractController
@@ -23,7 +27,9 @@ final class EventdetailsController extends AbstractController
         Evenement $evenement,
         TicketRepository $ticketRepository,
         UserRepository $userRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        MailerInterface $mailer,
+        LoggerInterface $logger
     ): Response
     {
         $user = $this->getUser();
@@ -47,6 +53,8 @@ final class EventdetailsController extends AbstractController
 
             $entityManager->persist($ticket);
             $entityManager->flush();
+
+            $this->sendTicketEmail($mailer, $logger, $user, $evenement, $ticket, $payload);
 
             return $this->redirectToRoute('app_eventdetails', ['id' => $evenement->getId()]);
         }
@@ -138,5 +146,52 @@ final class EventdetailsController extends AbstractController
         }
 
         return $data;
+    }
+
+    private function sendTicketEmail(
+        MailerInterface $mailer,
+        LoggerInterface $logger,
+        User $user,
+        Evenement $evenement,
+        Ticket $ticket,
+        string $payload
+    ): void {
+        $emailAddress = $user->getEmail();
+        if ($emailAddress === null || $emailAddress === '') {
+            $logger->warning('Ticket email not sent: user has no email', ['user_id' => $user->getId()]);
+            return;
+        }
+
+        try {
+            $qrCode = QrCode::create($payload)->setSize(240)->setMargin(10);
+            $writer = new SvgWriter();
+            $result = $writer->write($qrCode);
+            $svg = $result->getString();
+
+            // Prepare logo attachment
+            $logoPath = $this->getParameter('kernel.project_dir') . '/assets/assetsback/images/logo2.png';
+            $logoContent = file_get_contents($logoPath);
+
+            $email = (new TemplatedEmail())
+                ->from(new Address('noreply@artium.tn', 'Artium'))
+                ->to($emailAddress)
+                ->subject('Votre ticket pour ' . ($evenement->getTitre() ?? 'evenement'))
+                ->htmlTemplate('emails/ticket.html.twig')
+                ->context([
+                    'user' => $user,
+                    'evenement' => $evenement,
+                    'ticket' => $ticket,
+                ])
+                ->attach($logoContent, 'artium-logo', 'image/png')
+                ->attach($svg, 'QR-Code-' . $ticket->getId() . '.svg', 'image/svg+xml');
+
+            $mailer->send($email);
+            $logger->info('Ticket email sent successfully', ['user_id' => $user->getId(), 'ticket_id' => $ticket->getId()]);
+        } catch (\Exception $e) {
+            $logger->error('Failed to send ticket email: ' . $e->getMessage(), [
+                'user_id' => $user->getId(),
+                'ticket_id' => $ticket->getId(),
+            ]);
+        }
     }
 }

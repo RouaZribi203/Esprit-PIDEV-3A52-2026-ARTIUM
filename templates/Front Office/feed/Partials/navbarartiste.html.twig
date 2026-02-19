@@ -133,9 +133,7 @@
 									</li>
 								</ul>
 							</div>
-							<div class="card-footer text-center">
-								<a href="#" class="btn btn-sm btn-primary-soft">See all incoming activity</a>
-							</div>
+							
 						</div>
 					</div>
 				</li>
@@ -156,17 +154,22 @@
 									<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt="avatar">
 								</div>
 								<div>
-									<a class="h6 stretched-link" href="#">Lori Ferguson</a>
-									<p class="small m-0">Amateur d'art</p>
+									<a class="h6 stretched-link" href="#">{{ app.user.nom ~ ' ' ~ app.user.prenom }}</a>
+									<p class="small m-0">
+										{% if app.user.specialite is defined and app.user.specialite is not null %}
+											{{ app.user.specialite.value }}
+										{% else %}
+											Artiste
+										{% endif %}
+									</p>
 								</div>
 							</div>
-							<a class="dropdown-item btn btn-primary-soft btn-sm my-2 text-center" href="my-profile.html">Modifier profile</a>
 						</li>
 						<!-- Links -->						
-						<li class="dropdown-divider"></li>
-						<li>
-							<a class="dropdown-item bg-danger-soft-hover" href="sign-in-advance.html">
-								<i class="bi bi-power fa-fw me-2"></i>Se déconnecter</a>
+						<li class="px-3 text-center">
+							<a class="btn btn-outline-primary mb-0 rounded" href="{{ path('app_logout') }}" style="margin-top: 15px;">
+								<i class="bi bi-power me-2"></i>Se déconnecter
+							</a>
 						</li>
 						<li>
 							<hr class="dropdown-divider"></li>

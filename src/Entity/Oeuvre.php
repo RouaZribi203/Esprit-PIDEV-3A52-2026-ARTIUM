@@ -36,8 +36,10 @@ class Oeuvre
     #[ORM\Column(type: Types::BLOB)]
     private mixed $image = null;
 
-    #[ORM\Column(enumType: TypeOeuvre::class)]
+    
+    #[ORM\Column(type: 'string', enumType: TypeOeuvre::class)]
     private ?TypeOeuvre $type = null;
+
 
     #[ORM\ManyToOne(inversedBy: 'oeuvres')]
     #[ORM\JoinColumn(nullable: false)]

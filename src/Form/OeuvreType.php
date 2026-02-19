@@ -95,6 +95,7 @@ class OeuvreType extends AbstractType
             'temp_image_present' => false,
             'image_required' => true,
             'include_type' => true,
+            'validation_groups' => ['Default'],
         ]);
     }
 }

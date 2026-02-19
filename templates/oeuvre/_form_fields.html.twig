@@ -21,8 +21,10 @@
     <div class="row">
         <div class="col-md-12 mb-3">
             {{ form_label(form.date_creation, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
-            {{ form_widget(form.date_creation, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.date_creation) }}
+            {{ form_widget(form.date_creation, {'attr': {'class': (form.date_creation.vars.errors|length > 0) ? 'form-control is-invalid' : 'form-control'}}) }}
+            {% if form.date_creation.vars.errors|length > 0 %}
+                <div class="invalid-feedback d-block">{{ form_errors(form.date_creation) }}</div>
+            {% endif %}
         </div>
     </div>
 

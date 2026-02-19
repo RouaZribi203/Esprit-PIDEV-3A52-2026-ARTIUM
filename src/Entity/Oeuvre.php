@@ -34,6 +34,8 @@ class Oeuvre
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Assert\NotNull(message: 'La date d\'ajout ne peut pas être vide', groups: ['edit'])]
+    #[Assert\LessThanOrEqual('today', message: 'La date d\'ajout ne peut pas être dans le futur', groups: ['edit'])]
     private ?\DateTime $date_creation = null;
 
     #[ORM\Column(type: Types::BLOB)]
@@ -108,7 +110,7 @@ class Oeuvre
         return $this->date_creation;
     }
 
-    public function setDateCreation(\DateTime $date_creation): static
+    public function setDateCreation(?\DateTime $date_creation): static
     {
         $this->date_creation = $date_creation;
 

@@ -81,6 +81,7 @@ final class OeuvreFrontController extends AbstractController
             'user' => $user,
             'temp_image_present' => $tempImageName !== null,
             'include_type' => false,
+            'validation_groups' => ['Default'],
         ]);
         $form->handleRequest($request);
 
@@ -213,6 +214,7 @@ final class OeuvreFrontController extends AbstractController
             'image_required' => false,
             'user' => $user,
             'include_type' => false,
+            'validation_groups' => ['Default', 'edit'],
         ]);
         $form->handleRequest($request);
 

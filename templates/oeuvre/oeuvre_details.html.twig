@@ -112,7 +112,26 @@
                         <li class="list-group-item comment-item">
                           <div class="comment-avatar bg-secondary">{{ cinit }}</div>
                           <div>
-                            <div class="comment-meta">{{ commentaire.user ? (commentaire.user.nom ~ ' ' ~ commentaire.user.prenom) : 'Anonyme' }} {% if commentaire.dateCommentaire %}<span class="text-muted">• {{ commentaire.dateCommentaire|date('d M Y') }}</span>{% endif %}</div>
+                            <div class="d-flex justify-content-between align-items-start comment-meta">
+                              <div>
+                                {{ commentaire.user ? (commentaire.user.nom ~ ' ' ~ commentaire.user.prenom) : 'Anonyme' }} {% if commentaire.dateCommentaire %}<span class="text-muted">• {{ commentaire.dateCommentaire|date('d M Y') }}</span>{% endif %}
+                              </div>
+                              <div class="dropdown">
+                                <button class="btn btn-link p-0 text-muted text-decoration-none" type="button" id="commentActions{{ commentaire.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                  <i class="fe fe-more-horizontal"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentActions{{ commentaire.id }}">
+                                  <li>
+                                    <form method="post" action="{{ path('app_oeuvre_comment_delete', {'id': commentaire.id}) }}" onsubmit="return confirm('Supprimer ce commentaire ?');">
+                                      <input type="hidden" name="_token" value="{{ csrf_token('delete_comment' ~ commentaire.id) }}">
+                                      <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fe fe-trash-2 me-1"></i>Supprimer
+                                      </button>
+                                    </form>
+                                  </li>
+                                </ul>
+                              </div>
+                            </div>
                             <div class="comment-text">{{ commentaire.texte }}</div>
                           </div>
                         </li>

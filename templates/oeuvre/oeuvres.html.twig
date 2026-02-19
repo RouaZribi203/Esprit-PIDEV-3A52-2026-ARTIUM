@@ -42,20 +42,65 @@
                     </li>
                   </ul>
                 </div>
-                <div class="p-4 row">
-                  <!-- Form -->
-                <div class ="formbtn">
-                  <form class="d-flex align-items-center col-12 col-md-8 col-lg-3">
-                    <span class="position-absolute ps-3 search-icon">
-                      <i class="fe fe-search"></i>
-                    </span>
-                    <input type="search" class="form-control ps-6" placeholder="Rechercher Oeuvre" />
-                  </form>
-                  <div class="bouton_delete">
-                  <a href="#" class="btn btn-primary">Supprimer tout</a>
+                <div class="p-4">
+                  <div class="d-flex align-items-center gap-3">
+                    <!-- Search Form -->
+                    <form class="d-flex align-items-center flex-grow-1" method="get" action="{{ path('oeuvres') }}" id="searchForm" style="max-width: 300px;">
+                      <span class="position-absolute ps-3 search-icon">
+                        <i class="fe fe-search"></i>
+                      </span>
+                      <input type="search" name="q" class="form-control ps-6" placeholder="Rechercher Oeuvre" value="{{ currentQuery }}" />
+                      <input type="hidden" name="sort" id="sortInput" value="{{ sortBy }}" />
+                      <input type="hidden" name="order" id="orderInput" value="{{ sortOrder }}" />
+                    </form>
+
+                    <!-- Sort Dropdown and Order Button -->
+                    <div class="d-flex align-items-center gap-2">
+                      <select id="sortSelect" class="form-select" style="width: 200px;">
+                        <option value="" disabled selected>Trier par...</option>
+                        <option value="favoris" {{ sortBy == 'favoris' ? 'selected' : '' }}>Favoris</option>
+                        <option value="commentaires" {{ sortBy == 'commentaires' ? 'selected' : '' }}>Commentaires</option>
+                        <option value="likes" {{ sortBy == 'likes' ? 'selected' : '' }}>J'aimes</option>
+                      </select>
+                      <button type="button" class="btn btn-outline-primary" id="orderToggle" onclick="toggleOrder()">
+                        {{ sortOrder == 'ASC' ? '↑ ASC' : '↓ DESC' }}
+                      </button>
+                    </div>
+
+                    <!-- Delete All Button -->
+                    <div class="ms-auto">
+                      <a href="#" class="btn btn-primary">Supprimer tout</a>
+                    </div>
+                  </div>
                 </div>
-                </div>
-                </div>
+
+                <script>
+                  document.getElementById('sortSelect').addEventListener('change', function() {
+                    if (this.value) {
+                      document.getElementById('sortInput').value = this.value;
+                      document.getElementById('searchForm').submit();
+                    }
+                  });
+
+                  function toggleOrder() {
+                    const currentOrder = document.getElementById('orderInput').value;
+                    document.getElementById('orderInput').value = currentOrder === 'ASC' ? 'DESC' : 'ASC';
+                    document.getElementById('searchForm').submit();
+                  }
+                </script>
+
+                {% if isSearchActive and noResultsMessage %}
+                  <div class="alert alert-info mx-4 mb-3" role="alert">
+                    <i class="fe fe-info me-2"></i>{{ noResultsMessage }}
+                  </div>
+                {% endif %}
+
+                {% if isSearchActive and searchResults|length > 1 %}
+                  <div class="alert alert-info mx-4 mb-3" role="alert">
+                    <i class="fe fe-info me-2"></i>{{ searchResults|length }} résultat(s) trouvé(s)
+                  </div>
+                {% endif %}
+
                 <div>
                 
               <div class="tab-content" id="tabContent">
@@ -81,13 +126,14 @@
                               <th>Artiste</th>
                               <th>J'aimes</th>
                               <th>Commentaires</th>
-                              <th>Description</th>
+                              <th>Favoris</th>
                               <th></th>
                             </tr>
                           </thead>
                           <tbody>
-                            {# Render all oeuvres in the same table layout (no image column) #}
-                            {% for oeuvre in oeuvres %}
+                            {# Render search results or all oeuvres #}
+                            {% set displayOeuvres = isSearchActive ? searchResults : oeuvres %}
+                            {% for oeuvre in displayOeuvres %}
                             <tr>
                               <td>
                                 <div class="form-check">
@@ -125,8 +171,11 @@
                                 <span>{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
                                 </div>
                               </td>
-                              <td>
-                                <div class="small text-truncate" style="max-width:360px">{{ oeuvre.description|striptags|slice(0,10) }}{{ oeuvre.description and (oeuvre.description|length >10) ? '...' : '' }}</div>
+                              <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                  <i class="fe fe-star"></i>
+                                  <span>{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
+                                </div>
                               </td>
 
                               <td>
@@ -147,6 +196,7 @@
                                       <i class="fe fe-eye dropdown-item-icon"></i>
                                       Détails
                                     </a>
+                                    {# Bouton Modifier 
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -160,7 +210,7 @@
                                       data-collection-id="{{ oeuvre.collection ? oeuvre.collection.id : '' }}">
                                       <i class="fe fe-edit dropdown-item-icon"></i>
                                       Modifier
-                                    </button>
+                                    </button>#}
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -168,7 +218,7 @@
                                       <i class="fe fe-trash dropdown-item-icon"></i>
                                       Supprimer
                                     </button>
-                                    <form id="deleteForm{{ oeuvre.id }}" method="post" action="{{ path('app_oeuvre_delete_front', {'id': oeuvre.id}) }}" style="display:none;">
+                                    <form id="deleteForm{{ oeuvre.id }}" method="post" action="{{ path('app_oeuvre_delete', {'id': oeuvre.id}) }}" style="display:none;">
                                       <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ oeuvre.id) }}">
                                     </form>
                                   </span>
@@ -177,7 +227,7 @@
                             </tr>
                             {% else %}
                             <tr>
-                              <td colspan="9">no records found</td>
+                              <td colspan="9">Aucune œuvre trouvée.</td>
                             </tr>
                             {% endfor %}
                           </tbody>
@@ -210,7 +260,7 @@
                               <th>Artiste</th>
                               <th>J'aimes</th>
                               <th>Commentaires</th>
-                              <th>Description</th>
+                              <th>Favoris</th>
                               <th></th>
                             </tr>
                           </thead>
@@ -254,8 +304,11 @@
                                 <span>{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
                                 </div>
                               </td>
-                              <td>
-                                <div class="small text-truncate" style="max-width:360px">{{ oeuvre.description|striptags|slice(0,10) }}{{ oeuvre.description and (oeuvre.description|length >10) ? '...' : '' }}</div>
+                              <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                  <i class="fe fe-star"></i>
+                                  <span>{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
+                                </div>
                               </td>
 
                               <td>
@@ -276,6 +329,7 @@
                                       <i class="fe fe-eye dropdown-item-icon"></i>
                                       Détails
                                     </a>
+                                    {# Bouton Modifier 
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -289,7 +343,7 @@
                                       data-collection-id="{{ oeuvre.collection ? oeuvre.collection.id : '' }}">
                                       <i class="fe fe-edit dropdown-item-icon"></i>
                                       Modifier
-                                    </button>
+                                    </button>#}
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -306,7 +360,7 @@
                             </tr>
                             {% else %}
                             <tr>
-                              <td colspan="9">no records found</td>
+                              <td colspan="9">Aucune œuvre trouvée.</td>
                             </tr>
                             {% endfor %}
                           </tbody>
@@ -339,7 +393,7 @@
                               <th>Artiste</th>
                               <th>J'aimes</th>
                               <th>Commentaires</th>
-                              <th>Description</th>
+                              <th>Favoris</th>
                               <th></th>
                             </tr>
                           </thead>
@@ -383,8 +437,11 @@
                                 <span>{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
                                 </div>
                               </td>
-                              <td>
-                                <div class="small text-truncate" style="max-width:360px">{{ oeuvre.description|striptags|slice(0,10) }}{{ oeuvre.description and (oeuvre.description|length >10) ? '...' : '' }}</div>
+                              <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                  <i class="fe fe-star"></i>
+                                  <span>{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
+                                </div>
                               </td>
 
                               <td>
@@ -405,6 +462,7 @@
                                       <i class="fe fe-eye dropdown-item-icon"></i>
                                       Détails
                                     </a>
+                                    {# Bouton Modifier
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -418,7 +476,7 @@
                                       data-collection-id="{{ oeuvre.collection ? oeuvre.collection.id : '' }}">
                                       <i class="fe fe-edit dropdown-item-icon"></i>
                                       Modifier
-                                    </button>
+                                    </button> #}
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -435,7 +493,7 @@
                             </tr>
                             {% else %}
                             <tr>
-                              <td colspan="9">no records found</td>
+                              <td colspan="9">Aucune œuvre trouvée.</td>
                             </tr>
                             {% endfor %}
                           </tbody>
@@ -469,7 +527,7 @@
                               <th>Artiste</th>
                               <th>J'aimes</th>
                               <th>Commentaires</th>
-                              <th>Description</th>
+                              <th>Favoris</th>
                               <th></th>
                             </tr>
                           </thead>
@@ -513,8 +571,11 @@
                                 <span>{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
                                 </div>
                               </td>
-                              <td>
-                                <div class="small text-truncate" style="max-width:360px">{{ oeuvre.description|striptags|slice(0,10) }}{{ oeuvre.description and (oeuvre.description|length >10) ? '...' : '' }}</div>
+                              <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                  <i class="fe fe-star"></i>
+                                  <span>{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
+                                </div>
                               </td>
 
                               <td>
@@ -535,6 +596,7 @@
                                       <i class="fe fe-eye dropdown-item-icon"></i>
                                       Détails
                                     </a>
+                                    {# Bouton Modifier 
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -548,7 +610,7 @@
                                       data-collection-id="{{ oeuvre.collection ? oeuvre.collection.id : '' }}">
                                       <i class="fe fe-edit dropdown-item-icon"></i>
                                       Modifier
-                                    </button>
+                                    </button>#}
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -565,7 +627,7 @@
                             </tr>
                             {% else %}
                             <tr>
-                              <td colspan="9">no records found</td>
+                              <td colspan="9">Aucune œuvre trouvée.</td>
                             </tr>
                             {% endfor %}
                           </tbody>

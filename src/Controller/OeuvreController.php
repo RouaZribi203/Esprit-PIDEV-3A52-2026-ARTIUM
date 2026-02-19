@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Commentaire;
 use App\Entity\Collections;
 use App\Entity\Oeuvre;
 use App\Entity\User;
@@ -21,22 +22,45 @@ final class OeuvreController extends AbstractController
 {
 
     #[Route(name: 'oeuvres')]
-    public function indexx(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository): Response
+    public function indexx(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
     {
+        $query = $request->query->get('q', '');
+        $sortBy = $request->query->get('sort', 'titre');
+        $sortOrder = $request->query->get('order', 'ASC');
+        $searchResults = [];
+        $noResultsMessage = '';
+
+        // If search query exists, find matching oeuvres with sorting
+        if ($query) {
+            $searchResults = $oeuvreRepository->findByTitreWithSort($query, $sortBy, $sortOrder);
+
+            if (count($searchResults) === 1) {
+                // Single result: redirect to details
+                return $this->redirectToRoute('app_oeuvre_details', ['id' => $searchResults[0]->getId()]);
+            } elseif (count($searchResults) === 0) {
+                // No results
+                $noResultsMessage = 'Aucune œuvre trouvée avec ce titre.';
+                $searchResults = [];
+            }
+            // Multiple results: will be displayed in template
+        }
+
+        // Get oeuvres by type with sorting
+        $peintures = $oeuvreRepository->findBy(
+            ['type' => TypeOeuvre::PEINTURE]
+        );
+
+        $sculptures = $oeuvreRepository->findBy(
+           ['type' => TypeOeuvre::SCULPTURE]
+        );
+
+        $photos = $oeuvreRepository->findBy(
+           ['type' => TypeOeuvre::PHOTOGRAPHIE]
+        );
         
-
-        $peintures = $oeuvreRepository->findBy([
-            'type' => TypeOeuvre::PEINTURE
-       ]);
-
-        $sculptures = $oeuvreRepository->findBy([
-           'type' => TypeOeuvre::SCULPTURE
-       ]);
-
-        $photos = $oeuvreRepository->findBy([
-           'type' => TypeOeuvre::PHOTOGRAPHIE
-        ]);
-        $all = array_merge($peintures, $sculptures, $photos);
+        // Apply sorting to all oeuvres if needed
+        $all = $oeuvreRepository->findAllWithSort($sortBy, $sortOrder);
+        
         return $this->render('oeuvre/oeuvres.html.twig', [
             'controller_name' => 'OeuvreController',
             'oeuvres' => $all,
@@ -45,6 +69,12 @@ final class OeuvreController extends AbstractController
             'photos' => $photos,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
+            'searchResults' => $searchResults,
+            'noResultsMessage' => $noResultsMessage,
+            'isSearchActive' => (bool) $query,
+            'sortBy' => $sortBy,
+            'sortOrder' => $sortOrder,
+            'currentQuery' => $query,
         ]);
     }
     
@@ -153,6 +183,7 @@ final class OeuvreController extends AbstractController
         $user = $this->getUser();
         $form = $this->createForm(OeuvreType::class, $oeuvre, [
             'user' => $user instanceof User ? $user : null,
+            'validation_groups' => ['Default', 'edit'],
         ]);
         $form->handleRequest($request);
 
@@ -193,11 +224,53 @@ final class OeuvreController extends AbstractController
     #[Route('/{id}', name: 'app_oeuvre_delete', methods: ['POST'])]
     public function delete(Request $request, Oeuvre $oeuvre, EntityManagerInterface $entityManager): Response
     {
-        $likes = $oeuvre->getLikes(); 
-        foreach ($likes as $like) {$entityManager->remove($like);}
-        if ($this->isCsrfTokenValid('delete'.$oeuvre->getId(), $request->getPayload()->getString('_token'))) {
+        $oeuvreId = $oeuvre->getId();
+        
+        if ($this->isCsrfTokenValid('delete'.$oeuvreId, $request->getPayload()->getString('_token'))) {
+            // Delete using DQL to avoid entity loading and unbuffered query issues
+            $entityManager->createQuery('DELETE FROM App\Entity\Like l WHERE l.oeuvre = :oeuvre')
+                ->setParameter('oeuvre', $oeuvreId)
+                ->execute();
+            
+            $entityManager->createQuery('DELETE FROM App\Entity\Commentaire c WHERE c.oeuvre = :oeuvre')
+                ->setParameter('oeuvre', $oeuvreId)
+                ->execute();
+            
             $entityManager->remove($oeuvre);
             $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('oeuvres', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/admin/commentaire/{id}/delete', name: 'app_oeuvre_comment_delete', methods: ['POST'])]
+    public function deleteComment(int $id, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        // Fetch only the data we need without loading full entities
+        $commentData = $entityManager->createQuery(
+            'SELECT c.id, IDENTITY(c.oeuvre) as oeuvreId FROM App\Entity\Commentaire c WHERE c.id = :id'
+        )
+        ->setParameter('id', $id)
+        ->getOneOrNullResult();
+
+        if (!$commentData) {
+            return $this->redirectToRoute('oeuvres');
+        }
+
+        $submittedToken = (string) $request->getPayload()->getString('_token');
+        if (!$this->isCsrfTokenValid('delete_comment'.$id, $submittedToken)) {
+            return $this->redirectToRoute('oeuvres');
+        }
+
+        $oeuvreId = $commentData['oeuvreId'];
+
+        // Delete using DQL to avoid entity loading
+        $entityManager->createQuery('DELETE FROM App\Entity\Commentaire c WHERE c.id = :id')
+            ->setParameter('id', $id)
+            ->execute();
+
+        if ($oeuvreId !== null) {
+            return $this->redirectToRoute('app_oeuvre_details', ['id' => $oeuvreId], Response::HTTP_SEE_OTHER);
         }
 
         return $this->redirectToRoute('oeuvres', [], Response::HTTP_SEE_OTHER);

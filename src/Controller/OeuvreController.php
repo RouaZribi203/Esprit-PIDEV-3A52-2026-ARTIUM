@@ -27,6 +27,7 @@ final class OeuvreController extends AbstractController
         $query = $request->query->get('q', '');
         $sortBy = $request->query->get('sort', 'titre');
         $sortOrder = $request->query->get('order', 'ASC');
+        $activeTab = $request->query->get('tab', 'all-post');
         $searchResults = [];
         $noResultsMessage = '';
 
@@ -46,16 +47,22 @@ final class OeuvreController extends AbstractController
         }
 
         // Get oeuvres by type with sorting
-        $peintures = $oeuvreRepository->findBy(
-            ['type' => TypeOeuvre::PEINTURE]
+        $peintures = $oeuvreRepository->findByTypeWithSort(
+            TypeOeuvre::PEINTURE,
+            $sortBy,
+            $sortOrder
         );
 
-        $sculptures = $oeuvreRepository->findBy(
-           ['type' => TypeOeuvre::SCULPTURE]
+        $sculptures = $oeuvreRepository->findByTypeWithSort(
+           TypeOeuvre::SCULPTURE,
+           $sortBy,
+           $sortOrder
         );
 
-        $photos = $oeuvreRepository->findBy(
-           ['type' => TypeOeuvre::PHOTOGRAPHIE]
+        $photos = $oeuvreRepository->findByTypeWithSort(
+           TypeOeuvre::PHOTOGRAPHIE,
+           $sortBy,
+           $sortOrder
         );
         
         // Apply sorting to all oeuvres if needed
@@ -75,6 +82,7 @@ final class OeuvreController extends AbstractController
             'sortBy' => $sortBy,
             'sortOrder' => $sortOrder,
             'currentQuery' => $query,
+            'activeTab' => $activeTab,
         ]);
     }
     

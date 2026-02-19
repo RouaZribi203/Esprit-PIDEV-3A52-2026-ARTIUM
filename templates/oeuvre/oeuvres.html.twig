@@ -52,6 +52,7 @@
                       <input type="search" name="q" class="form-control ps-6" placeholder="Rechercher Oeuvre" value="{{ currentQuery }}" />
                       <input type="hidden" name="sort" id="sortInput" value="{{ sortBy }}" />
                       <input type="hidden" name="order" id="orderInput" value="{{ sortOrder }}" />
+                      <input type="hidden" name="tab" id="tabInput" value="{{ activeTab|default('all-post') }}" />
                     </form>
 
                     <!-- Sort Dropdown and Order Button -->
@@ -75,6 +76,24 @@
                 </div>
 
                 <script>
+                  // Track active tab on change
+                  document.querySelectorAll('.nav-lb-tab .nav-link').forEach(function(tab) {
+                    tab.addEventListener('shown.bs.tab', function(e) {
+                      const targetId = e.target.getAttribute('href').substring(1);
+                      document.getElementById('tabInput').value = targetId;
+                    });
+                  });
+
+                  // Restore active tab on page load
+                  document.addEventListener('DOMContentLoaded', function() {
+                    const activeTabId = new URLSearchParams(window.location.search).get('tab') || 'all-post';
+                    const tabElement = document.querySelector('[href="#' + activeTabId + '"]');
+                    if (tabElement) {
+                      const tab = new bootstrap.Tab(tabElement);
+                      tab.show();
+                    }
+                  });
+
                   document.getElementById('sortSelect').addEventListener('change', function() {
                     if (this.value) {
                       document.getElementById('sortInput').value = this.value;

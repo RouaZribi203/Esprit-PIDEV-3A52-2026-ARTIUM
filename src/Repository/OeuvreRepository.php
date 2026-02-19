@@ -41,6 +41,15 @@ class OeuvreRepository extends ServiceEntityRepository
         return $this->applySorting($qb, $sortBy, $sortOrder)->getQuery()->getResult();
     }
 
+    public function findByTypeWithSort($type, string $sortBy = 'titre', string $sortOrder = 'ASC'): array
+    {
+        $qb = $this->createQueryBuilder('o')
+            ->where('o.type = :type')
+            ->setParameter('type', $type);
+        
+        return $this->applySorting($qb, $sortBy, $sortOrder)->getQuery()->getResult();
+    }
+
     private function applySorting($qb, string $sortBy, string $sortOrder)
     {
         $sortOrder = strtoupper($sortOrder) === 'DESC' ? 'DESC' : 'ASC';

@@ -51,7 +51,7 @@
                     <button type="submit" class="btn btn-outline-primary ms-1 btn-sm">OK</button>
                   </form>
                   <div class="bouton_delete">
-                  <a href="#" class="btn btn-primary">Supprimer tout</a>
+                  <a href="#" id="deleteSelectedBtn" class="btn btn-primary" data-delete-url-template="{{ path('livre_delete', {'id': 0}) }}">Supprimer tout</a>
                   <button class="btn btn-success ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddLivre" aria-controls="offcanvasAddLivre">Ajouter Livre</button>
                 </div>
 
@@ -62,7 +62,7 @@
                     <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                   </div>
                   <div class="offcanvas-body">
-                    {{ form_start(livreForm, {'action': path('livre_create')}) }}
+                    {{ form_start(livreForm, {'action': path('livre_create'), 'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
                       <div class="mb-3">
                         {{ form_row(livreForm.titre) }}
                       </div>
@@ -70,16 +70,25 @@
                         {{ form_row(livreForm.description) }}
                       </div>
                       <div class="mb-3">
-                        {{ form_row(livreForm.image) }}
+                        {{ form_row(livreForm.image, {'attr': {'required': 'required'}}) }}
                       </div>
                       <div class="mb-3">
                         {{ form_row(livreForm.categorie) }}
                       </div>
                       <div class="mb-3">
-                        {{ form_row(livreForm.prix_location) }}
+                        {{ form_row(livreForm.prix_location, {
+                          'attr': {
+                            'required': 'required',
+                            'type': 'number',
+                            'step': '0.01',
+                            'min': '0',
+                            'inputmode': 'decimal',
+                            'pattern': '^\\d+(\\.\\d{1,2})?$'
+                          }
+                        }) }}
                       </div>
                       <div class="mb-3">
-                        {{ form_row(livreForm.fichier_pdf) }}
+                        {{ form_row(livreForm.fichier_pdf, {'attr': {'required': 'required'}}) }}
                       </div>
                       <div class="mb-3">
                         {{ form_row(livreForm.collection) }}
@@ -99,7 +108,7 @@
                   </div>
                   <div class="offcanvas-body">
                     {# render an empty form view and populate client-side #}
-                    {{ form_start(livreEditForm, {'action': '#', 'attr': {'id': 'editLivreForm', 'enctype': 'multipart/form-data'}}) }}
+                    {{ form_start(livreEditForm, {'action': '#', 'attr': {'id': 'editLivreForm', 'enctype': 'multipart/form-data', 'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
                       <div class="mb-3">
                         {{ form_row(livreEditForm.titre) }}
                       </div>
@@ -107,16 +116,25 @@
                         {{ form_row(livreEditForm.description) }}
                       </div>
                       <div class="mb-3">
-                        {{ form_row(livreEditForm.image) }}
+                        {{ form_row(livreEditForm.image, {'attr': {'required': 'required'}}) }}
                       </div>
                       <div class="mb-3">
                         {{ form_row(livreEditForm.categorie) }}
                       </div>
                       <div class="mb-3">
-                        {{ form_row(livreEditForm.prix_location) }}
+                        {{ form_row(livreEditForm.prix_location, {
+                          'attr': {
+                            'required': 'required',
+                            'type': 'number',
+                            'step': '0.01',
+                            'min': '0',
+                            'inputmode': 'decimal',
+                            'pattern': '^\\d+(\\.\\d{1,2})?$'
+                          }
+                        }) }}
                       </div>
                       <div class="mb-3">
-                        {{ form_row(livreEditForm.fichier_pdf) }}
+                        {{ form_row(livreEditForm.fichier_pdf, {'attr': {'required': 'required'}}) }}
                       </div>
                       <div class="mb-3">
                         {{ form_row(livreEditForm.collection) }}
@@ -129,6 +147,67 @@
                 </div>
                 </div>
                 </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function(){
+                  const forms = document.querySelectorAll('.needs-validation');
+
+                  forms.forEach(function (form) {
+                    // ensure an .invalid-feedback exists next to each input/select/textarea
+                    Array.from(form.querySelectorAll('input, textarea, select')).forEach(function(el){
+                      if (!el.name) return;
+                      if (el.type === 'hidden') return;
+                      if (el.matches('button, [type="submit"], [type="button"]')) return;
+                      const parent = el.parentElement || el.closest('.mb-3') || el;
+                      if (!parent) return;
+                      if (!parent.querySelector('.invalid-feedback')){
+                        const fb = document.createElement('div');
+                        fb.className = 'invalid-feedback';
+                        parent.appendChild(fb);
+                      }
+                    });
+
+                    form.addEventListener('submit', function (event) {
+                      const valid = form.checkValidity();
+
+                      Array.from(form.querySelectorAll('input, textarea, select')).forEach(function(el){
+                        if (!el.name) return;
+                        if (el.type === 'hidden') return;
+                        if (el.matches('button, [type="submit"], [type="button"]')) return;
+
+                        const parent = el.parentElement || el.closest('.mb-3') || el;
+                        const fb = parent ? parent.querySelector('.invalid-feedback') : null;
+
+                        if (!el.checkValidity()){
+                          el.classList.add('is-invalid');
+                          el.classList.remove('is-valid');
+                          if (fb){
+                            let msg = 'Champ invalide.';
+                            const v = el.validity;
+                            if (v.valueMissing) msg = 'Ce champ est requis.';
+                            else if (v.tooShort) msg = 'Valeur trop courte.';
+                            else if (v.tooLong) msg = 'Valeur trop longue.';
+                            else if (v.patternMismatch) msg = 'Format invalide.';
+                            else if (v.typeMismatch) msg = 'Format incorrect.';
+                            else if (v.rangeUnderflow || v.rangeOverflow) msg = 'Valeur hors limites.';
+                            else if (v.stepMismatch) msg = 'Valeur invalide.';
+                            fb.textContent = msg;
+                          }
+                        } else {
+                          el.classList.remove('is-invalid');
+                          el.classList.add('is-valid');
+                          if (fb) fb.textContent = '';
+                        }
+                      });
+
+                      if (!valid) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }
+                      form.classList.add('was-validated');
+                    }, false);
+                  });
+                });
+                </script>
                 <div>
                   <div class="tab-content" id="tabContent">
                     <!-- Tab -->
@@ -157,9 +236,16 @@
                           <tbody>
                             {% for livre in livres %}
                             <tr>
+                              {# determine if this livre is currently rented #}
+                              {% set isRented = false %}
+                              {% for loc in livre.locationLivres %}
+                                {% if loc.etat.value == 'Active' %}
+                                  {% set isRented = true %}
+                                {% endif %}
+                              {% endfor %}
                               <td>
                                 <div class="form-check">
-                                  <input type="checkbox" class="form-check-input" id="post{{ loop.index }}" />
+                                  <input type="checkbox" class="form-check-input row-checkbox" id="post{{ loop.index }}" value="{{ livre.id }}" data-rented="{{ isRented ? '1' : '0' }}" />
                                   <label class="form-check-label" for="post{{ loop.index }}"></label>
                                 </div>
                               </td>
@@ -248,8 +334,9 @@
                                           Modifier
                                         </a>
                                     <a class="dropdown-item js-delete-livre" href="#"
-                                       data-id="{{ livre.id }}"
-                                       data-delete-url-template="{{ path('livre_delete', {'id': 0}) }}"
+                                      data-id="{{ livre.id }}"
+                                      data-delete-url-template="{{ path('livre_delete', {'id': 0}) }}"
+                                      data-rented="{{ isActive ? '1' : '0' }}"
                                     >
                                       <i class="fe fe-trash dropdown-item-icon"></i>
                                       Supprimer
@@ -1804,6 +1891,13 @@
       if (!btn) return;
       e.preventDefault();
 
+      // If the row/book is currently rented, block single-item deletion
+      if (btn.dataset && btn.dataset.rented === '1') {
+        try { showAdminNotification('ce livre est actuellement loué. Suppression bloquée pour protéger les droits des amateurs.', 'warning'); } catch(e) {}
+        var trBlocked = btn.closest('tr'); if (trBlocked) trBlocked.style.backgroundColor = '#fff3cd';
+        return;
+      }
+
       if (!confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) {
         return;
       }
@@ -1820,6 +1914,69 @@
       document.body.appendChild(f);
       f.submit();
     });
+  </script>
+
+  <script>
+    // Admin: delete selected rows (minimal, uses existing delete route)
+    document.addEventListener('DOMContentLoaded', function () {
+      const checkAll = document.getElementById('checkAll');
+      if (checkAll) {
+        checkAll.addEventListener('change', function () {
+          document.querySelectorAll('input.row-checkbox').forEach(function (cb) { cb.checked = checkAll.checked; });
+        });
+      }
+
+      const delBtn = document.getElementById('deleteSelectedBtn');
+      if (!delBtn) return;
+
+      delBtn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+
+        const checkedBoxes = Array.from(document.querySelectorAll('input.row-checkbox:checked'));
+        if (checkedBoxes.length === 0) {
+          showAdminNotification('Aucun livre sélectionné.', 'info');
+          return;
+        }
+
+        // Block deletion if any selected livre is rented
+        const rented = checkedBoxes.filter(function(cb){ return cb.dataset && cb.dataset.rented === '1'; });
+        if (rented.length > 0) {
+          showAdminNotification('' + rented.length + ' livre(s) sélectionné(s) sont actuellement loués. Suppression bloquée pour protéger les droits des amateurs.', 'warning');
+          rented.forEach(function(cb){ const tr = cb.closest('tr'); if (tr) { tr.style.backgroundColor = '#fff3cd'; } });
+          return;
+        }
+
+        const selected = checkedBoxes.map(function(cb){ return cb.value; }).filter(Boolean);
+        if (!confirm('Confirmer la suppression de ' + selected.length + ' livre(s) ?')) return;
+
+        const tmpl = delBtn.dataset.deleteUrlTemplate || '/bibliotheque/livre/0/delete';
+
+        Promise.all(selected.map(function(id){
+          const url = tmpl.replace('/0', '/' + encodeURIComponent(id));
+          return fetch(url, { method: 'POST', credentials: 'same-origin', headers: {'X-Requested-With': 'XMLHttpRequest'} })
+            .then(function(r){ return { id: id, ok: r.ok, status: r.status }; })
+            .catch(function(err){ return { id: id, ok: false, error: String(err) }; });
+        })).then(function(){
+          location.reload();
+        });
+      });
+    });
+  </script>
+
+  <script>
+    // Minimal admin notification strip (top-right). type: 'info'|'warning'|'danger' -> bootstrap classes
+    function showAdminNotification(message, type) {
+      type = type || 'info';
+      const cls = type === 'danger' ? 'alert-danger' : (type === 'warning' ? 'alert-warning' : 'alert-info');
+      const container = document.createElement('div');
+      container.className = 'position-fixed top-0 end-0 p-3';
+      container.style.zIndex = '10800';
+      container.innerHTML = `<div class="alert ${cls} alert-dismissible fade show mb-0" role="alert" style="box-shadow: 0 4px 12px rgba(0,0,0,0.12);">` +
+                            `<div style="display:flex;align-items:center;gap:0.5rem;"><strong style="margin-right:.5rem;">${type === 'warning' ? '⚠️' : (type === 'danger' ? '⛔' : 'ℹ️')}</strong><div style="flex:1">${message}</div></div>` +
+                            `<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+      document.body.appendChild(container);
+      setTimeout(function(){ try{ container.remove(); }catch(e){} }, 4500);
+    }
   </script>
 
   {% endblock %}

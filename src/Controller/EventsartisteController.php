@@ -9,6 +9,9 @@ use App\Form\EvenementArtisteEditType;
 use App\Repository\EvenementRepository;
 use App\Repository\TicketRepository;
 use App\Repository\UserRepository;
+use App\Repository\ReclamationRepository;
+use App\Repository\CommentaireRepository;
+use App\Repository\LikeRepository;
 use App\Enum\StatutEvenement;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,7 +31,10 @@ final class EventsartisteController extends AbstractController
         UserRepository $userRepository,
         FormFactoryInterface $formFactory,
         Request $request,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        ReclamationRepository $reclamationRepository,
+        CommentaireRepository $commentaireRepository,
+        LikeRepository $likeRepository
     ): Response
     {
         $artiste = $this->getArtisteOrDeny($userRepository);
@@ -38,6 +44,19 @@ final class EventsartisteController extends AbstractController
             ['date_debut' => 'DESC']
         );
 
+        // Calculate statistics for sidebar
+        $nbOeuvres = 0;
+        if (method_exists($artiste, 'getCollections')) {
+            foreach ($artiste->getCollections() as $collection) {
+                if (method_exists($collection, 'getOeuvres')) {
+                    $nbOeuvres += $collection->getOeuvres()->count();
+                }
+            }
+        }
+        $nbReclamations = $artiste ? count($reclamationRepository->findByUserFilters($artiste, null, null)) : 0;
+        $nbEvenements = $artiste ? $evenementRepository->count(['artiste' => $artiste]) : 0;
+        $nbCommentaires = $artiste ? $commentaireRepository->countByArtist($artiste) : 0;
+        $nbLikes = $artiste ? $likeRepository->countByArtist($artiste) : 0;
         $newEvenement = new Evenement();
         $newForm = $formFactory->createNamed('evenement_new', EvenementArtisteType::class, $newEvenement, [
             'action' => $this->generateUrl('app_eventsartiste'),
@@ -107,6 +126,11 @@ final class EventsartisteController extends AbstractController
             'edit_forms' => $editForms,
             'show_add_form' => $showAddForm,
             'show_edit_forms' => $showEditForms,
+            'nbOeuvres' => $nbOeuvres,
+            'nbReclamations' => $nbReclamations,
+            'nbEvenements' => $nbEvenements,
+            'nbCommentaires' => $nbCommentaires,
+            'nbLikes' => $nbLikes,
         ]);
     }
 

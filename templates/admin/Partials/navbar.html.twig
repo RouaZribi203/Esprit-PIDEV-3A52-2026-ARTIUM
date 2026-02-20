@@ -177,7 +177,13 @@
                         <div class="dropdown-item">
                             <div class="d-flex">
                                 <div class="avatar avatar-md avatar-indicators avatar-online">
-                                    <img alt="avatar" src="{{ app.user.photoProfil ? asset('uploads/' ~ app.user.photoProfil) : asset('assetsback/images/photodeprofil.png') }}" class="rounded-circle" />
+                                    {% if app.user.photoProfil %}
+                                        <img alt="avatar" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" class="rounded-circle" />
+                                    {% else %}
+                                        <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:48px;height:48px;">
+                                            <i class="bi bi-person fs-3 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+                                        </span>
+                                    {% endif %}
                                 </div>
                                 <div class="ms-3 lh-1">
                                     <h5 class="mb-1">{{ app.user.nom }} {{ app.user.prenom }}</h5>

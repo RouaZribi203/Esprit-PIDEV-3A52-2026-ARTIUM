@@ -117,6 +117,7 @@
                       </div>
                       <div class="mb-3">
                         {{ form_row(livreEditForm.image, {'attr': {'required': 'required'}}) }}
+                        <div id="edit-image-preview" class="mt-2"></div>
                       </div>
                       <div class="mb-3">
                         {{ form_row(livreEditForm.categorie) }}
@@ -135,6 +136,7 @@
                       </div>
                       <div class="mb-3">
                         {{ form_row(livreEditForm.fichier_pdf, {'attr': {'required': 'required'}}) }}
+                        <div id="edit-pdf-preview" class="mt-2 small text-muted"></div>
                       </div>
                       <div class="mb-3">
                         {{ form_row(livreEditForm.collection) }}
@@ -303,7 +305,7 @@
                                       {% endfor %}
                                       {% set locationCount = livre.locationLivres|length %}
                                       {% set totalRevenue = (locationCount * 7 * (livre.prixLocation ?: 0)) %}
-                                      <a class="dropdown-item js-show-details" href="#"
+                                        <a class="dropdown-item js-show-details" href="#"
                                          data-id="{{ livre.id }}"
                                          data-titre="{{ livre.titre|e('html_attr') }}"
                                          data-date-creation="{{ livre.dateCreation ? livre.dateCreation|date('Y-m-d H:i:s') : '' }}"
@@ -318,13 +320,16 @@
                                         <i class="fe fe-eye dropdown-item-icon"></i>
                                         Détails
                                       </a>
-                                        <a class="dropdown-item js-edit-livre" href="#"
+                                         <a class="dropdown-item js-edit-livre" href="#"
                                            data-id="{{ livre.id }}"
                                            data-titre="{{ livre.titre|e('html_attr') }}"
                                            data-description="{{ (livre.description is not empty) ? livre.description|e('html_attr') : '' }}"
                                            data-categorie="{{ livre.categorie is not empty ? livre.categorie|e('html_attr') : '' }}"
                                            data-prix="{{ livre.prixLocation is not empty ? livre.prixLocation : '' }}"
+                                           data-image="{{ (livre.image is defined and livre.image) ? (path('livre_image', {'id': livre.id})|e('html_attr')) : '' }}"
+                                           data-pdf-url="{{ livre.fichierPdf ? path('livre_pdf', {'id': livre.id})|e('html_attr') : '' }}"
                                            data-collection="{{ livre.collection ? livre.collection.id : '' }}"
+                                           data-rented="{{ isActive ? '1' : '0' }}"
                                            data-edit-url-template="{{ path('livre_edit', {'id': 0}) }}"
                                            data-bs-toggle="offcanvas"
                                            data-bs-target="#offcanvasEditLivre"
@@ -352,6 +357,9 @@
                             {% endfor %}
                           </tbody>
                         </table>
+                        <div class="d-flex justify-content-center mt-4">
+                          {{ knp_pagination_render(livres) }}
+                        </div>
                       </div>
 
                       
@@ -1666,35 +1674,6 @@
                   </div>
                 </div>
                 <!-- Card Footer -->
-                <div class="card-footer">
-                  <nav>
-                    <ul class="pagination justify-content-center mb-0">
-                      <li class="page-item disabled">
-                        <a class="page-link mx-1 rounded" href="#" tabindex="-1" aria-disabled="true">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
-                          </svg>
-                        </a>
-                      </li>
-                      <li class="page-item active">
-                        <a class="page-link mx-1 rounded" href="#">1</a>
-                      </li>
-                      <li class="page-item">
-                        <a class="page-link mx-1 rounded" href="#">2</a>
-                      </li>
-                      <li class="page-item">
-                        <a class="page-link mx-1 rounded" href="#">3</a>
-                      </li>
-                      <li class="page-item">
-                        <a class="page-link mx-1 rounded" href="#">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
-                          </svg>
-                        </a>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
               </div>
             </div>
           </div>
@@ -1876,15 +1855,65 @@
       var coll = form.querySelector('[name="livre[collection]"]');
       if (coll) coll.value = (btn.dataset.collection || '');
 
+      // Store original values so we can detect forbidden edits on submit
+      try {
+        form.dataset.origPrix = btn.dataset.prix || '';
+        form.dataset.origCategorie = btn.dataset.categorie || '';
+        form.dataset.origCollection = btn.dataset.collection || '';
+      } catch(e) {}
+
       // clear file inputs (do not prefill for security)
       var imgInput = form.querySelector('[name="livre[image]"]');
       if (imgInput) imgInput.value = '';
       var pdfInput = form.querySelector('[name="livre[fichier_pdf]"]');
       if (pdfInput) pdfInput.value = '';
+
+      // populate previews for existing image/pdf (safe: show links/previews, do not set file inputs)
+      try {
+        var imgPreview = document.getElementById('edit-image-preview');
+        if (imgPreview) {
+          if (btn.dataset && btn.dataset.image) {
+            imgPreview.innerHTML = '<img src="' + btn.dataset.image + '" alt="Aperçu" style="max-height:120px;object-fit:cover;border-radius:6px;" /> <div class="mt-1"><a href="' + btn.dataset.image + '" target="_blank">Ouvrir l\'image actuelle</a></div>';
+          } else {
+            imgPreview.innerHTML = '<span class="text-muted">Aucune image actuelle</span>';
+          }
+        }
+        var pdfPreview = document.getElementById('edit-pdf-preview');
+        if (pdfPreview) {
+          if (btn.dataset && btn.dataset.pdfUrl) {
+            pdfPreview.innerHTML = '<a href="' + btn.dataset.pdfUrl + '?download=1" target="_blank">Télécharger le PDF actuel</a>';
+          } else {
+            pdfPreview.innerHTML = '<span class="text-muted">Aucun PDF actuel</span>';
+          }
+        }
+      } catch(e) {}
+
+      // On submit: if admin changed forbidden fields (prix/categorie/collection) while book is rented, block and show notification
+      form.onsubmit = function(event){
+        try {
+          var p = form.querySelector('[name="livre[prix_location]"]');
+          var c = form.querySelector('[name="livre[categorie]"]');
+          var col = form.querySelector('[name="livre[collection]"]');
+          var changed = false;
+          if (form.dataset && form.dataset.origPrix !== undefined && p && (String(p.value || '') !== String(form.dataset.origPrix || ''))) changed = true;
+          if (form.dataset && form.dataset.origCategorie !== undefined && c && (String(c.value || '') !== String(form.dataset.origCategorie || ''))) changed = true;
+          if (form.dataset && form.dataset.origCollection !== undefined && col && (String(col.value || '') !== String(form.dataset.origCollection || ''))) changed = true;
+          if (changed && (btn.dataset && btn.dataset.rented === '1')) {
+            // block submit and notify
+            event.preventDefault();
+            try { showAdminNotification('⚠️Modification interdite ! Ces modifications sont bloquées pour protéger les droits des amateurs.', 'warning'); } catch(e) {}
+            // highlight fields
+            if (p) p.style.backgroundColor = '#fff3cd';
+            if (c) c.style.backgroundColor = '#fff3cd';
+            if (col) col.style.backgroundColor = '#fff3cd';
+            return false;
+          }
+        } catch(e) {}
+        // allow submission to continue
+      };
     });
   </script>
 
-  // Delete handler: confirmation then POST
   <script>
     document.addEventListener('click', function(e){
       var btn = e.target.closest('.js-delete-livre');

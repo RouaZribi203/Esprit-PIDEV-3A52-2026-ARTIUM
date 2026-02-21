@@ -28,6 +28,9 @@ class LocationLivre
     #[ORM\JoinColumn(nullable: false)]
     private ?Livre $livre = null;
 
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $nombreDeJours = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -78,6 +81,17 @@ class LocationLivre
     {
         $this->livre = $livre;
 
+        return $this;
+    }
+    
+    public function getNombreDeJours(): ?int
+    {
+        return $this->nombreDeJours;
+    }
+
+    public function setNombreDeJours(?int $nombreDeJours): static
+    {
+        $this->nombreDeJours = $nombreDeJours;
         return $this;
     }
 }

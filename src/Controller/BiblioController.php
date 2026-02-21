@@ -12,11 +12,12 @@ use App\Entity\Livre;
 use App\Form\LivreType;
 use App\Repository\LivreRepository;
 use App\Enum\TypeOeuvre;
+use Knp\Component\Pager\PaginatorInterface;
 
 final class BiblioController extends AbstractController
 {
     #[Route('/bibliotheque', name: 'livres')]
-    public function index(Request $request, LivreRepository $livreRepository): Response
+    public function index(Request $request, LivreRepository $livreRepository, PaginatorInterface $paginator): Response
     {
         $form = $this->createForm(LivreType::class);
         // separate empty form instance to be used for editing (populated client-side)
@@ -24,13 +25,27 @@ final class BiblioController extends AbstractController
         // search / sort / pagination parameters (GET)
         $q = $request->query->get('q');
         $sort = $request->query->get('sort');
-        $page = max(1, (int) $request->query->get('page', 1));
-        $limit = 12;
+        $queryBuilder = $livreRepository->createQueryBuilder('l');
 
-        $result = $livreRepository->findForAdmin($q, $sort, $page, $limit);
-        $livres = $result['items'];
-        $total = $result['total'];
-        $lastPage = $limit > 0 ? (int) ceil($total / $limit) : 1;
+        if ($q) {
+            $queryBuilder
+            ->andWhere('l.titre LIKE :q')
+            ->setParameter('q', '%' . $q . '%');
+        }
+
+        if ($sort === 'asc') {
+            $queryBuilder->orderBy('l.titre', 'ASC');
+        } elseif ($sort === 'desc') {
+            $queryBuilder->orderBy('l.titre', 'DESC');
+        } else {
+            $queryBuilder->orderBy('l.id', 'DESC');
+        }
+
+        $livres = $paginator->paginate(
+            $queryBuilder, 
+            $request->query->getInt('page', 1),
+            8 // 👈 LIMIT PER PAGE (as you requested)
+        );
 
         return $this->render('biblio/livres.html.twig', [
             'controller_name' => 'BiblioController',
@@ -39,9 +54,6 @@ final class BiblioController extends AbstractController
             'livres' => $livres,
             'search_q' => $q,
             'search_sort' => $sort,
-            'page' => $page,
-            'lastPage' => $lastPage,
-            'total' => $total,
         ]);
     }
 

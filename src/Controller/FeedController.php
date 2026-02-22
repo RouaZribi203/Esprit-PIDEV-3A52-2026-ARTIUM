@@ -93,6 +93,57 @@ final class FeedController extends AbstractController
             'collections' => $collectionsRepository->findAll(),
         ]);
     }
+
+    #[Route('/feed_recommandations', name: 'app_feed_recommandations')]
+    public function indexRecommandations(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
+        $recommendedOeuvres = $this->collectRecommendedOeuvres($user);
+        $initialDisplayCount = $this->getInitialDisplayCount($recommendedOeuvres, $request);
+
+        return $this->render('Front Office/feed/feed.html.twig', [
+            'controller_name' => 'FeedController',
+            'oeuvres' => $recommendedOeuvres,
+            'initialDisplayCount' => $initialDisplayCount,
+            'typeOeuvres' => TypeOeuvre::cases(),
+            'collections' => $collectionsRepository->findAll(),
+        ]);
+    }
+
+    private function collectRecommendedOeuvres(User $user): array
+    {
+        $recommendedById = [];
+
+        foreach ($user->getFavUser() as $oeuvre) {
+            if ($oeuvre instanceof Oeuvre && $oeuvre->getId() !== null) {
+                $recommendedById[$oeuvre->getId()] = $oeuvre;
+            }
+        }
+
+        foreach ($user->getLikes() as $like) {
+            if ($like->isLiked() !== true) {
+                continue;
+            }
+
+            $oeuvre = $like->getOeuvre();
+            if ($oeuvre instanceof Oeuvre && $oeuvre->getId() !== null) {
+                $recommendedById[$oeuvre->getId()] = $oeuvre;
+            }
+        }
+
+        foreach ($user->getCommentaires() as $commentaire) {
+            $oeuvre = $commentaire->getOeuvre();
+            if ($oeuvre instanceof Oeuvre && $oeuvre->getId() !== null) {
+                $recommendedById[$oeuvre->getId()] = $oeuvre;
+            }
+        }
+
+        return array_values($recommendedById);
+    }
     #[Route('/feed_peintures', name: 'app_feed_peintures')]
     public function indexPeintures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
     {
@@ -109,6 +160,7 @@ final class FeedController extends AbstractController
             'collections' => $collectionsRepository->findAll(),
         ]);
     }
+
 
     #[Route('/feed_sculptures', name: 'app_feed_sculptures')]
     public function indexSculptures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response

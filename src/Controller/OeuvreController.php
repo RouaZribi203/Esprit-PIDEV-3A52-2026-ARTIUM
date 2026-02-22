@@ -96,36 +96,6 @@ final class OeuvreController extends AbstractController
     }
 
 
-    /*#[Route('/new', name: 'app_oeuvre_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-    $oeuvre = new Oeuvre();
-    $form = $this->createForm(OeuvreType::class, $oeuvre);
-    $form->handleRequest($request);
-
-    if ($form->isSubmitted() && $form->isValid()) {
-        /** @var UploadedFile|null $imageFile */
-       /* $imageFile = $form->get('image')->getData();
-
-        if ($imageFile) {
-            // Read the binary content of the file
-            $blobData = fopen($imageFile->getPathname(), 'rb');
-            $oeuvre->setImage($blobData);
-        }
-
-        $entityManager->persist($oeuvre);
-        $entityManager->flush();
-
-        return $this->redirectToRoute('app_oeuvre_index');
-    }
-
-    return $this->render('oeuvre/new.html.twig', [
-        'oeuvre' => $oeuvre,
-        'form' => $form->createView(),
-    ]);
-   }*/
-
-
     #[Route('/test/{id}', name: 'app_oeuvre_show', methods: ['GET'])]
     public function show(Oeuvre $oeuvre): Response
     {

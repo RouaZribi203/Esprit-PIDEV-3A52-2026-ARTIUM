@@ -46,6 +46,7 @@ class Oeuvre
     private ?TypeOeuvre $type = null;
 
 
+
     #[ORM\ManyToOne(inversedBy: 'oeuvres')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Veuillez choisir une collection')]
@@ -68,6 +69,10 @@ class Oeuvre
      */
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'oeuvre')]
     private Collection $likes;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $embedding = null;
+
 
     public function __construct()
     {
@@ -235,5 +240,16 @@ class Oeuvre
         }
 
         return $this;
+    }
+
+    public function getEmbedding(): ?array
+    {
+    return $this->embedding;
+    }
+
+    public function setEmbedding(array $embedding): self
+    {
+    $this->embedding = $embedding;
+    return $this;
     }
 }

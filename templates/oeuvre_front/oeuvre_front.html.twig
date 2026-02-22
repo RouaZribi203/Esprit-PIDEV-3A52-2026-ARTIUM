@@ -128,7 +128,7 @@
   <!-- Card img -->
   {% if oeuvre.image %}
   <div class="overflow-hidden mx-3 mb-2 rounded-3 border">
-    <img src="data:{{ processedOeuvres[oeuvre.id].mimeType ?? 'image/jpeg' }};base64,{{ processedOeuvres[oeuvre.id].imageBase64 }}" 
+    <img src="{{ path('app_oeuvre_front_image', {'id': oeuvre.id}) }}" 
          class="img-fluid" 
          alt="{{ oeuvre.titre }}"
          style="width: 100%; max-height: 600px; object-fit: contain;">

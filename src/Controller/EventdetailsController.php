@@ -65,10 +65,21 @@ final class EventdetailsController extends AbstractController
             ['date_achat' => 'DESC']
         );
 
+        // Fetch weather data if gallery has coordinates
+        $weatherData = null;
+        if ($evenement->getGalerie() && $evenement->getGalerie()->getLatitude() && $evenement->getGalerie()->getLongitude()) {
+            $weatherData = $this->fetchWeatherData(
+                $evenement->getGalerie()->getLatitude(),
+                $evenement->getGalerie()->getLongitude(),
+                $evenement->getDateDebut()
+            );
+        }
+
         return $this->render('Front Office/eventdetails/eventdetails.html.twig', [
             'evenement' => $evenement,
             'image' => $this->getImageDataUri($evenement->getImageCouverture()),
             'tickets' => $tickets,
+            'weather' => $weatherData,
         ]);
     }
 
@@ -293,6 +304,92 @@ final class EventdetailsController extends AbstractController
                 'user_id' => $user->getId(),
                 'ticket_id' => $ticket->getId(),
             ]);
+        }
+    }
+
+    /**
+     * Fetch weather forecast from Open-Meteo API (free, no API key required)
+     */
+    private function fetchWeatherData(float $latitude, float $longitude, ?\DateTimeInterface $eventDate): ?array
+    {
+        if (!$eventDate) {
+            return null;
+        }
+
+        try {
+            $targetDateTime = $eventDate->format('Y-m-d\TH:00');
+            
+            // Open-Meteo API URL with hourly forecast
+            $url = sprintf(
+                'https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&timezone=auto&forecast_days=16',
+                $latitude,
+                $longitude
+            );
+
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 10,
+                    'ignore_errors' => true
+                ]
+            ]);
+
+            $response = @file_get_contents($url, false, $context);
+            if ($response === false) {
+                return null;
+            }
+
+            $data = json_decode($response, true);
+            if (!$data || !isset($data['hourly'])) {
+                return null;
+            }
+
+            // Find the index for the event date and hour
+            $index = array_search($targetDateTime, $data['hourly']['time'] ?? [], true);
+
+            if ($index === false) {
+                return null;
+            }
+
+            // Weather code descriptions (WMO Weather interpretation codes)
+            $weatherDescriptions = [
+                0 => 'Clear sky',
+                1 => 'Mainly clear',
+                2 => 'Partly cloudy',
+                3 => 'Overcast',
+                45 => 'Foggy',
+                48 => 'Depositing rime fog',
+                51 => 'Light drizzle',
+                53 => 'Moderate drizzle',
+                55 => 'Dense drizzle',
+                61 => 'Slight rain',
+                63 => 'Moderate rain',
+                65 => 'Heavy rain',
+                71 => 'Slight snow',
+                73 => 'Moderate snow',
+                75 => 'Heavy snow',
+                77 => 'Snow grains',
+                80 => 'Slight rain showers',
+                81 => 'Moderate rain showers',
+                82 => 'Violent rain showers',
+                85 => 'Slight snow showers',
+                86 => 'Heavy snow showers',
+                95 => 'Thunderstorm',
+                96 => 'Thunderstorm with slight hail',
+                99 => 'Thunderstorm with heavy hail',
+            ];
+
+            $weatherCode = $data['hourly']['weather_code'][$index] ?? 0;
+
+            return [
+                'temperature' => $data['hourly']['temperature_2m'][$index] ?? null,
+                'humidity' => $data['hourly']['relative_humidity_2m'][$index] ?? null,
+                'precipitation' => $data['hourly']['precipitation'][$index] ?? null,
+                'wind_speed' => $data['hourly']['wind_speed_10m'][$index] ?? null,
+                'weather_code' => $weatherCode,
+                'description' => $weatherDescriptions[$weatherCode] ?? 'Unknown',
+            ];
+        } catch (\Exception $e) {
+            return null;
         }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Oeuvre;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -48,6 +49,31 @@ class OeuvreRepository extends ServiceEntityRepository
             ->setParameter('type', $type);
         
         return $this->applySorting($qb, $sortBy, $sortOrder)->getQuery()->getResult();
+    }
+
+    public function findDistinctCommentedByUser(User $user): array
+    {
+        return $this->createQueryBuilder('o')
+            ->distinct()
+            ->innerJoin('o.commentaires', 'c')
+            ->where('c.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findRecommendedForUser(User $user): array
+    {
+        return $this->createQueryBuilder('o')
+            ->distinct()
+            ->leftJoin('o.commentaires', 'c', 'WITH', 'c.user = :user')
+            ->leftJoin('o.likes', 'l', 'WITH', 'l.user = :user AND l.liked = true')
+            ->leftJoin('o.user_fav', 'uf', 'WITH', 'uf.id = :userId')
+            ->where('c.id IS NOT NULL OR l.id IS NOT NULL OR uf.id IS NOT NULL')
+            ->setParameter('user', $user)
+            ->setParameter('userId', $user->getId())
+            ->getQuery()
+            ->getResult();
     }
 
     private function applySorting($qb, string $sortBy, string $sortOrder)

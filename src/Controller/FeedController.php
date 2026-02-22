@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Entity\Commentaire;
+use App\Service\RecommendationService;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Collections;
@@ -95,14 +96,15 @@ final class FeedController extends AbstractController
     }
 
     #[Route('/feed_recommandations', name: 'app_feed_recommandations')]
-    public function indexRecommandations(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
+    public function indexRecommandations(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request, RecommendationService $recommendationService): Response
     {
         $user = $this->getUser();
         if (!$user) {
             throw $this->createNotFoundException('User not found');
         }
 
-        $recommendedOeuvres = $this->collectRecommendedOeuvres($user);
+        $recommendedOeuvres = $recommendationService->getRecommendedOeuvres($user);
+
         $initialDisplayCount = $this->getInitialDisplayCount($recommendedOeuvres, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
@@ -114,36 +116,7 @@ final class FeedController extends AbstractController
         ]);
     }
 
-    private function collectRecommendedOeuvres(User $user): array
-    {
-        $recommendedById = [];
-
-        foreach ($user->getFavUser() as $oeuvre) {
-            if ($oeuvre instanceof Oeuvre && $oeuvre->getId() !== null) {
-                $recommendedById[$oeuvre->getId()] = $oeuvre;
-            }
-        }
-
-        foreach ($user->getLikes() as $like) {
-            if ($like->isLiked() !== true) {
-                continue;
-            }
-
-            $oeuvre = $like->getOeuvre();
-            if ($oeuvre instanceof Oeuvre && $oeuvre->getId() !== null) {
-                $recommendedById[$oeuvre->getId()] = $oeuvre;
-            }
-        }
-
-        foreach ($user->getCommentaires() as $commentaire) {
-            $oeuvre = $commentaire->getOeuvre();
-            if ($oeuvre instanceof Oeuvre && $oeuvre->getId() !== null) {
-                $recommendedById[$oeuvre->getId()] = $oeuvre;
-            }
-        }
-
-        return array_values($recommendedById);
-    }
+    
     #[Route('/feed_peintures', name: 'app_feed_peintures')]
     public function indexPeintures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
     {

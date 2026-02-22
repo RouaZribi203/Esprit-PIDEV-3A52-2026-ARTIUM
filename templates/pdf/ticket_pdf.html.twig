@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Event Ticket - ARTIUM #{{ ticket.id }}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 15px;
+            background: white;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #333;
+        }
+
+        .ticket-container {
+            background: white;
+            width: 100%;
+        }
+
+        .ticket-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px 15px;
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 10px;
+        }
+
+        .event-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .event-date {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        .ticket-content {
+            padding: 0 15px;
+        }
+
+        .info-section {
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            font-size: 9px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 12px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .info-value.large {
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .description {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .qr-placeholder {
+            text-align: center;
+            padding: 15px;
+            margin-top: 30px;
+            border-top: 1px dashed #e0e0e0;
+            font-size: 9px;
+            color: #667eea;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket-container">
+        <!-- Header -->
+        <div class="ticket-header">
+            {% if logo %}
+            <img src="{{ logo }}" alt="ARTIUM" class="logo">
+            {% endif %}
+            <h1 class="event-title">{{ evenement.titre }}</h1>
+            <p class="event-date">
+                {% if evenement.dateDebut %}
+                    {{ evenement.dateDebut|date('d MMMM Y') }}
+                {% else %}
+                    ARTIUM
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Content -->
+        <div class="ticket-content">
+            <div class="info-section">
+                <div class="info-item">
+                    <span class="info-label">Attendee</span>
+                    <span class="info-value">{{ user.prenom }} {{ user.nom }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Ticket ID</span>
+                    <span class="info-value large">ARTIUM-{{ ticket.id }}</span>
+                </div>
+
+                {% if evenement.dateDebut %}
+                <div class="info-item">
+                    <span class="info-label">Date</span>
+                    <span class="info-value">{{ evenement.dateDebut|date('d/m/Y') }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Time</span>
+                    <span class="info-value">{{ evenement.dateDebut|date('H:i') }}</span>
+                </div>
+                {% endif %}
+
+                <div class="info-item">
+                    <span class="info-label">Location</span>
+                    <span class="info-value">
+                        {% if evenement.galerie %}
+                            {{ evenement.galerie.nom }}
+                        {% else %}
+                            ARTIUM
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Price</span>
+                    <span class="info-value">{{ evenement.prixTicket|default('Free') }} DT</span>
+                </div>
+            </div>
+
+            <div class="description">
+                Valid ticket for one person only.<br/>
+                Non-transferable. Present at entrance.
+            </div>
+
+            <div class="qr-placeholder">
+                SCAN QR CODE AT ENTRANCE
+            </div>
+        </div>
+    </div>
+</body>
+</html>

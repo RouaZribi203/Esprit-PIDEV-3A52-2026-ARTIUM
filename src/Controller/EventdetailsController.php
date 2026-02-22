@@ -9,6 +9,7 @@ use App\Repository\TicketRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Writer\SvgWriter;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -96,6 +97,106 @@ final class EventdetailsController extends AbstractController
         return new Response($result->getString(), Response::HTTP_OK, [
             'Content-Type' => 'image/svg+xml',
         ]);
+    }
+
+    #[Route('/ticket/{id}/download', name: 'app_ticket_download', methods: ['GET'])]
+    public function downloadTicket(
+        Ticket $ticket,
+        UserRepository $userRepository
+    ): Response {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            $fallback = $userRepository->find(1);
+            if ($fallback instanceof User) {
+                $user = $fallback;
+            } else {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
+        if ($ticket->getUser()?->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $evenement = $ticket->getEvenement();
+        if (!$evenement) {
+            throw $this->createNotFoundException('Événement non trouvé');
+        }
+
+        // Générer le QR code
+        $payload = $this->extractTicketPayload($ticket);
+        $qrCode = QrCode::create($payload)->setSize(300)->setMargin(10);
+        $writer = new PngWriter();
+        $result = $writer->write($qrCode);
+        
+        // Sauvegarder le QR code dans un fichier du projet
+        $varDir = $this->getParameter('kernel.project_dir') . '/var/tmp';
+        if (!is_dir($varDir)) {
+            mkdir($varDir, 0777, true);
+        }
+        $qrCodePath = $varDir . '/qr_' . $ticket->getId() . '_' . time() . '.png';
+        file_put_contents($qrCodePath, $result->getString());
+
+        // Préparer les données pour le template
+        $twig = $this->container->get('twig');
+        $templateData = [
+            'ticket' => $ticket,
+            'evenement' => $evenement,
+            'user' => $ticket->getUser(),
+            'image' => $this->getImageDataUri($evenement->getImageCouverture()),
+            'logo' => $this->getLogoDataUri(),
+            'qrCodePath' => $qrCodePath,
+        ];
+
+        // Générer le PDF
+        $html = $twig->render('pdf/ticket_pdf.html.twig', $templateData);
+        
+        $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        error_reporting(error_reporting() & ~E_WARNING);
+        
+        $pdf->SetMargins(0, 0, 0);
+        $pdf->SetAutoPageBreak(false, 0);
+        $pdf->AddPage();
+        $pdf->writeHTML($html, true, false, true, false, '');
+        
+        // Ajouter le QR code directement
+        if (file_exists($qrCodePath)) {
+            try {
+                $pdf->Image($qrCodePath, 75, 220, 60, 60, 'PNG');
+            } catch (\Exception $e) {
+                // Ignorer les erreurs d'image
+            }
+        }
+
+        error_reporting(E_ALL);
+        $pdfContent = $pdf->Output('', 'S');
+        
+        // Nettoyer le fichier temporaire
+        if (file_exists($qrCodePath)) {
+            @unlink($qrCodePath);
+        }
+
+        // Retourner le fichier
+        $response = new Response($pdfContent);
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', 'attachment; filename="ticket-' . $ticket->getId() . '-' . time() . '.pdf"');
+
+        return $response;
+    }
+
+    private function getLogoDataUri(): ?string
+    {
+        $logoPath = $this->getParameter('kernel.project_dir') . '/assets/assetsback/images/logo2.png';
+        if (!file_exists($logoPath)) {
+            return null;
+        }
+        
+        $logoContent = file_get_contents($logoPath);
+        if ($logoContent === false) {
+            return null;
+        }
+
+        return 'data:image/png;base64,' . base64_encode($logoContent);
     }
 
     private function getImageDataUri(mixed $image): ?string

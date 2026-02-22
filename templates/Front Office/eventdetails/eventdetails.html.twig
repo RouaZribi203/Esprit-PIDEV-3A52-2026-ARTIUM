@@ -109,9 +109,12 @@
                     <div class="text-muted small">
                         {{ evenement.titre }} · {{ evenement.prixTicket }} DT
                     </div>
-                    <div>
-                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_ticket_qr', { id: ticket.id }) }}" target="_blank" rel="noopener">
-                            <i class="bi bi-qr-code"></i>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_ticket_qr', { id: ticket.id }) }}" target="_blank" rel="noopener" title="Afficher le code QR">
+                            <i class="bi bi-qr-code"></i> QR Code
+                        </a>
+                        <a class="btn btn-sm btn-outline-primary" href="{{ path('app_ticket_download', { id: ticket.id }) }}" title="Télécharger le ticket en PDF">
+                            <i class="bi bi-download"></i> Télécharger
                         </a>
                     </div>
                 </div>

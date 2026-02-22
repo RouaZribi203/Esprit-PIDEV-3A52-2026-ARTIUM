@@ -8,6 +8,20 @@
       <h1 class="h4 card-title">Discover Events</h1>
     </div>
     <div class="card-body">
+      <div class="mb-4">
+        <form method="get" action="{{ path('app_eventsfrontkeyword') }}" class="d-flex gap-2">
+          <input 
+            type="text" 
+            name="query" 
+            class="form-control" 
+            placeholder="Search event idea (AI powered)..."
+            aria-label="Search events">
+          <button type="submit" class="btn btn-sm btn-primary">
+            Search
+          </button>
+        </form>
+      </div>
+
       <ul class="nav nav-tabs nav-bottom-line justify-content-center justify-content-md-start">
         <li class="nav-item">
           <a class="nav-link active" data-bs-toggle="tab" href="#tab-all">Tous</a>

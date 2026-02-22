@@ -12,6 +12,7 @@
         "doctrine/orm": "^3.6",
         "endroid/qr-code": "^5.1",
         "knplabs/knp-paginator-bundle": "^6.10",
+        "knplabs/knp-snappy": "*",
         "knpuniversity/oauth2-client-bundle": "^2.20",
         "league/oauth2-google": "*",
         "phpdocumentor/reflection-docblock": "^5.2",
@@ -27,7 +28,9 @@
         "symfony/framework-bundle": "6.4.*",
         "symfony/http-client": "6.4.*",
         "symfony/intl": "6.4.*",
+
         "symfony/mailer": "6.4.*",
+        
         "symfony/mime": "6.4.*",
         "symfony/monolog-bundle": "^3.0|^4.0",
         "symfony/notifier": "6.4.*",
@@ -45,6 +48,9 @@
         "symfony/validator": "6.4.*",
         "symfony/web-link": "6.4.*",
         "symfony/yaml": "6.4.*",
+
+        "tecnickcom/tcpdf": "^6.10",
+
         "twig/extra-bundle": "^2.12|^3.0",
         "twig/twig": "^2.12|^3.0"
     },

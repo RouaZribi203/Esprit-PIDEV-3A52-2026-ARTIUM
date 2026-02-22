@@ -25,12 +25,20 @@ final class MusiqueartisteController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
+        $artistCollections = $collectionsRepository->findBy([], ['titre' => 'ASC']);
+
         // Create new Musique entity
         $musique = new Musique();
         
         // Create the form
-        $form = $this->createForm(MusiqueType::class, $musique);
+        $form = $this->createForm(MusiqueType::class, $musique, [
+            'collection_choices' => $artistCollections,
+        ]);
         $form->handleRequest($request);
+
+        if (empty($artistCollections)) {
+            $this->addFlash('error', 'Aucune collection disponible. Créez d\'abord une collection.');
+        }
         
         // Handle form submission
         if ($form->isSubmitted()) {
@@ -126,12 +134,14 @@ final class MusiqueartisteController extends AbstractController
                 // Set type to MUSIQUE
                 $musique->setType(TypeOeuvre::MUSIQUE);
                 
-                // Get or create a default collection for this user
-                $collection = $collectionsRepository->findOneBy([]) ?? null;
-                if ($collection) {
-                    $musique->setCollection($collection);
-                } else {
-                    throw new \Exception('No collection available. Please contact support.');
+                // Validate selected collection belongs to current artist
+                $selectedCollection = $musique->getCollection();
+                if (!$selectedCollection) {
+                    throw new \Exception('Please select a collection.');
+                }
+
+                if (!$selectedCollection->getId()) {
+                    throw new \Exception('Invalid collection selected.');
                 }
                 
                 // Save to database

@@ -2,8 +2,12 @@
 
 namespace App\Form;
 
+use App\Entity\Collections;
 use App\Entity\Musique;
-use App\Enum\GenreMusique;use App\Validator\ImageDimensions;use Symfony\Component\Form\AbstractType;
+use App\Enum\GenreMusique;
+use App\Validator\ImageDimensions;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -69,6 +73,20 @@ class MusiqueType extends AbstractType
                 'placeholder' => 'Sélectionnez un genre',
                 'constraints' => [
                     new Assert\NotBlank(['message' => 'Le genre est requis'])
+                ]
+            ])
+            ->add('collection', EntityType::class, [
+                'class' => Collections::class,
+                'choices' => $options['collection_choices'],
+                'choice_label' => 'titre',
+                'placeholder' => 'Sélectionnez une collection',
+                'label' => 'Collection',
+                'attr' => [
+                    'class' => 'form-select',
+                    'required' => 'required',
+                ],
+                'constraints' => [
+                    new Assert\NotNull(['message' => 'La collection est requise'])
                 ]
             ])
             ->add('imageFile', FileType::class, [
@@ -138,10 +156,13 @@ class MusiqueType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Musique::class,
+            'collection_choices' => [],
             'attr' => [
                 'class' => 'needs-validation',
                 'novalidate' => true
             ]
         ]);
+
+        $resolver->setAllowedTypes('collection_choices', 'array');
     }
 }

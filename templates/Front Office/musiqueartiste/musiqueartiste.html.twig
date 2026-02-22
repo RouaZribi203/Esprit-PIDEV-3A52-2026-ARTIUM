@@ -272,6 +272,20 @@
           {% endif %}
         </div>
 
+        <!-- Collection -->
+        <div class="mb-3 col-12">
+          {{ form_label(form.collection, null, {'label_attr': {'class': 'form-label'}}) }}
+          <span class="text-danger">*</span>
+          {{ form_widget(form.collection) }}
+          {% if form.collection.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.collection.vars.errors %}
+                {{ error.message }}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
         <!-- Cover Image -->
         <div class="mb-3 col-12">
           <h5 class="mb-3">{{ form_label(form.imageFile, null, {'label_attr': {'class': 'form-label'}}) }}</h5>

@@ -6,19 +6,27 @@ use App\Enum\GenreMusique;
 use App\Repository\MusiqueRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: MusiqueRepository::class)]
+#[Vich\Uploadable]
 class Musique extends Oeuvre
 {
     #[ORM\Column(enumType: GenreMusique::class)]
     #[Assert\NotBlank(message: 'Genre is required')]
     private ?GenreMusique $genre = null;
 
-    #[ORM\Column(type: Types::BLOB)]
-    private mixed $audio = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $audio = null;
+
+    #[Vich\UploadableField(mapping: 'music_audio', fileNameProperty: 'audio')]
+    private ?File $audioFile = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
 
     /**
      * @var Collection<int, Playlist>
@@ -44,14 +52,40 @@ class Musique extends Oeuvre
         return $this;
     }
 
-    public function getAudio(): mixed
+    public function getAudio(): ?string
     {
         return $this->audio;
     }
 
-    public function setAudio(mixed $audio): static
+    public function setAudio(?string $audio): static
     {
         $this->audio = $audio;
+
+        return $this;
+    }
+
+    public function setAudioFile(?File $audioFile = null): void
+    {
+        $this->audioFile = $audioFile;
+
+        if ($audioFile !== null) {
+            $this->updatedAt = new \DateTimeImmutable();
+        }
+    }
+
+    public function getAudioFile(): ?File
+    {
+        return $this->audioFile;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
+    {
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }

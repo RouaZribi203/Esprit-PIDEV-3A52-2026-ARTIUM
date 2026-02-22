@@ -9,8 +9,10 @@ use App\Repository\CollectionsRepository;
 use App\Repository\MusiqueRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class MusiqueartisteController extends AbstractController
@@ -100,12 +102,8 @@ final class MusiqueartisteController extends AbstractController
                     if ($audioFile->getSize() > 20971520) { // 20MB
                         throw new \Exception('Audio file exceeds maximum size of 20MB');
                     }
-                    
-                    $audioContent = file_get_contents($audioFile->getPathname());
-                    if ($audioContent === false) {
-                        throw new \Exception('Failed to read audio file');
-                    }
-                    $musique->setAudio($audioContent);
+
+                    $musique->setAudioFile($audioFile);
                 }
                 
                 // Validate required fields are not empty after file processing
@@ -118,7 +116,7 @@ final class MusiqueartisteController extends AbstractController
                 if (!$musique->getGenre()) {
                     throw new \Exception('Genre must be selected');
                 }
-                if (!$musique->getAudio()) {
+                if (!$audioFile) {
                     throw new \Exception('Audio file is required');
                 }
                 
@@ -202,23 +200,16 @@ final class MusiqueartisteController extends AbstractController
             throw $this->createNotFoundException('Audio not found');
         }
 
-        // Get audio binary data from BLOB
-        $audioData = $musique->getAudio();
-        if (is_resource($audioData)) {
-            $audioData = stream_get_contents($audioData);
+        $audioPath = $this->getParameter('kernel.project_dir') . '/public/uploads/music/' . $musique->getAudio();
+        if (!is_file($audioPath)) {
+            throw $this->createNotFoundException('Audio file not found on disk');
         }
-        
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->buffer($audioData) ?: 'audio/mpeg';
 
-        return new Response(
-            $audioData,
-            200,
-            [
-                'Content-Type' => $mimeType,
-                'Content-Disposition' => 'inline; filename="' . $musique->getTitre() . '.mp3"'
-            ]
-        );
+        $response = new BinaryFileResponse($audioPath);
+        $response->headers->set('Content-Type', mime_content_type($audioPath) ?: 'audio/mpeg');
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($audioPath));
+
+        return $response;
     }
 
     #[Route('/musiqueartiste/image/{id}', name: 'app_musiqueartiste_image')]

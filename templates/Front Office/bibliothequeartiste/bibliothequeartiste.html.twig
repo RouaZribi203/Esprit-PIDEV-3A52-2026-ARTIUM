@@ -348,15 +348,13 @@
                         document.getElementById('detail-date-creation').textContent = dataset.dateCreation || '-';
                         document.getElementById('detail-description').textContent = dataset.description || '-';
 
-                        // PDF or image embed + download link — only allow if current user is renter
+                        // PDF or image embed + download link — artist can always view the PDF
                         const pdfLabel = document.getElementById('detail-pdf-label');
                         const pdfUrl = dataset.pdfUrl || '';
-                        const activeUser = dataset.activeUser || '';
-                        const currentUser = dataset.currentUser || '';
 
                         if (!pdfUrl) {
                           pdfLabel.innerHTML = '<span class="badge bg-secondary">Aucun fichier</span>';
-                        } else if (activeUser && currentUser && activeUser === currentUser) {
+                        } else {
                           // allowed: perform HEAD probe and show embed/download
                           pdfLabel.innerHTML = '<div class="text-muted">Chargement du fichier…</div>';
                           fetch(pdfUrl, { method: 'HEAD' }).then(function(resp) {
@@ -369,9 +367,6 @@
                           }).catch(function() {
                             pdfLabel.innerHTML = '<div class="mt-2"><a href="' + pdfUrl + '?download=1" class="btn btn-sm btn-primary" target="_blank">Télécharger le fichier</a></div>';
                           });
-                        } else {
-                          // not allowed: show greyed/disabled notice
-                          pdfLabel.innerHTML = '<div class="text-muted">Fichier réservé au locataire actuel.</div><div class="mt-2"><button class="btn btn-sm btn-secondary" disabled style="pointer-events:none;">Accès restreint</button></div>';
                         }
 
                         // Image

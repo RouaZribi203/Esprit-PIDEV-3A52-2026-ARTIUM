@@ -102,6 +102,16 @@ class OeuvreRepository extends ServiceEntityRepository
 
         return $qb;
     }
+    public function findByTypes(array $types, int $limit = 10): array
+    {
+        if (empty($types)) return [];
+        return $this->createQueryBuilder('o')
+            ->where('o.type IN (:types)')
+            ->setParameter('types', $types)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 
     //    /**
     //     * @return Oeuvre[] Returns an array of Oeuvre objects

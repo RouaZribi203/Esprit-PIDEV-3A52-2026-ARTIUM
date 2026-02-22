@@ -12,9 +12,9 @@ use App\Entity\Collections;
 use App\Entity\Oeuvre;
 use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
+use App\Repository\CommentaireRepository;
 use App\Repository\CollectionsRepository;
 use App\Repository\OeuvreRepository;
-use Doctrine\DBAL\ParameterType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -272,47 +272,51 @@ final class FeedController extends AbstractController
     }
 
     #[Route('/oeuvre/{id}/commentaire', name: 'oeuvre_commentaire', methods: ['POST'])]
-    public function addCommentaire(Oeuvre $oeuvre,Request $request,EntityManagerInterface $em,UserRepository $userRepository): Response
+    public function addCommentaire(Oeuvre $oeuvre, Request $request, EntityManagerInterface $em): Response
     {
-    $contenu = $request->request->get('contenu'); // récupère le texte du textarea
-    if (!$contenu) {
-        $redirectPath = (string) $request->request->get('redirect_path', '/feed');
-        return $this->redirect($this->buildRedirectWithFocus($redirectPath, $oeuvre->getId())); // si vide, on ne fait rien
+        $contenu = trim((string) $request->request->get('contenu'));
+        $isTurboFrame = $request->headers->has('Turbo-Frame');
+        
+        if ($contenu === '') {
+            if ($isTurboFrame) {
+                return $this->render('Front Office/feed/list.html.twig', [
+                    'oeuvre' => $oeuvre
+                ]);
+            }
+            return $this->redirect($this->buildRedirectWithFocus('/feed', $oeuvre->getId()));
+        }
+
+        $user = $this->getUser();
+        if (!$user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
+        $commentaire = new Commentaire();
+        $commentaire->setTexte($contenu);
+        $commentaire->setUser($user);
+        $oeuvre->addCommentaire($commentaire);
+        $commentaire->setDateCommentaire(new \DateTime());
+        $em->persist($commentaire);
+        $em->flush();
+
+        if ($isTurboFrame) {
+            return $this->render('Front Office/feed/list.html.twig', [
+                'oeuvre' => $oeuvre
+            ]);
+        }
+
+        return $this->redirect($this->buildRedirectWithFocus('/feed', $oeuvre->getId()));
     }
-
-    $user = $this->getUser();
-    if (!$user) {
-        throw $this->createNotFoundException('User not found');
-    }
-
-    $commentaire = new Commentaire();
-    $commentaire->setTexte($contenu);
-    $commentaire->setUser($user);
-    $commentaire->setOeuvre($oeuvre);
-    $commentaire->setDateCommentaire(new \DateTime());
-    $em->persist($commentaire);
-    $em->flush();
-
-    $redirectPath = (string) $request->request->get('redirect_path', '/feed');
-    return $this->redirect($this->buildRedirectWithFocus($redirectPath, $oeuvre->getId())); // retourne sur le feed après publication
-}
 
     #[Route('/commentaire/{id}/delete', name: 'commentaire_delete', methods: ['POST'])]
-    public function deleteCommentaire(int $id, Request $request, EntityManagerInterface $em): Response
+    public function deleteCommentaire(int $id, Request $request, CommentaireRepository $commentaireRepository, OeuvreRepository $oeuvreRepository): Response
     {
         $user = $this->getUser();
         if (!$user) {
             return $this->redirectToRoute('app_feed');
         }
 
-        // Fetch only the data we need without loading full entities
-        $commentData = $em->createQuery(
-            'SELECT c.id, IDENTITY(c.user) as userId, IDENTITY(c.oeuvre) as oeuvreId 
-             FROM App\Entity\Commentaire c 
-             WHERE c.id = :id'
-        )
-        ->setParameter('id', $id)
-        ->getOneOrNullResult();
+        $commentData = $commentaireRepository->findOwnershipDataById($id);
 
         if (!$commentData) {
             return $this->redirectToRoute('app_feed');
@@ -331,60 +335,61 @@ final class FeedController extends AbstractController
 
         $oeuvreId = $commentData['oeuvreId'];
 
-        // Delete using DQL to avoid entity loading
-        $em->createQuery('DELETE FROM App\Entity\Commentaire c WHERE c.id = :id')
-            ->setParameter('id', $id)
-            ->execute();
+        $commentaireRepository->deleteById($id);
 
-        $redirectPath = (string) $request->request->get('redirect_path', '/feed');
-        return $this->redirect($this->buildRedirectWithFocus($redirectPath, (int) $oeuvreId));
+        if ($request->headers->has('Turbo-Frame')) {
+            $oeuvre = $oeuvreRepository->find($oeuvreId);
+            if ($oeuvre) {
+                return $this->render('Front Office/feed/list.html.twig', [
+                    'oeuvre' => $oeuvre
+                ]);
+            }
+        }
+
+        return $this->redirect($this->buildRedirectWithFocus('/feed', (int) $oeuvreId));
     }
 
     
-        #[Route('/feed/commentaire/{id}/edit', name: 'commentaire_edit', methods: ['POST'])]
-public function editCommentaire(int $id, Request $request, EntityManagerInterface $em): Response
-{
-    $user = $this->getUser();
-    if (!$user) {
-        return $this->redirectToRoute('app_feed');
+    #[Route('/feed/commentaire/{id}/edit', name: 'commentaire_edit', methods: ['POST'])]
+    public function editCommentaire(int $id, Request $request, CommentaireRepository $commentaireRepository, OeuvreRepository $oeuvreRepository): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $submittedToken = (string) $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('edit_comment_'.$id, $submittedToken)) {
+            $this->addFlash('error', 'Requête invalide.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $contenu = trim((string) $request->request->get('contenu'));
+        if ($contenu === '') {
+            $this->addFlash('error', 'Le commentaire ne peut pas être vide.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $updatedRows = $commentaireRepository->updateTextIfOwnedByUser($id, $user->getId(), $contenu);
+
+        if ($updatedRows === 0) {
+            $this->addFlash('error', 'Vous ne pouvez pas modifier ce commentaire.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $oeuvreId = (int) $request->request->get('oeuvre_id', 0);
+
+        if ($request->headers->has('Turbo-Frame') && $oeuvreId > 0) {
+            $oeuvre = $oeuvreRepository->find($oeuvreId);
+            if ($oeuvre) {
+                return $this->render('Front Office/feed/list.html.twig', [
+                    'oeuvre' => $oeuvre
+                ]);
+            }
+        }
+
+        return $this->redirect($this->buildRedirectWithFocus('/feed', $oeuvreId));
     }
-
-    $submittedToken = (string) $request->request->get('_token');
-    if (!$this->isCsrfTokenValid('edit_comment_'.$id, $submittedToken)) {
-        $this->addFlash('error', 'Requête invalide.');
-        return $this->redirectToRoute('app_feed');
-    }
-
-    $contenu = trim((string) $request->request->get('contenu'));
-    if ($contenu === '') {
-        $this->addFlash('error', 'Le commentaire ne peut pas être vide.');
-        return $this->redirectToRoute('app_feed');
-    }
-
-    $connection = $em->getConnection();
-    $updatedRows = $connection->executeStatement(
-        'UPDATE commentaire SET texte = :texte WHERE id = :id AND user_id = :userId',
-        [
-            'texte' => $contenu,
-            'id' => $id,
-            'userId' => $user->getId(),
-        ],
-        [
-            'id' => ParameterType::INTEGER,
-            'userId' => ParameterType::INTEGER,
-        ]
-    );
-
-    if ($updatedRows === 0) {
-        $this->addFlash('error', 'Vous ne pouvez pas modifier ce commentaire.');
-        return $this->redirectToRoute('app_feed');
-    }
-
-    $redirectPath = (string) $request->request->get('redirect_path', '/feed');
-    $oeuvreId = (int) $request->request->get('oeuvre_id', 0);
-
-    return $this->redirect($this->buildRedirectWithFocus($redirectPath, $oeuvreId));
-}
 
     #[Route('/oeuvre/{id}/image', name: 'oeuvre_image', methods: ['GET'])]
     public function oeuvreImage(Oeuvre $oeuvre): Response

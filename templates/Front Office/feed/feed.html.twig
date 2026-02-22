@@ -35,13 +35,13 @@
                 </div>
                 <!-- Card feed action dropdown START -->
                 <div class="dropdown">
-                    <a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2"
-                       id="cardFeedAction{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                          <a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2"
+                              id="cardFeedAction{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
                         <i class="bi bi-three-dots"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction{{ oeuvre.id }}">
                         <li>
-                            <a class="dropdown-item favorite-toggle" 
+                            <a class="dropdown-item favorite-toggle"
                                href="#" 
                                data-oeuvre-id="{{ oeuvre.id }}"
                                data-favorited="{{ app.user.favUser.contains(oeuvre) ? 'true' : 'false' }}"
@@ -97,7 +97,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#!">
-                        <i class="bi bi-chat-fill pe-1"></i>Commentaires ({{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }})</a>
+                        <i class="bi bi-chat-fill pe-1"></i>Commentaires (<span class="comment-count" data-oeuvre-id="{{ oeuvre.id }}">{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>)</a>
                 </li>
 				<!-- Card share action START -->
                 <li class="nav-item ms-sm-auto d-flex align-items-center">
@@ -119,12 +119,12 @@
                 </div>
 
                 <!-- Comment box  -->
-                <form class="w-100" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}#oeuvre-{{ oeuvre.id }}" method="post">
+                <form class="w-100" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}#oeuvre-{{ oeuvre.id }}" method="post" data-turbo-frame="comments-{{ oeuvre.id }}">
                     <div class="position-relative">
                         <textarea name="contenu" data-autoresize class="form-control bg-light rounded pe-5" rows="1"
                                   placeholder="Ajouter un commentaire..."></textarea>
                         <input type="hidden" name="redirect_path" value="{{ app.request.pathInfo }}">
-                        <button class="btn btn-link text-primary position-absolute top-50 end-0 translate-middle-y me-2 p-0" type="submit" aria-label="Publier le commentaire">
+                        <button class="btn btn-link text-primary position-absolute top-50 end-0 translate-middle-y me-2 p-0 comment-submit-button" type="submit" aria-label="Publier le commentaire">
                             <i class="bi bi-send-fill fs-5"></i>
                         </button>
                     </div>
@@ -133,8 +133,9 @@
             </div>
             
             <!-- Comment wrap START -->
-            {% if oeuvre.commentaires and oeuvre.commentaires|length > 0 %}
-            <ul class="comment-wrap list-unstyled mb-0">
+            <turbo-frame id="comments-{{ oeuvre.id }}">
+                {% if oeuvre.commentaires and oeuvre.commentaires|length > 0 %}
+                <ul class="comment-wrap list-unstyled mb-0">
                 {% for commentaire in oeuvre.commentaires %}
                 <!-- Comment item START -->
                 <li class="comment-item{% if loop.index > 3 %} hidden-comment d-none{% endif %}">
@@ -144,9 +145,9 @@
                             <a href="#!"><img class="avatar-img rounded-circle"
                                     src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt=""></a>
                         </div>
-                        <div class="ms-2">
+                        <div class="ms-2 w-100">
                             <!-- Comment by -->
-                            <div class="bg-light rounded-start-top-0 p-3 rounded">
+                            <div class="bg-light rounded-start-top-0 p-3 rounded w-100">
                                 <div class="d-flex justify-content-between">
                                     <h6 class="mb-1">
                                         <a href="#!">
@@ -157,7 +158,7 @@
                                         <small class="ms-2">{{ commentaire.dateCommentaire|date('d F Y') }}</small>
                                         {% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
                                             <div class="dropdown ms-2">
-                                                <a href="#" class="text-secondary btn btn-sm btn-link p-0" id="commentAction{{ commentaire.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <a href="#" class="text-secondary btn btn-sm btn-link p-0" id="commentAction{{ commentaire.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
                                                     <i class="bi bi-three-dots"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="commentAction{{ commentaire.id }}">
@@ -168,7 +169,7 @@
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <form method="post" action="{{ path('commentaire_delete', {'id': commentaire.id}) }}" class="m-0">
+                                                        <form method="post" action="{{ path('commentaire_delete', {'id': commentaire.id}) }}" class="m-0" data-turbo-frame="comments-{{ oeuvre.id }}">
                                                             <input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ commentaire.id) }}">
                                                             <input type="hidden" name="redirect_path" value="{{ app.request.pathInfo }}">
                                                             <button type="submit" class="dropdown-item text-danger">
@@ -181,11 +182,11 @@
                                         {% endif %}
                                     </div>
                                 </div>
-                                <div id="commentText{{ commentaire.id }}" class="small mb-0">{{ commentaire.texte }}</div>
+                                <div id="commentText{{ commentaire.id }}" class="small mb-0 comment-text">{{ commentaire.texte }}</div>
                                 {% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
-                                    <form method="post" action="{{ path('commentaire_edit', {'id': commentaire.id}) }}" class="d-none" id="editComment{{ commentaire.id }}">
-                                        <div class="position-relative">
-                                            <textarea name="contenu" class="form-control bg-white" rows="2">{{ commentaire.texte }}</textarea>
+                                    <form method="post" action="{{ path('commentaire_edit', {'id': commentaire.id}) }}" class="d-none w-100" id="editComment{{ commentaire.id }}" data-turbo-frame="comments-{{ oeuvre.id }}">
+                                        <div class="position-relative w-100">
+                                            <textarea name="contenu" class="form-control bg-white w-100 comment-edit-textarea" rows="3">{{ commentaire.texte }}</textarea>
                                             <input type="hidden" name="_token" value="{{ csrf_token('edit_comment_' ~ commentaire.id) }}">
                                             <input type="hidden" name="redirect_path" value="{{ app.request.pathInfo }}">
                                             <input type="hidden" name="oeuvre_id" value="{{ oeuvre.id }}">
@@ -212,18 +213,20 @@
                 </li>
                 <!-- Comment item END -->
                 {% endfor %}
-            </ul>
-            {% endif %}
+                </ul>
+                {% else %}
+                <ul class="comment-wrap list-unstyled mb-0"></ul>
+                {% endif %}
+            </turbo-frame>
             <!-- Comment wrap END -->
         </div>
         <!-- Card body END -->
         
         <!-- Card footer START -->
-        {% if oeuvre.commentaires and oeuvre.commentaires|length > 3 %}
-        <div class="card-footer border-0 pt-0">
+        <div class="card-footer border-0 pt-0" style="display: {{ oeuvre.commentaires and oeuvre.commentaires|length > 3 ? '' : 'none' }};">
             <!-- Load more comments -->
-            <a href="#" role="button"
-               class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center comments-load-more">
+                <a href="#" role="button" data-turbo="false"
+                    class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center comments-load-more">
                 <div class="spinner-dots me-2 comments-loader" style="display: none;">
                     <span class="spinner-dot"></span>
                     <span class="spinner-dot"></span>
@@ -232,7 +235,6 @@
                 <span class="comments-load-text">Voir plus de commentaires</span>
             </a>
         </div>
-        {% endif %}
         <!-- Card footer END -->
     </div>
     <!-- Card feed item END -->
@@ -279,13 +281,13 @@
                 </div>
 				<!-- Card feed action dropdown START -->
                 <div class="dropdown">
-                    <a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2"
-                       id="cardFeedAction{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                          <a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2"
+                              id="cardFeedAction{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
                         <i class="bi bi-three-dots"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction{{ oeuvre.id }}">
                         <li>
-                            <a class="dropdown-item favorite-toggle" 
+                            <a class="dropdown-item favorite-toggle"
                                href="#" 
                                data-oeuvre-id="{{ oeuvre.id }}"
                                data-favorited="{{ app.user.favUser.contains(oeuvre) ? 'true' : 'false' }}"
@@ -342,7 +344,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#!">
-                        <i class="bi bi-chat-fill pe-1"></i>Commentaires ({{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }})</a>
+                        <i class="bi bi-chat-fill pe-1"></i>Commentaires (<span class="comment-count" data-oeuvre-id="{{ oeuvre.id }}">{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>)</a>
                 </li>
                 <!-- Card share action START -->
                 <li class="nav-item ms-sm-auto d-flex align-items-center">
@@ -364,7 +366,7 @@
                 </div>
 
                 <!-- Comment box  -->
-                <form class="w-100" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}#oeuvre-{{ oeuvre.id }}" method="post">
+                <form class="w-100" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}#oeuvre-{{ oeuvre.id }}" method="post" data-turbo-frame="comments-{{ oeuvre.id }}">
                     <div class="position-relative">
                         <textarea name="contenu" data-autoresize class="form-control bg-light rounded pe-5" rows="1"
                                   placeholder="Ajouter un commentaire..."></textarea>
@@ -378,6 +380,7 @@
             </div>
             
             <!-- Comment wrap START -->
+            <turbo-frame id="comments-{{ oeuvre.id }}">
             {% if oeuvre.commentaires and oeuvre.commentaires|length > 0 %}
             <ul class="comment-wrap list-unstyled mb-0">
                 {% for commentaire in oeuvre.commentaires %}
@@ -402,7 +405,7 @@
                                         <small class="ms-2">{{ commentaire.dateCommentaire|date('d F Y') }}</small>
                                         {% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
                                             <div class="dropdown ms-2">
-                                                <a href="#" class="text-secondary btn btn-sm btn-link p-0" id="commentAction{{ commentaire.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <a href="#" class="text-secondary btn btn-sm btn-link p-0" id="commentAction{{ commentaire.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
                                                     <i class="bi bi-three-dots"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="commentAction{{ commentaire.id }}">
@@ -413,7 +416,7 @@
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <form method="post" action="{{ path('commentaire_delete', {'id': commentaire.id}) }}" class="m-0">
+                                                        <form method="post" action="{{ path('commentaire_delete', {'id': commentaire.id}) }}" class="m-0" data-turbo-frame="comments-{{ oeuvre.id }}">
                                                             <input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ commentaire.id) }}">
                                                             <input type="hidden" name="redirect_path" value="{{ app.request.pathInfo }}">
                                                             <button type="submit" class="dropdown-item text-danger">
@@ -428,7 +431,7 @@
                                 </div>
                                 <div id="commentText{{ commentaire.id }}" class="small mb-0">{{ commentaire.texte }}</div>
                                 {% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
-                                    <form method="post" action="{{ path('commentaire_edit', {'id': commentaire.id}) }}" class="d-none" id="editComment{{ commentaire.id }}">
+                                    <form method="post" action="{{ path('commentaire_edit', {'id': commentaire.id}) }}" class="d-none" id="editComment{{ commentaire.id }}" data-turbo-frame="comments-{{ oeuvre.id }}">
                                         <div class="position-relative">
                                             <textarea name="contenu" class="form-control bg-white" rows="2">{{ commentaire.texte }}</textarea>
                                             <input type="hidden" name="_token" value="{{ csrf_token('edit_comment_' ~ commentaire.id) }}">
@@ -458,14 +461,16 @@
                 <!-- Comment item END -->
                 {% endfor %}
             </ul>
+            {% else %}
+            <ul class="comment-wrap list-unstyled mb-0"></ul>
             {% endif %}
+            </turbo-frame>
             <!-- Comment wrap END -->
         </div>
         <!-- Card body END -->
         
         <!-- Card footer START -->
-        {% if oeuvre.commentaires and oeuvre.commentaires|length > 3 %}
-        <div class="card-footer border-0 pt-0">
+        <div class="card-footer border-0 pt-0" style="display: {{ oeuvre.commentaires and oeuvre.commentaires|length > 3 ? '' : 'none' }};">
             <!-- Load more comments -->
             <a href="#" role="button"
                class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center comments-load-more">
@@ -477,7 +482,6 @@
                 <span class="comments-load-text">Voir plus de commentaires</span>
             </a>
         </div>
-        {% endif %}
         <!-- Card footer END -->
     </div>
     <!-- Card feed item END -->
@@ -499,13 +503,91 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Handle Turbo form submissions
+        function handleTurboFormSubmit(e) {
+            const form = e.target;
+            if (!form || form.tagName !== 'FORM' || !form.dataset.turboFrame) {
+                return;
+            }
+            
+            const frameName = form.dataset.turboFrame;
+            const frameEl = document.getElementById(frameName);
+            
+            if (!frameEl) {
+                return;
+            }
+            
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const fetchInit = {
+                method: form.method || 'GET',
+                headers: {
+                    'Turbo-Frame': frameName,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            };
+            
+            if (form.method.toUpperCase() === 'POST') {
+                fetchInit.body = formData;
+            }
+            
+            fetch(form.action, fetchInit)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newFrame = doc.querySelector(`turbo-frame[id="${frameName}"]`);
+                    
+                    // Check if this is an add comment form (not edit)
+                    const isAddCommentForm = form.action.includes('/oeuvre/') && form.action.includes('/commentaire') && !form.id;
+                    
+                    if (newFrame && frameEl) {
+                        const card = frameEl.closest('.card');
+                        const oeuvreId = card?.id?.replace('oeuvre-', '');
+                        frameEl.replaceWith(newFrame);
+                        
+                        // Sync footer on the NEW frame
+                        syncCommentsFooter(newFrame);
+                        
+                        // Update comment count
+                        const commentCount = newFrame.querySelectorAll('.comment-item').length;
+                        if (oeuvreId) {
+                            const countElement = document.querySelector(`.comment-count[data-oeuvre-id="${oeuvreId}"]`);
+                            if (countElement) {
+                                countElement.textContent = commentCount;
+                            }
+                        }
+                        
+                        // Clear textarea on the ORIGINAL add comment form (not inside frame)
+                        if (isAddCommentForm && card) {
+                            const addCommentForm = card.querySelector('form[action*="/commentaire"]');
+                            if (addCommentForm) {
+                                const textarea = addCommentForm.querySelector('textarea[name="contenu"]');
+                                if (textarea) {
+                                    textarea.value = '';
+                                }
+                            }
+                        }
+                        
+                        // Dispatch event on document so global listener catches it
+                        const event = new CustomEvent('turbo:submit-end', {
+                            detail: { success: true }
+                        });
+                        document.dispatchEvent(event);
+                    }
+                })
+                .catch(error => {
+                    console.error('Turbo frame update error:', error);
+                });
+        }
+        
         const loadMoreBtn = document.getElementById('load-more-btn');
         const feedContainer = document.getElementById('feed-container');
-        const hiddenOeuvres = document.querySelectorAll('.hidden-oeuvre');
-        let currentIndex = 0;
         const itemsPerLoad = 3;
 
-        if (loadMoreBtn && hiddenOeuvres.length > 0) {
+        const initialHiddenOeuvres = document.querySelectorAll('.hidden-oeuvre');
+        if (loadMoreBtn && initialHiddenOeuvres.length > 0) {
             loadMoreBtn.addEventListener('click', function() {
                 // Show spinner
                 this.querySelector('.load-text').style.display = 'none';
@@ -513,19 +595,33 @@
 
                 // Simulate loading delay
                 setTimeout(() => {
-                    // Calculate how many to show
-                    const endIndex = Math.min(currentIndex + itemsPerLoad, hiddenOeuvres.length);
+                    // Re-query fresh list of currently hidden oeuvres
+                    const hiddenOeuvres = document.querySelectorAll('.hidden-oeuvre');
+                    const stillHidden = Array.from(hiddenOeuvres).filter(el => el.style.display !== 'block');
+                    
+                    // Show next batch
+                    const endIndex = Math.min(itemsPerLoad, stillHidden.length);
                     
                     // Move items from hidden to visible
-                    for (let i = currentIndex; i < endIndex; i++) {
-                        feedContainer.appendChild(hiddenOeuvres[i]);
-                        hiddenOeuvres[i].style.display = 'block';
+                    for (let i = 0; i < endIndex; i++) {
+                        feedContainer.appendChild(stillHidden[i]);
+                        stillHidden[i].style.display = 'block';
+                        
+                        // Sync comment footers
+                        stillHidden[i].querySelectorAll('turbo-frame[id^="comments-"]')
+                            .forEach(syncCommentsFooter);
+                        
+                        // Bind Turbo form submissions for appended cards
+                        stillHidden[i].querySelectorAll('form[data-turbo-frame]').forEach(form => {
+                            form.removeEventListener('submit', handleTurboFormSubmit);
+                            form.addEventListener('submit', handleTurboFormSubmit);
+                        });
                     }
-                    
-                    currentIndex = endIndex;
 
                     // Hide button if no more items
-                    if (currentIndex >= hiddenOeuvres.length) {
+                    const remainingHidden = document.querySelectorAll('.hidden-oeuvre');
+                    const stillMoreHidden = Array.from(remainingHidden).filter(el => el.style.display !== 'block');
+                    if (stillMoreHidden.length === 0) {
                         this.style.display = 'none';
                     }
 
@@ -535,6 +631,94 @@
                 }, 500);
             });
         }
+
+        function syncCommentsFooter(frame) {
+            if (!frame) {
+                return;
+            }
+
+            const card = frame.closest('.card');
+            if (!card) {
+                return;
+            }
+
+            const footer = card.querySelector('.card-footer');
+            if (!footer) {
+                return;
+            }
+
+            if (card.dataset.commentsExpanded === 'true') {
+                frame.querySelectorAll('.comment-item.hidden-comment.d-none').forEach((item) => {
+                    item.classList.remove('d-none');
+                });
+            }
+
+            const totalComments = frame.querySelectorAll('.comment-item').length;
+            if (totalComments <= 3) {
+                delete card.dataset.commentsExpanded;
+                footer.style.display = 'none';
+                return;
+            }
+
+            const remainingHidden = frame.querySelectorAll('.comment-item.hidden-comment.d-none').length;
+            footer.style.display = remainingHidden > 0 ? '' : 'none';
+        }
+
+        document.querySelectorAll('turbo-frame[id^="comments-"]').forEach(syncCommentsFooter);
+
+        document.addEventListener('turbo:frame-load', function(e) {
+            const frame = e.target;
+            if (frame && frame.id && frame.id.startsWith('comments-')) {
+                syncCommentsFooter(frame);
+                
+                // Update comment count
+                const card = frame.closest('.card');
+                const oeuvreId = card?.id?.replace('oeuvre-', '');
+                const commentCount = frame.querySelectorAll('.comment-item').length;
+                if (oeuvreId) {
+                    const countElement = document.querySelector(`.comment-count[data-oeuvre-id="${oeuvreId}"]`);
+                    if (countElement) {
+                        countElement.textContent = commentCount;
+                    }
+                }
+            }
+        });
+
+        document.addEventListener('turbo:submit-end', function(e) {
+            const form = e.target;
+            if (!form || form.tagName !== 'FORM') {
+                return;
+            }
+
+            if (form.dataset.turboFrame && form.action.includes('/commentaire') && e.detail.success) {
+                const textarea = form.querySelector('textarea[name="contenu"]');
+                if (textarea) {
+                    textarea.value = '';
+                }
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.defaultPrevented) {
+                return;
+            }
+            const textarea = e.target;
+            if (!textarea || textarea.tagName !== 'TEXTAREA') {
+                return;
+            }
+
+            if (textarea.name !== 'contenu') {
+                return;
+            }
+
+            if (e.key === 'Enter' && !e.shiftKey) {
+                const form = textarea.closest('form');
+                if (form) {
+                    e.preventDefault();
+                    form.requestSubmit();
+                }
+            }
+        });
 
         // Load more comments per post
         document.addEventListener('click', function(e) {
@@ -581,6 +765,10 @@
                     if (footer) {
                         footer.style.display = 'none';
                     }
+                }
+
+                if (!card.dataset.commentsExpanded) {
+                    card.dataset.commentsExpanded = 'true';
                 }
             }, 400);
         });

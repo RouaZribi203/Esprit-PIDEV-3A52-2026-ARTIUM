@@ -34,7 +34,7 @@
 		</li>
 		<li class="nav-item">
 			<a class="nav-link" href="#!">
-				<i class="bi bi-chat-fill pe-1"></i>Commentaires ({{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }})
+				<i class="bi bi-chat-fill pe-1"></i>Commentaires (<span class="comment-count" data-oeuvre-id="{{ oeuvre.id }}">{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>)
 			</a>
 		</li>
 		<li class="nav-item ms-sm-auto d-flex align-items-center">
@@ -48,10 +48,9 @@
 		<div class="avatar avatar-xs me-2">
 			<a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt=""></a>
 		</div>
-		<form class="w-100" action="{{ path('oeuvre_commentaire', {'id': oeuvre.id}) }}" method="post">
+		<form class="w-100" action="{{ path('favoris_commentaire', {'id': oeuvre.id}) }}" method="post">
 			<div class="position-relative">
 				<textarea name="contenu" data-autoresize class="form-control bg-light rounded pe-5" rows="1" placeholder="Ajouter un commentaire..."></textarea>
-				<input type="hidden" name="redirect_path" value="/favoris">
 				<button class="btn btn-link text-primary position-absolute top-50 end-0 translate-middle-y me-2 p-0" type="submit" aria-label="Publier le commentaire">
 					<i class="bi bi-send-fill fs-5"></i>
 				</button>
@@ -76,7 +75,7 @@
 										<small class="ms-2">{{ commentaire.dateCommentaire ? commentaire.dateCommentaire|date('d F Y') : '' }}</small>
 										{% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
 											<div class="dropdown ms-2">
-												<a href="#" class="text-secondary btn btn-sm btn-link p-0" id="commentActionFav{{ commentaire.id }}{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+												<a href="#" class="text-secondary btn btn-sm btn-link p-0" id="commentActionFav{{ commentaire.id }}{{ oeuvre.id }}" data-bs-toggle="dropdown" data-turbo="false" aria-expanded="false">
 													<i class="bi bi-three-dots"></i>
 												</a>
 												<ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="commentActionFav{{ commentaire.id }}{{ oeuvre.id }}">
@@ -87,9 +86,8 @@
 													</li>
 													<li><hr class="dropdown-divider"></li>
 													<li>
-														<form method="post" action="{{ path('commentaire_delete', {'id': commentaire.id}) }}" class="m-0">
-															<input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ commentaire.id) }}">
-															<input type="hidden" name="redirect_path" value="/favoris">
+													<form method="post" action="{{ path('favoris_commentaire_delete', {'id': commentaire.id}) }}" class="m-0">
+														<input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ commentaire.id) }}">
 															<input type="hidden" name="oeuvre_id" value="{{ oeuvre.id }}">
 															<button type="submit" class="dropdown-item text-danger">
 																<i class="bi bi-trash3 pe-2"></i>Supprimer
@@ -103,11 +101,10 @@
 								</div>
 								<div id="favCommentText{{ commentaire.id }}" class="small mb-0">{{ commentaire.texte }}</div>
 								{% if commentaire.user and app.user and commentaire.user.id == app.user.id %}
-									<form method="post" action="{{ path('commentaire_edit', {'id': commentaire.id}) }}" class="d-none" id="favEditComment{{ commentaire.id }}">
-										<div class="position-relative">
-											<textarea name="contenu" class="form-control bg-white" rows="2">{{ commentaire.texte }}</textarea>
-											<input type="hidden" name="_token" value="{{ csrf_token('edit_comment_' ~ commentaire.id) }}">
-											<input type="hidden" name="redirect_path" value="/favoris">
+								<form method="post" action="{{ path('favoris_commentaire_edit', {'id': commentaire.id}) }}" class="d-none" id="favEditComment{{ commentaire.id }}">
+									<div class="position-relative">
+										<textarea name="contenu" class="form-control bg-white" rows="2">{{ commentaire.texte }}</textarea>
+										<input type="hidden" name="_token" value="{{ csrf_token('edit_comment_' ~ commentaire.id) }}">
 											<input type="hidden" name="oeuvre_id" value="{{ oeuvre.id }}">
 											<div class="d-flex gap-2 mt-2">
 												<button type="submit" class="btn btn-sm btn-primary">

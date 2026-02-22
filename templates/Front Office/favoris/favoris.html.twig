@@ -34,7 +34,7 @@
 											<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
 												<div class="position-absolute bottom-0 end-0">
 													<div class="dropdown mb-2 me-3">
-														<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEditAll{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+														<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEditAll{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
 															<i class="bi bi-pencil-fill"></i>
 														</a>
 														<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEditAll{{ oeuvre.id }}">
@@ -72,12 +72,12 @@
 											<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
 												<div class="position-absolute bottom-0 end-0">
 													<div class="dropdown mb-2 me-3">
-														<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+														<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
 															<i class="bi bi-pencil-fill"></i>
 														</a>
 														<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit{{ oeuvre.id }}">
-													<li>
-														<a class="dropdown-item favorite-remove-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-favorited="true">
+															<li>
+																<a class="dropdown-item favorite-remove-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-favorited="true">
 															<i class="bi bi-star-fill text-warning fa-fw pe-1"></i> Retirer des favoris
 														</a>
 													</li>
@@ -111,12 +111,12 @@
 										<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
 											<div class="position-absolute bottom-0 end-0">
 												<div class="dropdown mb-2 me-3">
-													<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-pencil-fill"></i>
-													</a>
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit{{ oeuvre.id }}">
-														<li>
-															<a class="dropdown-item favorite-remove-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-favorited="true">
+												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
+													<i class="bi bi-pencil-fill"></i>
+												</a>
+												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit{{ oeuvre.id }}">
+											<li>
+												<a class="dropdown-item favorite-remove-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-favorited="true">
 																<i class="bi bi-star-fill text-warning fa-fw pe-1"></i> Retirer des favoris
 															</a>
 														</li>
@@ -149,7 +149,7 @@
 											<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
 												<div class="position-absolute bottom-0 end-0">
 													<div class="dropdown mb-2 me-3">
-														<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+													<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
 															<i class="bi bi-pencil-fill"></i>
 														</a>
 														<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit{{ oeuvre.id }}">
@@ -195,6 +195,49 @@
 			{% endif %}
 
 <script>
+function updateFavorisCommentCount(frame) {
+	if (!frame || !frame.id || !frame.id.startsWith('comments-fav-')) {
+		return;
+	}
+
+	const oeuvreId = frame.id.replace('comments-fav-', '');
+	const count = frame.querySelectorAll('.comment-item').length;
+	if (!oeuvreId) {
+		return;
+	}
+
+	document.querySelectorAll(`.comment-count[data-oeuvre-id="${oeuvreId}"]`).forEach((el) => {
+		el.textContent = count;
+	});
+}
+
+function syncFavorisComments(frame) {
+	if (!frame || !frame.id || !frame.id.startsWith('comments-fav-')) {
+		return;
+	}
+
+	// Check if comments were previously expanded
+	if (frame.dataset.commentsExpanded === 'true') {
+		frame.querySelectorAll('.comment-item.hidden-comment.d-none').forEach((item) => {
+			item.classList.remove('d-none');
+		});
+
+		// Hide the load more button since all comments are visible
+		const loadMoreBtn = frame.querySelector('.fav-comments-load-more');
+		if (loadMoreBtn) {
+			const btnContainer = loadMoreBtn.closest('.pt-2');
+			if (btnContainer) {
+				btnContainer.style.display = 'none';
+			}
+		}
+	}
+}
+
+document.addEventListener('turbo:frame-load', function (event) {
+	updateFavorisCommentCount(event.target);
+	syncFavorisComments(event.target);
+});
+
 document.addEventListener('click', function (event) {
 	const commentsBtn = event.target.closest('.fav-comments-load-more');
 	if (commentsBtn) {
@@ -230,6 +273,12 @@ document.addEventListener('click', function (event) {
 				return;
 			}
 
+			// Mark the turbo-frame as expanded
+			const turboFrame = scope.closest('turbo-frame');
+			if (turboFrame) {
+				turboFrame.dataset.commentsExpanded = 'true';
+			}
+
 			const hiddenComments = Array.from(scope.querySelectorAll('.comment-item.hidden-comment.d-none'));
 			hiddenComments.forEach((comment) => {
 				comment.classList.remove('d-none');
@@ -237,7 +286,10 @@ document.addEventListener('click', function (event) {
 
 			const remaining = scope.querySelectorAll('.comment-item.hidden-comment.d-none').length;
 			if (remaining === 0) {
-				commentsBtn.remove();
+				const btnContainer = commentsBtn.closest('.pt-2');
+				if (btnContainer) {
+					btnContainer.style.display = 'none';
+				}
 				return;
 			} else if (text) {
 				text.textContent = 'Voir plus de commentaires';

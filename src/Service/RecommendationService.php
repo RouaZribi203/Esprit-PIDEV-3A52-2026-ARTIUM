@@ -4,6 +4,8 @@ namespace App\Service;
 
 use App\Entity\User;
 use App\Repository\OeuvreRepository;
+use App\Enum\CentreInteret;
+use App\Enum\TypeOeuvre;
 
 class RecommendationService
 {
@@ -32,6 +34,34 @@ class RecommendationService
                 if (is_array($embedding) && count($embedding) > 0) {
                     $validEmbeddings[] = $embedding;
                 }
+        }
+        //If no valid embeddings, fallback based on user interests
+        if (count($validEmbeddings) === 0) {
+            $centreInterets = $user->getCentreInteret() ?? [];
+            $mappedTypes = [];
+            foreach ($centreInterets as $ci) {
+                $ciValue = $ci instanceof CentreInteret ? $ci->value : (string) $ci;
+                switch ($ciValue) {
+                case CentreInteret::PEINTURE->value:
+                    $mappedTypes[] = TypeOeuvre::PEINTURE->value;
+                    break;
+                case CentreInteret::SCULPTURE->value:
+                    $mappedTypes[] = TypeOeuvre::SCULPTURE->value;
+                    break;
+                case CentreInteret::PHOTOGRAPHIE->value:
+                    $mappedTypes[] = TypeOeuvre::PHOTOGRAPHIE->value;
+                    break;
+                case CentreInteret::MUSIQUE->value:
+                    $mappedTypes[] = TypeOeuvre::MUSIQUE->value;
+                    break;
+                case CentreInteret::LECTURE->value:
+                    $mappedTypes[] = TypeOeuvre::LIVRE->value;
+                    break;
+                }
+            }
+            $mappedTypes = array_unique($mappedTypes);
+            // return directement les œuvres filtrées par type
+            return $this->oeuvreRepository->findByTypes($mappedTypes);
         }
         // 2️⃣ Compute user embedding if possible
         $userEmbedding = null;

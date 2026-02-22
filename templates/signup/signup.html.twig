@@ -64,6 +64,56 @@
                     <div class="mb-3">{{ form_row(form.centreInteret, {'error_attr': {'class': 'text-danger fw-bold d-flex align-items-center mt-1'}}) }}</div>
                   </div>
                   <div class="mb-3">{{ form_row(form.biographie, {'error_attr': {'class': 'text-danger fw-bold d-flex align-items-center mt-1'}}) }}</div>
+                  <div class="mb-3">
+                    <!-- Capture webcam pour la photo de référence -->
+                    <div style="text-align:center;">
+                      <label class="form-label">Photo de référence (reconnaissance faciale)</label>
+                      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                        <video id="video-signup" width="320" height="240" autoplay style="display:block;margin-bottom:10px;"></video>
+                        <canvas id="canvas-signup" width="320" height="240" style="display:none;"></canvas>
+                        <input type="file" id="faceSignupPhoto" name="photo" accept="image/*" style="display:none;" />
+                        {{ form_row(form.photo, {'attr': {'style': 'display:none'}}) }}
+                        <button type="button" class="btn btn-secondary mt-2" id="captureSignupBtn" style="width:200px;">Prendre une photo</button>
+                      </div>
+                    </div>
+                  </div>
+                  <script>
+                  const videoSignup = document.getElementById('video-signup');
+                  const canvasSignup = document.getElementById('canvas-signup');
+                  const captureSignupBtn = document.getElementById('captureSignupBtn');
+                  const fileSignupInput = document.getElementById('faceSignupPhoto');
+                  // Récupère le champ file généré par Symfony (form.photo)
+                  const symfonyPhotoInput = document.querySelector('input[name="signup[photo]"]');
+                  let previewImg = null;
+                  navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                      videoSignup.srcObject = stream;
+                    })
+                    .catch(err => {
+                      alert("Impossible d'accéder à la caméra : " + err.message);
+                    });
+                  captureSignupBtn.addEventListener('click', function() {
+                    canvasSignup.getContext('2d').drawImage(videoSignup, 0, 0, canvasSignup.width, canvasSignup.height);
+                    canvasSignup.toBlob(function(blob) {
+                      const file = new File([blob], 'reference.jpg', { type: 'image/jpeg' });
+                      const dataTransfer = new DataTransfer();
+                      dataTransfer.items.add(file);
+                      fileSignupInput.files = dataTransfer.files;
+                      // Synchronise avec le champ Symfony invisible
+                      if (symfonyPhotoInput) {
+                        symfonyPhotoInput.files = dataTransfer.files;
+                      }
+                      // Affiche un aperçu de la photo capturée
+                      if (!previewImg) {
+                        previewImg = document.createElement('img');
+                        previewImg.style.marginTop = '10px';
+                        previewImg.style.maxWidth = '200px';
+                        canvasSignup.parentNode.appendChild(previewImg);
+                      }
+                      previewImg.src = URL.createObjectURL(blob);
+                    }, 'image/jpeg');
+                  });
+                  </script>
                 </div>
 
                 <div class="d-flex justify-content-between mt-4">

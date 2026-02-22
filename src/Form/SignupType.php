@@ -78,6 +78,13 @@ class SignupType extends AbstractType
             'multiple' => true,
             'attr' => ['data-step' => 3, 'id' => 'signup_centreInteret', 'class' => 'form-select']
         ]);
+        // Photo de référence pour la reconnaissance faciale
+        $builder->add('photo', \Symfony\Component\Form\Extension\Core\Type\FileType::class, [
+            'label' => 'Photo de référence',
+            'mapped' => false,
+            'required' => false,
+            'attr' => ['data-step' => 4, 'class' => 'form-control']
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

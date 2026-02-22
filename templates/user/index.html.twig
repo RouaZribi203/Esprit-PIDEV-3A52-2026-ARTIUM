@@ -24,6 +24,15 @@
                 <a href="{{ path('app_user_new') }}" class="btn btn-primary">
                     <i class="fe fe-plus me-2"></i>Ajouter
                 </a>
+                {% if current_filter is defined and current_filter == 'ARTISTE' %}
+                    <a href="{{ path('app_user_export_pdf', {'type': 'artistes'}) }}" class="btn btn-outline-success" data-bs-toggle="tooltip" title="Exporter la liste des artistes en PDF">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
+                    </a>
+                {% elseif current_filter is defined and current_filter == 'AMATEUR' %}
+                    <a href="{{ path('app_user_export_pdf', {'type': 'amateurs'}) }}" class="btn btn-outline-info" data-bs-toggle="tooltip" title="Exporter la liste des amateurs en PDF">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -122,6 +131,17 @@
                                        class="text-primary" 
                                        data-bs-toggle="tooltip" 
                                        title="Voir">
+                                        {% if export_success is defined and export_success %}
+                                        <div id="export-notification" class="alert alert-success text-center" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;min-width:300px;">
+                                            Le tableau a été exporté avec succès !
+                                        </div>
+                                        <script>
+                                            setTimeout(function() {
+                                                var notif = document.getElementById('export-notification');
+                                                if (notif) notif.style.display = 'none';
+                                            }, 3000);
+                                        </script>
+                                        {% endif %}
                                         <i class="fe fe-eye"></i>
                                     </a>
                                     <a href="{{ path('app_user_edit', {'id': user.id}) }}" 

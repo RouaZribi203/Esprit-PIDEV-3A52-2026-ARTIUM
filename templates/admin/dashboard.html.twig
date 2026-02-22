@@ -266,13 +266,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Chart activité
     if (window.Chart) {
         var ctx = document.getElementById('activityChart').getContext('2d');
+        var activityLabels = {{ activity_labels|default(['Jan','Fév','Mar','Avr','Mai','Juin'])|json_encode|raw }};
+        var activityData = {{ activity_data|default([5,8,6,10,7,12])|json_encode|raw }};
+        // Fallback: if no data, show zeros
+        if (!activityLabels || activityLabels.length === 0) {
+            activityLabels = ['Jan','Fév','Mar','Avr','Mai','Juin'];
+        }
+        if (!activityData || activityData.length === 0) {
+            activityData = [0,0,0,0,0,0];
+        }
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: {{ activity_labels|default(['Jan','Fév','Mar','Avr','Mai','Juin'])|json_encode|raw }},
+                labels: activityLabels,
                 datasets: [{
                     label: 'Inscriptions',
-                    data: {{ activity_data|default([5,8,6,10,7,12])|json_encode|raw }},
+                    data: activityData,
                     borderColor: '#007bff',
                     backgroundColor: 'rgba(0,123,255,0.1)',
                     tension: 0.4,
@@ -287,14 +296,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         // Chart rôles
         var ctx2 = document.getElementById('rolesChart').getContext('2d');
+        var rolesData = {{ roles_data|default([2,10,20])|json_encode|raw }};
+        if (!rolesData || rolesData.length === 0) {
+            rolesData = [0,0,0];
+        }
         new Chart(ctx2, {
             type: 'doughnut',
             data: {
                 labels: ['Admin', 'Artistes', 'Amateurs'],
                 datasets: [{
-                    data: {{ roles_data|default([2,10,20])|json_encode|raw }},
-                    // Palette cohérente avec le dashboard :
-                    // Admin: bleu (#2196f3), Artistes: violet (#8e24aa), Amateurs: orange (#ff9800)
+                    data: rolesData,
                     backgroundColor: ['#2196f3','#8e24aa','#ff9800'],
                     borderWidth: 1
                 }]

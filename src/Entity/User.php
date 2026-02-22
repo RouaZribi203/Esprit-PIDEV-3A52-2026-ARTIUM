@@ -89,7 +89,6 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         pattern: '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
         message: 'Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets'
     )]
-    // ...existing code...
     private ?string $nom = null;
 
     #[ORM\Column(length: 255)]
@@ -104,7 +103,6 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         pattern: '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
         message: 'Le prenom ne doit contenir que des lettres, espaces, apostrophes et tirets'
     )]
-    // ...existing code...
     private ?string $prenom = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
@@ -117,18 +115,15 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         value: '-120 years',
         message: 'La date de naissance n\'est pas valide'
     )]
-    // ...existing code...
     private ?\DateTime $date_naissance = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "L'email est obligatoire")]
     #[Assert\Email(message: "L'email n'est pas valide")]
     #[Assert\Length(max: 255, maxMessage: "L'email ne peut pas depasser {{ limit }} caracteres")]
-    // ...existing code...
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
-    // ...existing code...
     private ?string $mdp = null;
 
     #[Assert\NotBlank(message: 'Le mot de passe est obligatoire', groups: ['create'])]
@@ -141,16 +136,13 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
 
     #[ORM\Column(enumType: Role::class)]
     #[Assert\NotNull(message: 'Le role est obligatoire')]
-    // ...existing code...
     private ?Role $role = null;
 
     #[ORM\Column(enumType: Statut::class)]
     #[Assert\NotNull(message: 'Le statut est obligatoire')]
-    // ...existing code...
     private ?Statut $statut = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    // ...existing code...
     private ?\DateTime $date_inscription = null;
 
     #[ORM\Column(length: 255)]
@@ -197,6 +189,23 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
     ])]
     
     private ?array $centre_interet = null;
+
+    /**
+     * Chemin de la photo de référence pour la reconnaissance faciale
+     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $photoReferencePath = null;
+
+    public function getPhotoReferencePath(): ?string
+    {
+        return $this->photoReferencePath;
+    }
+
+    public function setPhotoReferencePath(?string $photoReferencePath): self
+    {
+        $this->photoReferencePath = $photoReferencePath;
+        return $this;
+    }
 
     public static function getSpecialiteChoices(): array
     {

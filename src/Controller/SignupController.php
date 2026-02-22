@@ -11,6 +11,7 @@ use App\Form\SignupType;
 use App\Entity\User;
 use App\Enum\Statut;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final class SignupController extends AbstractController
 {
@@ -52,6 +53,20 @@ final class SignupController extends AbstractController
                 } elseif ($user->getRole() === \App\Enum\Role::ADMIN) {
                     $user->setSpecialite(null);
                     $user->setCentreInteret(null);
+                }
+
+                /**
+                 * Sauvegarde la photo de référence lors de l'inscription
+                 */
+                /** @var UploadedFile|null $photoFile */
+                $photoFile = $form->get('photo')->getData();
+                if ($photoFile) {
+                    $filename = 'user_' . uniqid() . '.' . $photoFile->guessExtension();
+                    $photoFile->move(
+                        $this->getParameter('user_photos_directory'), // Défini dans config/services.yaml
+                        $filename
+                    );
+                    $user->setPhotoReferencePath($filename); // Adapte selon ta logique d'entité
                 }
 
                 $em->persist($user);

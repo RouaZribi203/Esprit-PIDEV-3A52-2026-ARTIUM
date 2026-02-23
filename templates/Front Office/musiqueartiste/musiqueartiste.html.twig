@@ -156,6 +156,13 @@
                         </a>
                       </li>
                       <li>
+                        <a class="dropdown-item view-lyrics-btn" href="#"
+                           data-music-id="{{ musique.id }}"
+                           data-music-title="{{ musique.titre }}">
+                          <i class="bi bi-mic pe-2"></i>Voir paroles
+                        </a>
+                      </li>
+                      <li>
                         <form method="post" action="{{ path('app_musiqueartiste_delete', {'id': musique.id}) }}" 
                               class="delete-music-form" 
                               data-music-title="{{ musique.titre }}"
@@ -402,6 +409,29 @@
 </div>
 <!-- Offcanvas Edit Music Form END -->
 
+<!-- Lyrics Modal START -->
+<div class="modal fade" id="lyricsModal" tabindex="-1" aria-labelledby="lyricsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="lyricsModalLabel">Paroles</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="lyricsLoading" class="text-center py-4" style="display:none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+          <p class="mt-2 mb-0 text-muted">Chargement des paroles...</p>
+        </div>
+        <div id="lyricsMessage" class="alert alert-warning" style="display:none;"></div>
+        <pre id="lyricsContent" class="mb-0" style="white-space: pre-wrap; font-family: inherit;"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Lyrics Modal END -->
+
 <!-- Audio element for playback -->
 <audio id="audioPlayer" style="display: none;"></audio>
 
@@ -643,6 +673,61 @@ document.addEventListener('click', function(e) {
     // Update form action
     const form = document.getElementById('editMusicForm');
     form.action = '{{ path('app_musiqueartiste_edit', {'id': '__ID__'}) }}'.replace('__ID__', musicId);
+  }
+});
+
+// Lyrics Modal Handler
+document.addEventListener('click', async function(e) {
+  const lyricsBtn = e.target.closest('.view-lyrics-btn');
+  if (!lyricsBtn) {
+    return;
+  }
+
+  e.preventDefault();
+
+  const musicId = lyricsBtn.dataset.musicId;
+  const musicTitle = lyricsBtn.dataset.musicTitle || 'Paroles';
+
+  const modalElement = document.getElementById('lyricsModal');
+  const modalTitle = document.getElementById('lyricsModalLabel');
+  const loading = document.getElementById('lyricsLoading');
+  const message = document.getElementById('lyricsMessage');
+  const content = document.getElementById('lyricsContent');
+
+  if (!modalElement || !loading || !message || !content || !modalTitle) {
+    return;
+  }
+
+  modalTitle.textContent = `Paroles - ${musicTitle}`;
+  message.style.display = 'none';
+  content.textContent = '';
+  loading.style.display = 'block';
+
+  const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+  modal.show();
+
+  try {
+    const url = '{{ path('app_musiqueartiste_lyrics', {'id': '__ID__'}) }}'.replace('__ID__', musicId);
+    const response = await fetch(url, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+
+    const data = await response.json();
+    loading.style.display = 'none';
+
+    if (!response.ok || !data.success || !data.lyrics) {
+      message.textContent = data.message || 'Impossible de récupérer les paroles pour cette musique.';
+      message.style.display = 'block';
+      return;
+    }
+
+    content.textContent = data.lyrics;
+  } catch (error) {
+    loading.style.display = 'none';
+    message.textContent = 'Erreur réseau lors de la récupération des paroles.';
+    message.style.display = 'block';
   }
 });
 

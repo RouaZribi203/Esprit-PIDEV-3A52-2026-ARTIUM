@@ -126,6 +126,9 @@
                                                 <button class="btn btn-sm btn-primary flex-grow-1 play-btn">
                                                     <i class="bi bi-play-fill pe-1"></i> Jouer
                                                 </button>
+                                                <button class="btn btn-sm btn-outline-primary lyrics-btn" data-music-id="{{ musique.id }}" title="View lyrics">
+                                                    <i class="bi bi-music-note-list"></i>
+                                                </button>
                                                 <button class="btn btn-sm btn-outline-primary" title="Add to favorites">
                                                     <i class="bi bi-heart"></i>
                                                 </button>
@@ -192,6 +195,9 @@
                                             <div class="d-flex mt-3 gap-2">
                                                 <button class="btn btn-sm btn-primary flex-grow-1 play-btn">
                                                     <i class="bi bi-play-fill pe-1"></i> Jouer
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary lyrics-btn" data-music-id="{{ musique.id }}" title="View lyrics">
+                                                    <i class="bi bi-music-note-list"></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-heart"></i>
@@ -1176,5 +1182,71 @@
                 currentPlayingButton = null;
             }
         }
+
+        // Lyrics functionality
+        document.querySelectorAll('.lyrics-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const musicId = this.getAttribute('data-music-id');
+                const modal = new bootstrap.Modal(document.getElementById('lyricsModal'));
+                const modalBody = document.getElementById('lyricsContent');
+                const modalTitle = document.getElementById('lyricsModalLabel');
+                const loadingDiv = document.getElementById('lyricsLoading');
+                const messageDiv = document.getElementById('lyricsMessage');
+
+                // Show loading state
+                loadingDiv.classList.remove('d-none');
+                messageDiv.classList.add('d-none');
+                modalBody.classList.add('d-none');
+                modalTitle.textContent = 'Chargement des paroles...';
+
+                modal.show();
+
+                // Fetch lyrics
+                fetch(`{{ path('app_musicfront_lyrics', {'id': '__ID__'}) }}`.replace('__ID__', musicId))
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingDiv.classList.add('d-none');
+
+                        if (data.success) {
+                            modalTitle.textContent = `${data.track} - ${data.artist}`;
+                            modalBody.textContent = data.lyrics;
+                            modalBody.classList.remove('d-none');
+                        } else {
+                            modalTitle.textContent = 'Paroles non disponibles';
+                            messageDiv.textContent = data.message || 'Impossible de charger les paroles';
+                            messageDiv.classList.remove('d-none');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching lyrics:', error);
+                        loadingDiv.classList.add('d-none');
+                        modalTitle.textContent = 'Erreur';
+                        messageDiv.textContent = 'Échec du chargement des paroles. Veuillez réessayer plus tard.';
+                        messageDiv.classList.remove('d-none');
+                    });
+            });
+        });
     </script>
+
+    <!-- Lyrics Modal -->
+    <div class="modal fade" id="lyricsModal" tabindex="-1" aria-labelledby="lyricsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lyricsModalLabel">Paroles</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="lyricsLoading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Chargement des paroles...</p>
+                    </div>
+                    <div id="lyricsMessage" class="alert alert-info d-none" role="alert"></div>
+                    <pre id="lyricsContent" class="d-none" style="white-space: pre-wrap; font-family: inherit;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

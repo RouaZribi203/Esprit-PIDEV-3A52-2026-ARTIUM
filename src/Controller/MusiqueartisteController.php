@@ -10,10 +10,12 @@ use App\Repository\MusiqueRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class MusiqueartisteController extends AbstractController
 {
@@ -242,6 +244,105 @@ final class MusiqueartisteController extends AbstractController
             200,
             ['Content-Type' => 'image/jpeg']
         );
+    }
+
+    #[Route('/musiqueartiste/lyrics/{id}', name: 'app_musiqueartiste_lyrics', methods: ['GET'])]
+    public function getLyrics(
+        int $id,
+        MusiqueRepository $musiqueRepository,
+        HttpClientInterface $httpClient
+    ): JsonResponse
+    {
+        $musique = $musiqueRepository->find($id);
+
+        if (!$musique) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Song not found.'
+            ], 404);
+        }
+
+        $trackName = trim((string) $musique->getTitre());
+        $nom = trim((string) ($musique->getCollection()?->getArtiste()?->getNom() ?? ''));
+        $prenom = trim((string) ($musique->getCollection()?->getArtiste()?->getPrenom() ?? ''));
+        $artistName = trim($prenom . ' ' . $nom);
+
+        if ($trackName === '') {
+            return $this->json([
+                'success' => false,
+                'message' => 'Song title is missing.'
+            ], 400);
+        }
+
+        $lyrics = null;
+        $source = null;
+
+        // Try lyrics.ovh first (simpler, more reliable API)
+        if ($artistName !== '') {
+            try {
+                $lyricsOvhResponse = $httpClient->request('GET', sprintf(
+                    'https://api.lyrics.ovh/v1/%s/%s',
+                    rawurlencode($artistName),
+                    rawurlencode($trackName)
+                ), [
+                    'timeout' => 10,
+                    'max_duration' => 15,
+                ]);
+
+                if ($lyricsOvhResponse->getStatusCode() === 200) {
+                    $lyricsOvhPayload = json_decode($lyricsOvhResponse->getContent(false), true);
+                    if (is_array($lyricsOvhPayload) && !empty($lyricsOvhPayload['lyrics'])) {
+                        $lyrics = trim($lyricsOvhPayload['lyrics']);
+                        $source = 'lyrics.ovh';
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log('lyrics.ovh failed: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback to lrclib if lyrics.ovh didn't work
+        if (!$lyrics) {
+            try {
+                $getParams = ['track_name' => $trackName];
+                if ($artistName !== '') {
+                    $getParams['artist_name'] = $artistName;
+                }
+
+                $getResponse = $httpClient->request('GET', 'https://lrclib.net/api/get', [
+                    'query' => $getParams,
+                    'timeout' => 10,
+                    'max_duration' => 15,
+                ]);
+
+                if ($getResponse->getStatusCode() === 200) {
+                    $payload = json_decode($getResponse->getContent(false), true);
+                    if (is_array($payload)) {
+                        $lyrics = $payload['plainLyrics'] ?? $payload['syncedLyrics'] ?? null;
+                        if ($lyrics) {
+                            $source = 'lrclib';
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log('lrclib.net /get failed: ' . $e->getMessage());
+            }
+        }
+
+        if (!$lyrics) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Pas de paroles trouvées pour cette chanson.'
+            ], 404);
+        }
+
+        return $this->json([
+            'success' => true,
+            'track' => $trackName,
+            'artist' => $artistName,
+            'lyrics' => $lyrics,
+            'source' => $source
+        ]);
     }
 
     #[Route('/musiqueartiste/edit/{id}', name: 'app_musiqueartiste_edit', methods: ['POST'])]

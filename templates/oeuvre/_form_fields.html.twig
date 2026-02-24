@@ -42,6 +42,15 @@
         {{ form_label(form.image, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
         {{ form_widget(form.image, {'attr': {'class': 'form-control'}}) }}
         <div class="form-text">Formats acceptés : JPG, PNG</div>
+        {% if tempImagePresent|default(false) %}
+            <div class="alert alert-info mt-2 mb-0">
+                {% if tempImageName is not empty %}
+                    Fichier temporaire sélectionné: <strong>{{ tempImageName }}</strong>
+                {% else %}
+                    Une image a été sélectionnée et sera conservée si la validation réussit.
+                {% endif %}
+            </div>
+        {% endif %}
     </div>
 
     {# Collection #}

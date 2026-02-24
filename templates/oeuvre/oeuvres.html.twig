@@ -70,12 +70,74 @@
 
                     <!-- Delete All Button -->
                     <div class="ms-auto">
-                      <a href="#" class="btn btn-primary">Supprimer tout</a>
+                      <button type="button" class="btn btn-primary" id="deleteAllBtn" onclick="bulkDeleteOeuvres()">Supprimer tout</button>
                     </div>
                   </div>
                 </div>
 
+                <!-- Hidden bulk delete form -->
+                <form id="bulkDeleteForm" method="post" action="{{ path('oeuvre_bulk_delete') }}" style="display:none;">
+                  <input type="hidden" name="_token" value="{{ csrf_token('bulk_delete_oeuvre') }}">
+                  <div id="bulkIds"></div>
+                </form>
+
                 <script>
+                  // Initialize checkAll listener on page load
+                  document.addEventListener('DOMContentLoaded', function() {
+                    setupCheckboxListeners();
+                  });
+
+                  function setupCheckboxListeners() {
+                    // Get all checkAll checkboxes (one per tab)
+                    const checkAllBoxes = document.querySelectorAll('#checkAll');
+                    checkAllBoxes.forEach(checkbox => {
+                      checkbox.addEventListener('change', function() {
+                        toggleAllInTab(this);
+                      });
+                    });
+                  }
+
+                  function toggleAllInTab(checkAllBox) {
+                    // Find the closest table and toggle all checkboxes in that table
+                    const table = checkAllBox.closest('table');
+                    if (table) {
+                      const checkboxes = table.querySelectorAll('input[type="checkbox"][id^="post"]');
+                      checkboxes.forEach(checkbox => {
+                        checkbox.checked = checkAllBox.checked;
+                      });
+                    }
+                  }
+
+                  function bulkDeleteOeuvres() {
+                    // Collect all checked checkboxes across all tabs
+                    const checkedBoxes = document.querySelectorAll('input[type="checkbox"][id^="post"]:checked');
+                    
+                    if (checkedBoxes.length === 0) {
+                      alert('Veuillez sélectionner au moins une œuvre à supprimer.');
+                      return;
+                    }
+
+                    if (!confirm('Êtes-vous sûr de vouloir supprimer ' + checkedBoxes.length + ' œuvre(s) ?')) {
+                      return;
+                    }
+
+                    // Collect IDs and add to form
+                    const bulkIdsContainer = document.getElementById('bulkIds');
+                    bulkIdsContainer.innerHTML = '';
+                    
+                    checkedBoxes.forEach(checkbox => {
+                      const id = checkbox.id.replace('post', '');
+                      const input = document.createElement('input');
+                      input.type = 'hidden';
+                      input.name = 'ids[]';
+                      input.value = id;
+                      bulkIdsContainer.appendChild(input);
+                    });
+
+                    // Submit the form
+                    document.getElementById('bulkDeleteForm').submit();
+                  }
+
                   // Track active tab on change
                   document.querySelectorAll('.nav-lb-tab .nav-link').forEach(function(tab) {
                     tab.addEventListener('shown.bs.tab', function(e) {
@@ -107,18 +169,6 @@
                     document.getElementById('searchForm').submit();
                   }
                 </script>
-
-                {% if isSearchActive and noResultsMessage %}
-                  <div class="alert alert-info mx-4 mb-3" role="alert">
-                    <i class="fe fe-info me-2"></i>{{ noResultsMessage }}
-                  </div>
-                {% endif %}
-
-                {% if isSearchActive and searchResults|length > 1 %}
-                  <div class="alert alert-info mx-4 mb-3" role="alert">
-                    <i class="fe fe-info me-2"></i>{{ searchResults|length }} résultat(s) trouvé(s)
-                  </div>
-                {% endif %}
 
                 <div>
                 
@@ -166,7 +216,11 @@
                                 </h5>
                               </td>
                               <td>
-                                {{ oeuvre.type ? oeuvre.type.value : '—' }}
+                                {% if oeuvre.type %}
+                                  <span class="badge bg-{{ oeuvre.type.color }} text-white">{{ oeuvre.type.value }}</span>
+                                {% else %}
+                                  <span class="badge bg-secondary text-white">—</span>
+                                {% endif %}
                               </td>
                               <td>
                                 <a  class="text-inherit">{{ oeuvre.collection ? oeuvre.collection.titre : '—' }}</a>
@@ -179,21 +233,21 @@
                               </td>
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                <i class="fe fe-heart text-danger"></i>
-                                <span>{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                                <i class="bi bi-heart-fill text-danger"></i>
+                                <span class="fw-semibold">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
                                 </div>
                               </td>
 
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                <i class="fe fe-message-square"></i>
-                                <span>{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
+                                <i class="bi bi-chat-fill text-info"></i>
+                                <span class="fw-semibold">{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
                                 </div>
                               </td>
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                  <i class="fe fe-star"></i>
-                                  <span>{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
+                                  <i class="bi bi-star-fill text-warning"></i>
+                                  <span class="fw-semibold">{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
                                 </div>
                               </td>
 
@@ -215,7 +269,7 @@
                                       <i class="fe fe-eye dropdown-item-icon"></i>
                                       Détails
                                     </a>
-                                    {# Bouton Modifier 
+                                    {# Bouton Modifier #}
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -229,7 +283,7 @@
                                       data-collection-id="{{ oeuvre.collection ? oeuvre.collection.id : '' }}">
                                       <i class="fe fe-edit dropdown-item-icon"></i>
                                       Modifier
-                                    </button>#}
+                                    </button>
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -299,7 +353,11 @@
                                 </h5>
                               </td>
                               <td>
-                                {{ oeuvre.type ? oeuvre.type.value : '—' }}
+                                {% if oeuvre.type %}
+                                  <span class="badge bg-{{ oeuvre.type.color }} text-white">{{ oeuvre.type.value }}</span>
+                                {% else %}
+                                  <span class="badge bg-secondary text-white">—</span>
+                                {% endif %}
                               </td>
                               <td>
                                 <a  class="text-inherit">{{ oeuvre.collection ? oeuvre.collection.titre : '—' }}</a>
@@ -312,21 +370,21 @@
                               </td>
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                <i class="fe fe-heart text-danger"></i>
-                                <span>{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                                <i class="bi bi-heart-fill text-danger"></i>
+                                <span class="fw-semibold">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
                                 </div>
                               </td>
 
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                <i class="fe fe-message-square"></i>
-                                <span>{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
+                                <i class="bi bi-chat-fill text-info"></i>
+                                <span class="fw-semibold">{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
                                 </div>
                               </td>
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                  <i class="fe fe-star"></i>
-                                  <span>{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
+                                  <i class="bi bi-star-fill text-warning"></i>
+                                  <span class="fw-semibold">{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
                                 </div>
                               </td>
 
@@ -348,7 +406,7 @@
                                       <i class="fe fe-eye dropdown-item-icon"></i>
                                       Détails
                                     </a>
-                                    {# Bouton Modifier 
+                                    {# Bouton Modifier #}
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -362,7 +420,7 @@
                                       data-collection-id="{{ oeuvre.collection ? oeuvre.collection.id : '' }}">
                                       <i class="fe fe-edit dropdown-item-icon"></i>
                                       Modifier
-                                    </button>#}
+                                    </button>
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -432,7 +490,11 @@
                                 </h5>
                               </td>
                               <td>
-                                {{ oeuvre.type ? oeuvre.type.value : '—' }}
+                                {% if oeuvre.type %}
+                                  <span class="badge bg-{{ oeuvre.type.color }} text-white">{{ oeuvre.type.value }}</span>
+                                {% else %}
+                                  <span class="badge bg-secondary text-white">—</span>
+                                {% endif %}
                               </td>
                               <td>
                                 <a  class="text-inherit">{{ oeuvre.collection ? oeuvre.collection.titre : '—' }}</a>
@@ -445,21 +507,21 @@
                               </td>
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                <i class="fe fe-heart text-danger"></i>
-                                <span>{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                                <i class="bi bi-heart-fill text-danger"></i>
+                                <span class="fw-semibold">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
                                 </div>
                               </td>
 
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                <i class="fe fe-message-square"></i>
-                                <span>{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
+                                <i class="bi bi-chat-fill text-info"></i>
+                                <span class="fw-semibold">{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
                                 </div>
                               </td>
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                  <i class="fe fe-star"></i>
-                                  <span>{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
+                                  <i class="bi bi-star-fill text-warning"></i>
+                                  <span class="fw-semibold">{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
                                 </div>
                               </td>
 
@@ -481,7 +543,7 @@
                                       <i class="fe fe-eye dropdown-item-icon"></i>
                                       Détails
                                     </a>
-                                    {# Bouton Modifier
+                                    {# Bouton Modifier#}
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -495,7 +557,7 @@
                                       data-collection-id="{{ oeuvre.collection ? oeuvre.collection.id : '' }}">
                                       <i class="fe fe-edit dropdown-item-icon"></i>
                                       Modifier
-                                    </button> #}
+                                    </button> 
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -566,7 +628,11 @@
                                 </h5>
                               </td>
                               <td>
-                                {{ oeuvre.type ? oeuvre.type.value : '—' }}
+                                {% if oeuvre.type %}
+                                  <span class="badge bg-{{ oeuvre.type.color }} text-white">{{ oeuvre.type.value }}</span>
+                                {% else %}
+                                  <span class="badge bg-secondary text-white">—</span>
+                                {% endif %}
                               </td>
                               <td>
                                 <a  class="text-inherit">{{ oeuvre.collection ? oeuvre.collection.titre : '—' }}</a>
@@ -579,21 +645,21 @@
                               </td>
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                <i class="fe fe-heart text-danger"></i>
-                                <span>{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                                <i class="bi bi-heart-fill text-danger"></i>
+                                <span class="fw-semibold">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
                                 </div>
                               </td>
 
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                <i class="fe fe-message-square"></i>
-                                <span>{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
+                                <i class="bi bi-chat-fill text-info"></i>
+                                <span class="fw-semibold">{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>
                                 </div>
                               </td>
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
-                                  <i class="fe fe-star"></i>
-                                  <span>{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
+                                  <i class="bi bi-star-fill text-warning"></i>
+                                  <span class="fw-semibold">{{ oeuvre.userFav ? oeuvre.userFav|length : 0 }}</span>
                                 </div>
                               </td>
 
@@ -615,7 +681,7 @@
                                       <i class="fe fe-eye dropdown-item-icon"></i>
                                       Détails
                                     </a>
-                                    {# Bouton Modifier 
+                                    {# Bouton Modifier #}
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -629,7 +695,7 @@
                                       data-collection-id="{{ oeuvre.collection ? oeuvre.collection.id : '' }}">
                                       <i class="fe fe-edit dropdown-item-icon"></i>
                                       Modifier
-                                    </button>#}
+                                    </button>
                                     <button 
                                       class="dropdown-item" 
                                       type="button"
@@ -658,41 +724,11 @@
                   
               </div>
               </div>
-                <!-- Card Footer -->
-                <div class="card-footer">
-                  <nav>
-                    <ul class="pagination justify-content-center mb-0">
-                      <li class="page-item disabled">
-                        <a class="page-link mx-1 rounded" href="#" tabindex="-1" aria-disabled="true">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
-                          </svg>
-                        </a>
-                      </li>
-                      <li class="page-item active">
-                        <a class="page-link mx-1 rounded" href="#">1</a>
-                      </li>
-                      <li class="page-item">
-                        <a class="page-link mx-1 rounded" href="#">2</a>
-                      </li>
-                      <li class="page-item">
-                        <a class="page-link mx-1 rounded" href="#">3</a>
-                      </li>
-                      <li class="page-item">
-                        <a class="page-link mx-1 rounded" href="#">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
-                          </svg>
-                        </a>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
               </div>
             </div>
           </div>
 
           {# Include the offcanvas edit partial #}
-          {% include 'oeuvre/_offcanvas_edit.html.twig' %}
+          {% include 'oeuvre/_offcanvas_edit.html.twig' with {'edit_route': 'app_oeuvre_edit'} %}
 
 {% endblock %}

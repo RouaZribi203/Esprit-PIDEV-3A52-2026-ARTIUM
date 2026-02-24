@@ -106,8 +106,3 @@ header.fixed-top {
     overflow-wrap: anywhere;
     word-break: break-word;
 }
-
-.comment-edit-textarea {
-    min-height: 96px;
-    resize: vertical;
-}

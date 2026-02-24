@@ -1,4 +1,6 @@
 {% set offcanvas_id = 'offcanvasOeuvreEdit' %}
+{% set edit_route = edit_route|default('oeuvre_edit') %}
+{% set edit_url_pattern = path(edit_route, {'id': 999999}) %}
 
 <div class="offcanvas offcanvas-end" tabindex="-1" id="{{ offcanvas_id }}" aria-labelledby="{{ offcanvas_id }}Label" data-bs-backdrop="true" data-bs-scroll="false" style="width: 600px; z-index: 2000;">
 	<div class="offcanvas-header">
@@ -37,9 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
 				}
 			}
 
-			console.log('Submitting to:', `{{ path('oeuvre_edit', {'id': 'ID_PLACEHOLDER'}) }}`.replace('ID_PLACEHOLDER', oeuvreId));
+			console.log('Submitting to:', `{{ edit_url_pattern }}`.replace('999999', oeuvreId));
 
-			fetch(`{{ path('oeuvre_edit', {'id': 'ID_PLACEHOLDER'}) }}`.replace('ID_PLACEHOLDER', oeuvreId), {
+			fetch(`{{ edit_url_pattern }}`.replace('999999', oeuvreId), {
 				method: 'POST',
 				body: formData,
 				headers: {
@@ -85,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		console.log('Opening offcanvas for oeuvre:', oeuvreId);
 		
 		// Fetch the form from the server
-		fetch(`{{ path('oeuvre_edit', {'id': 'ID_PLACEHOLDER'}) }}`.replace('ID_PLACEHOLDER', oeuvreId), {
+		fetch(`{{ edit_url_pattern }}`.replace('999999', oeuvreId), {
 			method: 'GET',
 			headers: {
 				'X-Requested-With': 'XMLHttpRequest',

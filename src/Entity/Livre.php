@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
 
 #[ORM\Entity(repositoryClass: LivreRepository::class)]
 class Livre extends Oeuvre
@@ -18,12 +19,14 @@ class Livre extends Oeuvre
     private ?float $prix_location = null;
 
     #[ORM\Column(type: Types::BLOB)]
+    #[Ignore]
     private mixed $fichier_pdf = null;
 
     /**
      * @var Collection<int, LocationLivre>
      */
     #[ORM\OneToMany(targetEntity: LocationLivre::class, mappedBy: 'livre')]
+    #[Ignore]
     private Collection $locationLivres;
 
     public function __construct()

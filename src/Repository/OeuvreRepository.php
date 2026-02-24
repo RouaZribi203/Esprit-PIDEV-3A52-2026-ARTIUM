@@ -102,6 +102,38 @@ class OeuvreRepository extends ServiceEntityRepository
 
         return $qb;
     }
+    public function findByIdsWithSort(array $ids, string $sortBy = 'titre', string $sortOrder = 'ASC'): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        $qb = $this->createQueryBuilder('o')
+            ->where('o.id IN (:ids)')
+            ->setParameter('ids', $ids);
+
+        $this->applySorting($qb, $sortBy, $sortOrder);
+
+        $results = $qb->getQuery()->getResult();
+
+        // Preserve Meilisearch order if no explicit sorting
+        if (empty($sortBy)) {
+            $orderedResults = [];
+            $oeuvresById = [];
+            foreach ($results as $oeuvre) {
+                $oeuvresById[$oeuvre->getId()] = $oeuvre;
+            }
+            foreach ($ids as $id) {
+                if (isset($oeuvresById[$id])) {
+                    $orderedResults[] = $oeuvresById[$id];
+                }
+            }
+            return $orderedResults;
+        }
+
+        return $results;
+    }
+
     public function findByTypes(array $types, int $limit = 10): array
     {
         if (empty($types)) return [];
@@ -137,4 +169,34 @@ class OeuvreRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    public function findWithCollectionAndArtist(int $id): ?Oeuvre
+    {
+        return $this->createQueryBuilder('o')
+            ->leftJoin('o.collection', 'c')
+            ->leftJoin('c.artiste', 'a')
+            ->addSelect('c', 'a')
+            ->where('o.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function deleteLikesByOeuvre(int $oeuvreId): int
+    {
+        return $this->getEntityManager()->createQuery(
+            'DELETE FROM App\Entity\Like l WHERE l.oeuvre = :oeuvre'
+        )
+        ->setParameter('oeuvre', $oeuvreId)
+        ->execute();
+    }
+
+    public function deleteCommentairesByOeuvre(int $oeuvreId): int
+    {
+        return $this->getEntityManager()->createQuery(
+            'DELETE FROM App\Entity\Commentaire c WHERE c.oeuvre = :oeuvre'
+        )
+        ->setParameter('oeuvre', $oeuvreId)
+        ->execute();
+    }
 }

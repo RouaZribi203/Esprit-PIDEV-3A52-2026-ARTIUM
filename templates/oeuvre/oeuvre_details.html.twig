@@ -52,9 +52,11 @@
                       <h2 class="h4 mb-1">{{ oeuvre.titre }}</h2>
                     </div>
                     <div class="text-end">
-                      {% set typeColors = {'Peinture':'primary','Sculpture':'success','Photographie':'info','Musique':'warning','Livre':'dark'} %}
-                      {% set typeLabel = oeuvre.type ? oeuvre.type.value : '—' %}
-                      <span class="badge badge-type bg-{{ typeColors[typeLabel]|default('secondary') }} text-white">{{ typeLabel }}</span>
+                      {% if oeuvre.type %}
+                        <span class="badge badge-type bg-{{ oeuvre.type.color }} text-white">{{ oeuvre.type.value }}</span>
+                      {% else %}
+                        <span class="badge badge-type bg-secondary text-white">—</span>
+                      {% endif %}
                     </div>
                   </div>
 
@@ -80,12 +82,16 @@
                     <div class="col-md-6">
                       <div class="d-flex justify-content-end gap-3">
                         <div class="stat-pill">
-                          <i class="fe fe-heart text-danger"></i>
-                          <small>{{ oeuvre.likes is defined ? (oeuvre.likes|length) : 0 }}</small>
+                          <i class="bi bi-heart-fill text-danger"></i>
+                          <small class="fw-semibold">{{ oeuvre.likes is defined ? (oeuvre.likes|length) : 0 }}</small>
                         </div>
                         <div class="stat-pill">
-                          <i class="fe fe-message-square"></i>
-                          <small>{{ oeuvre.commentaires is defined ? (oeuvre.commentaires|length) : 0 }}</small>
+                          <i class="bi bi-chat-fill text-info"></i>
+                          <small class="fw-semibold">{{ oeuvre.commentaires is defined ? (oeuvre.commentaires|length) : 0 }}</small>
+                        </div>
+                        <div class="stat-pill">
+                          <i class="bi bi-star-fill text-warning"></i>
+                          <small class="fw-semibold">{{ oeuvre.userFav is defined ? (oeuvre.userFav|length) : 0 }}</small>
                         </div>
                       </div>
                     </div>

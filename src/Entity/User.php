@@ -11,6 +11,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -163,60 +164,70 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
      * @var Collection<int, Collections>
      */
     #[ORM\OneToMany(targetEntity: Collections::class, mappedBy: 'artiste', orphanRemoval: true)]
+    #[Ignore]
     private Collection $collections;
 
     /**
      * @var Collection<int, Commentaire>
      */
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'user', orphanRemoval: true)]
+    #[Ignore]
     private Collection $commentaires;
 
     /**
      * @var Collection<int, Playlist>
      */
     #[ORM\OneToMany(targetEntity: Playlist::class, mappedBy: 'user', orphanRemoval: true)]
+    #[Ignore]
     private Collection $playlists;
 
     /**
      * @var Collection<int, Oeuvre>
      */
     #[ORM\ManyToMany(targetEntity: Oeuvre::class, mappedBy: 'user_fav')]
+    #[Ignore]
     private Collection $fav_user;
 
     /**
      * @var Collection<int, Reclamation>
      */
     #[ORM\OneToMany(targetEntity: Reclamation::class, mappedBy: 'user')]
+    #[Ignore]
     private Collection $reclamations;
 
     /**
      * @var Collection<int, Reponse>
      */
     #[ORM\OneToMany(targetEntity: Reponse::class, mappedBy: 'user_admin')]
+    #[Ignore]
     private Collection $reponses;
 
     /**
      * @var Collection<int, Evenement>
      */
     #[ORM\OneToMany(targetEntity: Evenement::class, mappedBy: 'artiste')]
+    #[Ignore]
     private Collection $evenements;
 
     /**
      * @var Collection<int, Ticket>
      */
     #[ORM\OneToMany(targetEntity: Ticket::class, mappedBy: 'user')]
+    #[Ignore]
     private Collection $tickets;
 
     /**
      * @var Collection<int, LocationLivre>
      */
     #[ORM\OneToMany(targetEntity: LocationLivre::class, mappedBy: 'user')]
+    #[Ignore]
     private Collection $locationLivres;
 
     /**
      * @var Collection<int, Like>
      */
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'user')]
+    #[Ignore]
     private Collection $likes;
 
     public function __construct()
@@ -428,6 +439,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
     /**
      * @return Collection<int, Collections>
      */
+    #[Ignore]
     public function getCollections(): Collection
     {
         return $this->collections;
@@ -515,6 +527,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
     /**
      * @return Collection<int, Oeuvre>
      */
+    #[Ignore]
     public function getFavUser(): Collection
     {
         return $this->fav_user;

@@ -9,6 +9,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Ignore;
+use Meilisearch\Bundle\Search\Attributes\Searchable;
 
 #[ORM\Entity(repositoryClass: OeuvreRepository::class)]
 #[ORM\InheritanceType("JOINED")]
@@ -18,6 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     "livre" => Livre::class,
     "musique" => Musique::class
 ])]
+#[Searchable(['titre', 'collection.titre', 'collection.artiste.nom', 'collection.artiste.prenom', 'description'])]
 class Oeuvre
 {
     #[ORM\Id]
@@ -39,6 +42,7 @@ class Oeuvre
     private ?\DateTime $date_creation = null;
 
     #[ORM\Column(type: Types::BLOB)]
+    #[Ignore]
     private mixed $image = null;
 
     
@@ -56,18 +60,21 @@ class Oeuvre
      * @var Collection<int, Commentaire>
      */
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'oeuvre', orphanRemoval: true)]
+    #[Ignore]
     private Collection $commentaires;
 
     /**
      * @var Collection<int, User>
      */
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'fav_user')]
+    #[Ignore]
     private Collection $user_fav;
 
     /**
      * @var Collection<int, Like>
      */
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'oeuvre')]
+    #[Ignore]
     private Collection $likes;
 
     #[ORM\Column(type: 'json', nullable: true)]
@@ -161,6 +168,7 @@ class Oeuvre
     /**
      * @return Collection<int, Commentaire>
      */
+    #[Ignore]
     public function getCommentaires(): Collection
     {
         return $this->commentaires;
@@ -191,6 +199,7 @@ class Oeuvre
     /**
      * @return Collection<int, User>
      */
+    #[Ignore]
     public function getUserFav(): Collection
     {
         return $this->user_fav;
@@ -215,6 +224,7 @@ class Oeuvre
     /**
      * @return Collection<int, Like>
      */
+    #[Ignore]
     public function getLikes(): Collection
     {
         return $this->likes;

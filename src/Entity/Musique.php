@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MusiqueRepository::class)]
@@ -18,12 +19,14 @@ class Musique extends Oeuvre
     private ?GenreMusique $genre = null;
 
     #[ORM\Column(type: Types::BLOB)]
+    #[Ignore]
     private mixed $audio = null;
 
     /**
      * @var Collection<int, Playlist>
      */
     #[ORM\ManyToMany(targetEntity: Playlist::class, mappedBy: 'musique')]
+    #[Ignore]
     private Collection $playlists;
 
     public function __construct()

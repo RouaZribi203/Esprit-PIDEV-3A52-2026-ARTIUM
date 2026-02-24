@@ -10,22 +10,24 @@ use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
 use App\Repository\CollectionsRepository;
 use App\Repository\OeuvreRepository;
+use App\Repository\CommentaireRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Attribute\Route;
+use Meilisearch\Bundle\SearchManagerInterface;
 
 #[Route('/oeuvre')]
 final class OeuvreController extends AbstractController
 {
 
     #[Route(name: 'oeuvres')]
-    public function indexx(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
+    public function indexx(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request, SearchManagerInterface $searchManager): Response
     {
         $query = $request->query->get('q', '');
-        $sortBy = $request->query->get('sort', 'titre');
+        $sortBy = $request->query->get('sort', '');
         $sortOrder = $request->query->get('order', 'ASC');
         $activeTab = $request->query->get('tab', 'all-post');
         $searchResults = [];
@@ -33,40 +35,48 @@ final class OeuvreController extends AbstractController
 
         // If search query exists, find matching oeuvres with sorting
         if ($query) {
-            $searchResults = $oeuvreRepository->findByTitreWithSort($query, $sortBy, $sortOrder);
-
-            if (count($searchResults) === 1) {
-                // Single result: redirect to details
-                return $this->redirectToRoute('app_oeuvre_details', ['id' => $searchResults[0]->getId()]);
-            } elseif (count($searchResults) === 0) {
-                // No results
-                $noResultsMessage = 'Aucune œuvre trouvée avec ce titre.';
+            $hits = $searchManager->search(Oeuvre::class, $query, ['limit' => 100])->getHits();
+            
+            if (count($hits) === 0) {
+                $this->addFlash('info', 'Aucune œuvre trouvée avec ce titre.');
                 $searchResults = [];
+            } else {
+                // Extract IDs in Meilisearch relevance order
+                $ids = array_map(fn($oeuvre) => $oeuvre->getId(), $hits);
+                
+                // Fetch from DB with optional sorting, or preserve Meilisearch order
+                if ($sortBy && in_array($sortBy, ['likes', 'commentaires', 'favoris', 'titre'])) {
+                    $searchResults = $oeuvreRepository->findByIdsWithSort($ids, $sortBy, $sortOrder);
+                } else {
+                    // Keep Meilisearch relevance order
+                    $searchResults = $oeuvreRepository->findByIdsWithSort($ids, '', 'ASC');
+                }
+                // Show flash message with count
+                $this->addFlash('info', count($searchResults) . ' résultat(s) trouvé(s)');
             }
-            // Multiple results: will be displayed in template
         }
 
         // Get oeuvres by type with sorting
         $peintures = $oeuvreRepository->findByTypeWithSort(
             TypeOeuvre::PEINTURE,
-            $sortBy,
+            $sortBy ?: 'titre',
             $sortOrder
         );
 
         $sculptures = $oeuvreRepository->findByTypeWithSort(
            TypeOeuvre::SCULPTURE,
-           $sortBy,
+           $sortBy ?: 'titre',
            $sortOrder
         );
 
         $photos = $oeuvreRepository->findByTypeWithSort(
            TypeOeuvre::PHOTOGRAPHIE,
-           $sortBy,
+           $sortBy ?: 'titre',
            $sortOrder
         );
         
         // Apply sorting to all oeuvres if needed
-        $all = $oeuvreRepository->findAllWithSort($sortBy, $sortOrder);
+        $all = $oeuvreRepository->findAllWithSort($sortBy ?: 'titre', $sortOrder);
         
         return $this->render('oeuvre/oeuvres.html.twig', [
             'controller_name' => 'OeuvreController',
@@ -85,7 +95,6 @@ final class OeuvreController extends AbstractController
             'activeTab' => $activeTab,
         ]);
     }
-    
 
     #[Route('/test',name: 'app_oeuvre_index', methods: ['GET'])]
     public function index(OeuvreRepository $oeuvreRepository): Response
@@ -96,7 +105,7 @@ final class OeuvreController extends AbstractController
     }
 
 
-    #[Route('/test/{id}', name: 'app_oeuvre_show', methods: ['GET'])]
+    #[Route('/test/{id}', name: 'app_oeuvre_show', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function show(Oeuvre $oeuvre): Response
     {
     $imageBase64 = null;
@@ -125,7 +134,7 @@ final class OeuvreController extends AbstractController
     ]);
     }
 
-    #[Route('/{id}', name: 'app_oeuvre_details', methods: ['GET'])]
+    #[Route('/{id}', name: 'app_oeuvre_details', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function details(Oeuvre $oeuvre): Response
     {
     $imageBase64 = null;
@@ -155,23 +164,70 @@ final class OeuvreController extends AbstractController
     }
 
 
-    #[Route('/{id}/edit', name: 'app_oeuvre_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Oeuvre $oeuvre, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}/edit', name: 'app_oeuvre_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'])]
+    public function edit(Request $request, Oeuvre $oeuvre, EntityManagerInterface $entityManager, OeuvreRepository $oeuvreRepository): Response
     {
-        $user = $this->getUser();
+        // Fetch oeuvre with collection and artist relations
+        $oeuvre = $oeuvreRepository->findWithCollectionAndArtist($oeuvre->getId());
+        
+        if (!$oeuvre) {
+            throw $this->createNotFoundException('Oeuvre not found');
+        }
+        
+        // Get the artist who owns this oeuvre
+        $oeuvreArtist = null;
+        if ($oeuvre->getCollection() && $oeuvre->getCollection()->getArtiste()) {
+            $oeuvreArtist = $oeuvre->getCollection()->getArtiste();
+        }
+        
+        $session = $request->getSession();
+        $tempImageName = $session->get('oeuvre_temp_image_' . $oeuvre->getId());
+        
         $form = $this->createForm(OeuvreType::class, $oeuvre, [
-            'user' => $user instanceof User ? $user : null,
+            'user' => $oeuvreArtist,
+            'image_required' => false,
+            'include_type' => false,
+            'temp_image_present' => $tempImageName !== null,
             'validation_groups' => ['Default', 'edit'],
         ]);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            // Handle image file upload during edit
-            /** @var UploadedFile|null $imageFile */
-            $imageFile = $form->get('image')->getData();
+        // Handle image file upload temporarily before validation
+        $tempDir = $this->getParameter('kernel.project_dir') . '/var/tmp/oeuvre_uploads';
+        $imageFile = $form->get('image')->getData();
+        if ($imageFile instanceof UploadedFile) {
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0777, true);
+            }
+            $newName = bin2hex(random_bytes(16));
+            $ext = $imageFile->guessExtension();
+            if ($ext) {
+                $newName .= '.' . $ext;
+            }
 
-            if ($imageFile) {
-                // Read the binary content of the file
+            $imageFile->move($tempDir, $newName);
+
+            if ($tempImageName) {
+                $oldPath = $tempDir . '/' . $tempImageName;
+                if (is_file($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+
+            $tempImageName = $newName;
+            $session->set('oeuvre_temp_image_' . $oeuvre->getId(), $tempImageName);
+        }
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Handle the temp image on validation success
+            $tempPath = $tempImageName ? $tempDir . '/' . $tempImageName : null;
+            if ($tempPath && is_file($tempPath)) {
+                $blobData = fopen($tempPath, 'rb');
+                $oeuvre->setImage($blobData);
+                unlink($tempPath);
+                $session->remove('oeuvre_temp_image_' . $oeuvre->getId());
+            } elseif ($imageFile instanceof UploadedFile) {
+                // Fallback if temp handling didn't work
                 $blobData = fopen($imageFile->getPathname(), 'rb');
                 $oeuvre->setImage($blobData);
             }
@@ -190,30 +246,30 @@ final class OeuvreController extends AbstractController
         if ($request->isXmlHttpRequest()) {
             return $this->render('oeuvre/_form_fields.html.twig', [
                 'form' => $form->createView(),
+                'tempImagePresent' => $tempImageName !== null,
+                'tempImageName' => $tempImageName,
             ]);
         }
 
         return $this->render('oeuvre/edit.html.twig', [
             'oeuvre' => $oeuvre,
             'form' => $form,
+            'tempImagePresent' => $tempImageName !== null,
+            'tempImageName' => $tempImageName,
         ]);
     }
 
-    #[Route('/{id}', name: 'app_oeuvre_delete', methods: ['POST'])]
-    public function delete(Request $request, Oeuvre $oeuvre, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}', name: 'app_oeuvre_delete', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function delete(Request $request, Oeuvre $oeuvre, EntityManagerInterface $entityManager, OeuvreRepository $oeuvreRepository): Response
     {
         $oeuvreId = $oeuvre->getId();
         
         if ($this->isCsrfTokenValid('delete'.$oeuvreId, $request->getPayload()->getString('_token'))) {
-            // Delete using DQL to avoid entity loading and unbuffered query issues
-            $entityManager->createQuery('DELETE FROM App\Entity\Like l WHERE l.oeuvre = :oeuvre')
-                ->setParameter('oeuvre', $oeuvreId)
-                ->execute();
+            // Delete dependent records from repository
+            $oeuvreRepository->deleteLikesByOeuvre($oeuvreId);
+            $oeuvreRepository->deleteCommentairesByOeuvre($oeuvreId);
             
-            $entityManager->createQuery('DELETE FROM App\Entity\Commentaire c WHERE c.oeuvre = :oeuvre')
-                ->setParameter('oeuvre', $oeuvreId)
-                ->execute();
-            
+            // Delete the oeuvre itself
             $entityManager->remove($oeuvre);
             $entityManager->flush();
         }
@@ -222,14 +278,10 @@ final class OeuvreController extends AbstractController
     }
 
     #[Route('/admin/commentaire/{id}/delete', name: 'app_oeuvre_comment_delete', methods: ['POST'])]
-    public function deleteComment(int $id, Request $request, EntityManagerInterface $entityManager): Response
+    public function deleteComment(int $id, Request $request, CommentaireRepository $commentaireRepository): Response
     {
-        // Fetch only the data we need without loading full entities
-        $commentData = $entityManager->createQuery(
-            'SELECT c.id, IDENTITY(c.oeuvre) as oeuvreId FROM App\Entity\Commentaire c WHERE c.id = :id'
-        )
-        ->setParameter('id', $id)
-        ->getOneOrNullResult();
+        // Fetch comment ownership data from repository
+        $commentData = $commentaireRepository->findOwnershipDataById($id);
 
         if (!$commentData) {
             return $this->redirectToRoute('oeuvres');
@@ -242,10 +294,8 @@ final class OeuvreController extends AbstractController
 
         $oeuvreId = $commentData['oeuvreId'];
 
-        // Delete using DQL to avoid entity loading
-        $entityManager->createQuery('DELETE FROM App\Entity\Commentaire c WHERE c.id = :id')
-            ->setParameter('id', $id)
-            ->execute();
+        // Delete comment via repository
+        $commentaireRepository->deleteById($id);
 
         if ($oeuvreId !== null) {
             return $this->redirectToRoute('app_oeuvre_details', ['id' => $oeuvreId], Response::HTTP_SEE_OTHER);
@@ -253,7 +303,35 @@ final class OeuvreController extends AbstractController
 
         return $this->redirectToRoute('oeuvres', [], Response::HTTP_SEE_OTHER);
     }
-    
+
+    #[Route('/bulk-delete', name: 'oeuvre_bulk_delete', methods: ['POST'])]
+    public function bulkDelete(Request $request, OeuvreRepository $oeuvreRepository, EntityManagerInterface $entityManager): Response
+    {
+        if (!$this->isCsrfTokenValid('bulk_delete_oeuvre', $request->getPayload()->getString('_token'))) {
+            return $this->redirectToRoute('oeuvres');
+        }
+
+        // Get IDs from form
+        $ids = $request->getPayload()->all('ids');
+        
+        if (empty($ids)) {
+            return $this->redirectToRoute('oeuvres');
+        }
+
+        // Delete likes and comments for each oeuvre
+        foreach ($ids as $id) {
+            $oeuvreRepository->deleteLikesByOeuvre((int)$id);
+            $oeuvreRepository->deleteCommentairesByOeuvre((int)$id);
+        }
+
+        // Delete all oeuvres by IDs
+        $entityManager->createQuery('DELETE FROM App\Entity\Oeuvre o WHERE o.id IN (:ids)')
+            ->setParameter('ids', array_map('intval', $ids))
+            ->execute();
+
+        $this->addFlash('success', count($ids) . ' œuvre(s) supprimée(s) avec succès.');
+        return $this->redirectToRoute('oeuvres', [], Response::HTTP_SEE_OTHER);
+    }
 
     
 }

@@ -292,7 +292,7 @@
   </div>
 </div>
 
-{% include 'oeuvre/_offcanvas_edit.html.twig' %}
+{% include 'oeuvre/_offcanvas_edit.html.twig' with {'edit_route': 'oeuvre_edit'} %}
 {% if form.vars.submitted and not form.vars.valid %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {

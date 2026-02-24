@@ -260,7 +260,7 @@
 <script>
 // Load more comments per post
 document.addEventListener('click', function(e) {
-    const commentsBtn = e.target.closest('.comments-load-more');
+  const commentsBtn = e.target.closest('.comments-load-more, .fav-comments-load-more');
     if (!commentsBtn) {
         return;
     }

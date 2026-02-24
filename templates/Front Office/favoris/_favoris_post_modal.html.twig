@@ -1,3 +1,5 @@
+{% set canInteractWithPost = is_granted('ROLE_AMATEUR') %}
+
 <div class="modal fade favoris-post-modal" id="{{ modalId|default('favorisPostModal' ~ oeuvre.id) }}" tabindex="-1" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-xl">
 		<div class="modal-content border-0 shadow-lg">
@@ -45,10 +47,17 @@
 										{% set userLiked = true %}
 									{% endif %}
 								{% endfor %}
-								<a class="nav-link like-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
-									<i class="bi bi-heart{{ userLiked ? '-fill text-danger' : '' }} pe-1"></i>
-									<span class="like-count">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
-								</a>
+								{% if canInteractWithPost %}
+									<a class="nav-link like-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
+										<i class="bi bi-heart{{ userLiked ? '-fill text-danger' : '' }} pe-1"></i>
+										<span class="like-count">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+									</a>
+								{% else %}
+									<span class="nav-link text-muted" aria-disabled="true" title="Seuls les amateurs peuvent aimer cette œuvre">
+										<i class="bi bi-heart{{ userLiked ? '-fill text-danger' : '' }} pe-1"></i>
+										<span class="like-count">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+									</span>
+								{% endif %}
 							</li>
 							<li class="nav-item">
 								<a class="nav-link" href="#!">
@@ -62,19 +71,21 @@
 							</li>
 						</ul>
 
-						<div class="d-flex mb-3">
-							<div class="avatar avatar-xs me-2">
-								<a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt=""></a>
-							</div>
-						<form class="w-100" action="{{ path('favoris_commentaire', {'id': oeuvre.id}) }}" method="post" data-turbo-frame="comments-fav-{{ oeuvre.id }}">
-							<div class="position-relative">
-								<textarea name="contenu" data-autoresize class="form-control bg-light rounded pe-5" rows="1" placeholder="Ajouter un commentaire..."></textarea>
-									<button class="btn btn-link text-primary position-absolute top-50 end-0 translate-middle-y me-2 p-0 comment-submit-button" type="submit" aria-label="Publier le commentaire">
-										<i class="bi bi-send-fill fs-5"></i>
-									</button>
+						{% if canInteractWithPost %}
+							<div class="d-flex mb-3">
+								<div class="avatar avatar-xs me-2">
+									<a href="#!"><img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt=""></a>
 								</div>
-							</form>
-						</div>
+							<form class="w-100" action="{{ path('favoris_commentaire', {'id': oeuvre.id}) }}" method="post" data-turbo-frame="comments-fav-{{ oeuvre.id }}">
+								<div class="position-relative">
+									<textarea name="contenu" data-autoresize class="form-control bg-light rounded pe-5" rows="1" placeholder="Ajouter un commentaire..."></textarea>
+										<button class="btn btn-link text-primary position-absolute top-50 end-0 translate-middle-y me-2 p-0 comment-submit-button" type="submit" aria-label="Publier le commentaire">
+											<i class="bi bi-send-fill fs-5"></i>
+										</button>
+									</div>
+								</form>
+							</div>
+						{% endif %}
 
 						<turbo-frame id="comments-fav-{{ oeuvre.id }}">
 						{% if oeuvre.commentaires and oeuvre.commentaires|length > 0 %}

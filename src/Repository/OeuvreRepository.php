@@ -199,4 +199,42 @@ class OeuvreRepository extends ServiceEntityRepository
         ->setParameter('oeuvre', $oeuvreId)
         ->execute();
     }
+
+    public function findTopLikedByArtiste(User $artiste, int $limit = 5): array
+    {
+        return $this->createQueryBuilder('o')
+            ->select('o.id AS oeuvreId')
+            ->addSelect('o.titre AS oeuvreTitle')
+            ->addSelect('COUNT(l.id) AS likesCount')
+            ->innerJoin('o.collection', 'c')
+            ->leftJoin('o.likes', 'l', 'WITH', 'l.liked = true')
+            ->andWhere('c.artiste = :artiste')
+            ->setParameter('artiste', $artiste)
+            ->groupBy('o.id, o.titre')
+            ->orderBy('likesCount', 'DESC')
+            ->addOrderBy('o.titre', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    public function findInteractionStatsByArtiste(User $artiste): array
+    {
+        return $this->createQueryBuilder('o')
+            ->select('o.id AS oeuvreId')
+            ->addSelect('o.titre AS oeuvreTitle')
+            ->addSelect('COUNT(DISTINCT l.id) AS likesCount')
+            ->addSelect('COUNT(DISTINCT com.id) AS commentairesCount')
+            ->addSelect('COUNT(DISTINCT fav.id) AS favorisCount')
+            ->addSelect('(COUNT(DISTINCT l.id) + COUNT(DISTINCT com.id) + COUNT(DISTINCT fav.id)) AS interactionsCount')
+            ->innerJoin('o.collection', 'c')
+            ->leftJoin('o.likes', 'l', 'WITH', 'l.liked = true')
+            ->leftJoin('o.commentaires', 'com')
+            ->leftJoin('o.user_fav', 'fav')
+            ->andWhere('c.artiste = :artiste')
+            ->setParameter('artiste', $artiste)
+            ->groupBy('o.id, o.titre')
+            ->getQuery()
+            ->getArrayResult();
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Commentaire;
+use App\Entity\User;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -51,6 +52,25 @@ class CommentaireRepository extends ServiceEntityRepository
                 'userId' => ParameterType::INTEGER,
             ]
         );
+    }
+
+    public function countReceivedByArtistePerDayBetween(User $artiste, \DateTimeInterface $startDate, \DateTimeInterface $endDate): array
+    {
+        return $this->createQueryBuilder('com')
+            ->select('com.date_commentaire AS commentDate')
+            ->addSelect('COUNT(com.id) AS commentsCount')
+            ->innerJoin('com.oeuvre', 'o')
+            ->innerJoin('o.collection', 'c')
+            ->andWhere('c.artiste = :artiste')
+            ->andWhere('com.date_commentaire >= :startDate')
+            ->andWhere('com.date_commentaire <= :endDate')
+            ->setParameter('artiste', $artiste)
+            ->setParameter('startDate', $startDate)
+            ->setParameter('endDate', $endDate)
+            ->groupBy('com.date_commentaire')
+            ->orderBy('com.date_commentaire', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
     }
 
     //    /**

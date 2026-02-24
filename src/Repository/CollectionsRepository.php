@@ -50,6 +50,28 @@ class CollectionsRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    public function findInteractionStatsByArtiste(User $artiste): array
+    {
+        return $this->createQueryBuilder('c')
+            ->select('c.id AS collectionId')
+            ->addSelect('c.titre AS collectionTitle')
+            ->addSelect('COUNT(DISTINCT o.id) AS oeuvresCount')
+            ->addSelect('COUNT(DISTINCT l.id) AS likesCount')
+            ->addSelect('COUNT(DISTINCT uf.id) AS favorisCount')
+            ->addSelect('COUNT(DISTINCT com.id) AS commentairesCount')
+            ->addSelect('(COUNT(DISTINCT l.id) + COUNT(DISTINCT uf.id) + COUNT(DISTINCT com.id)) AS interactionsCount')
+            ->leftJoin('c.oeuvres', 'o')
+            ->leftJoin('o.likes', 'l', 'WITH', 'l.liked = true')
+            ->leftJoin('o.user_fav', 'uf')
+            ->leftJoin('o.commentaires', 'com')
+            ->andWhere('c.artiste = :artiste')
+            ->setParameter('artiste', $artiste)
+            ->groupBy('c.id, c.titre')
+            ->orderBy('interactionsCount', 'DESC')
+            ->getQuery()
+            ->getArrayResult();
+    }
+
 
 //    /**
 //     * @return Collections[] Returns an array of Collections objects

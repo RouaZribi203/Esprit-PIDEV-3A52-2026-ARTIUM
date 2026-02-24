@@ -154,12 +154,23 @@
                       const tab = new bootstrap.Tab(tabElement);
                       tab.show();
                     }
-                  });
 
-                  document.getElementById('sortSelect').addEventListener('change', function() {
-                    if (this.value) {
-                      document.getElementById('sortInput').value = this.value;
-                      document.getElementById('searchForm').submit();
+                    // Attach sort change listener
+                    const sortSelect = document.getElementById('sortSelect');
+                    if (sortSelect) {
+                      sortSelect.addEventListener('change', function() {
+                        if (this.value) {
+                          // Redirect directly with sort=value and order=ASC
+                          const currentTab = new URLSearchParams(window.location.search).get('tab') || 'all-post';
+                          const currentQuery = new URLSearchParams(window.location.search).get('q') || '';
+                          let url = '{{ path("oeuvres") }}?sort=' + encodeURIComponent(this.value) + '&order=ASC&tab=' + encodeURIComponent(currentTab);
+                          if (currentQuery) {
+                            url += '&q=' + encodeURIComponent(currentQuery);
+                          }
+                          console.log('Sorting by:', this.value, ' Order: ASC, URL:', url);
+                          window.location.href = url;
+                        }
+                      });
                     }
                   });
 
@@ -234,7 +245,7 @@
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
                                 <i class="bi bi-heart-fill text-danger"></i>
-                                <span class="fw-semibold">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                                <span class="fw-semibold">{{ (oeuvre.likes ? oeuvre.likes|filter(like => like.liked) : [])|length }}</span>
                                 </div>
                               </td>
 
@@ -371,7 +382,7 @@
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
                                 <i class="bi bi-heart-fill text-danger"></i>
-                                <span class="fw-semibold">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                                <span class="fw-semibold">{{ (oeuvre.likes ? oeuvre.likes|filter(like => like.liked) : [])|length }}</span>
                                 </div>
                               </td>
 
@@ -508,7 +519,7 @@
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
                                 <i class="bi bi-heart-fill text-danger"></i>
-                                <span class="fw-semibold">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                                <span class="fw-semibold">{{ (oeuvre.likes ? oeuvre.likes|filter(like => like.liked) : [])|length }}</span>
                                 </div>
                               </td>
 
@@ -646,7 +657,7 @@
                               <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-1">
                                 <i class="bi bi-heart-fill text-danger"></i>
-                                <span class="fw-semibold">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
+                                <span class="fw-semibold">{{ (oeuvre.likes ? oeuvre.likes|filter(like => like.liked) : [])|length }}</span>
                                 </div>
                               </td>
 
@@ -724,6 +735,262 @@
                   
               </div>
               </div>
+                <!-- Card Footer with Pagination -->
+                <div class="card-footer">
+                  <div id="pagination-all-post" class="tab-pagination">
+                    {% if oeuvres.getPageCount > 1 %}
+                    <nav>
+                      <ul class="pagination justify-content-center mb-0">
+                        {% if oeuvres.getCurrentPageNumber > 1 %}
+                        <li class="page-item">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page: oeuvres.getCurrentPageNumber - 1, sort: sortBy, order: sortOrder, tab: 'all-post', q: currentQuery}) }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                          <a class="page-link mx-1 rounded" href="#" tabindex="-1" aria-disabled="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for pageNum in 1..oeuvres.getPageCount %}
+                          {% if pageNum == oeuvres.getCurrentPageNumber %}
+                          <li class="page-item active">
+                            <a class="page-link mx-1 rounded" href="#">{{ pageNum }}</a>
+                          </li>
+                          {% else %}
+                          <li class="page-item">
+                            <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page: pageNum, sort: sortBy, order: sortOrder, tab: 'all-post', q: currentQuery}) }}">{{ pageNum }}</a>
+                          </li>
+                          {% endif %}
+                        {% endfor %}
+                        
+                        {% if oeuvres.getCurrentPageNumber < oeuvres.getPageCount %}
+                        <li class="page-item">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page: oeuvres.getCurrentPageNumber + 1, sort: sortBy, order: sortOrder, tab: 'all-post', q: currentQuery}) }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                          <a class="page-link mx-1 rounded" href="#" tabindex="-1" aria-disabled="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% endif %}
+                      </ul>
+                    </nav>
+                    {% endif %}
+                  </div>
+                  
+                  <div id="pagination-published" class="tab-pagination" style="display:none;">
+                    {% if peintures.getPageCount > 1 %}
+                    <nav>
+                      <ul class="pagination justify-content-center mb-0">
+                        {% if peintures.getCurrentPageNumber > 1 %}
+                        <li class="page-item">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page_peinture: peintures.getCurrentPageNumber - 1, sort: sortBy, order: sortOrder, tab: 'published', q: currentQuery}) }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                          <a class="page-link mx-1 rounded" href="#" tabindex="-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for pageNum in 1..peintures.getPageCount %}
+                          {% if pageNum == peintures.getCurrentPageNumber %}
+                          <li class="page-item active">
+                            <a class="page-link mx-1 rounded" href="#">{{ pageNum }}</a>
+                          </li>
+                          {% else %}
+                          <li class="page-item">
+                            <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page_peinture: pageNum, sort: sortBy, order: sortOrder, tab: 'published', q: currentQuery}) }}">{{ pageNum }}</a>
+                          </li>
+                          {% endif %}
+                        {% endfor %}
+                        
+                        {% if peintures.getCurrentPageNumber < peintures.getPageCount %}
+                        <li class="page-item">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page_peinture: peintures.getCurrentPageNumber + 1, sort: sortBy, order: sortOrder, tab: 'published', q: currentQuery}) }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                          <a class="page-link mx-1 rounded" href="#" tabindex="-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% endif %}
+                      </ul>
+                    </nav>
+                    {% endif %}
+                  </div>
+                  
+                  <div id="pagination-scheduled" class="tab-pagination" style="display:none;">
+                    {% if sculptures.getPageCount > 1 %}
+                    <nav>
+                      <ul class="pagination justify-content-center mb-0">
+                        {% if sculptures.getCurrentPageNumber > 1 %}
+                        <li class="page-item">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page_sculpture: sculptures.getCurrentPageNumber - 1, sort: sortBy, order: sortOrder, tab: 'scheduled', q: currentQuery}) }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                          <a class="page-link mx-1 rounded" href="#" tabindex="-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for pageNum in 1..sculptures.getPageCount %}
+                          {% if pageNum == sculptures.getCurrentPageNumber %}
+                          <li class="page-item active">
+                            <a class="page-link mx-1 rounded" href="#">{{ pageNum }}</a>
+                          </li>
+                          {% else %}
+                          <li class="page-item">
+                            <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page_sculpture: pageNum, sort: sortBy, order: sortOrder, tab: 'scheduled', q: currentQuery}) }}">{{ pageNum }}</a>
+                          </li>
+                          {% endif %}
+                        {% endfor %}
+                        
+                        {% if sculptures.getCurrentPageNumber < sculptures.getPageCount %}
+                        <li class="page-item">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page_sculpture: sculptures.getCurrentPageNumber + 1, sort: sortBy, order: sortOrder, tab: 'scheduled', q: currentQuery}) }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                          <a class="page-link mx-1 rounded" href="#" tabindex="-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% endif %}
+                      </ul>
+                    </nav>
+                    {% endif %}
+                  </div>
+                  
+                  <div id="pagination-draft" class="tab-pagination" style="display:none;">
+                    {% if photos.getPageCount > 1 %}
+                    <nav>
+                      <ul class="pagination justify-content-center mb-0">
+                        {% if photos.getCurrentPageNumber > 1 %}
+                        <li class="page-item">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page_photo: photos.getCurrentPageNumber - 1, sort: sortBy, order: sortOrder, tab: 'draft', q: currentQuery}) }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                          <a class="page-link mx-1 rounded" href="#" tabindex="-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for pageNum in 1..photos.getPageCount %}
+                          {% if pageNum == photos.getCurrentPageNumber %}
+                          <li class="page-item active">
+                            <a class="page-link mx-1 rounded" href="#">{{ pageNum }}</a>
+                          </li>
+                          {% else %}
+                          <li class="page-item">
+                            <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page_photo: pageNum, sort: sortBy, order: sortOrder, tab: 'draft', q: currentQuery}) }}">{{ pageNum }}</a>
+                          </li>
+                          {% endif %}
+                        {% endfor %}
+                        
+                        {% if photos.getCurrentPageNumber < photos.getPageCount %}
+                        <li class="page-item">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page_photo: photos.getCurrentPageNumber + 1, sort: sortBy, order: sortOrder, tab: 'draft', q: currentQuery}) }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                          <a class="page-link mx-1 rounded" href="#" tabindex="-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
+                            </svg>
+                          </a>
+                        </li>
+                        {% endif %}
+                      </ul>
+                    </nav>
+                    {% endif %}
+                  </div>
+                </div>
+                
+                <script>
+                  // Show/hide pagination based on active tab
+                  document.addEventListener('DOMContentLoaded', function() {
+                    const tabs = document.querySelectorAll('.nav-lb-tab .nav-link');
+                    tabs.forEach(function(tab) {
+                      tab.addEventListener('shown.bs.tab', function(e) {
+                        // Hide all paginations
+                        document.querySelectorAll('.tab-pagination').forEach(p => p.style.display = 'none');
+                        
+                        // Show pagination for active tab
+                        const targetId = e.target.getAttribute('href').substring(1);
+                        const paginationId = 'pagination-' + targetId;
+                        const paginationEl = document.getElementById(paginationId);
+                        if (paginationEl) {
+                          paginationEl.style.display = 'block';
+                        }
+                      });
+                    });
+
+                    // Show correct pagination on page load
+                    const activeTabId = new URLSearchParams(window.location.search).get('tab') || 'all-post';
+                    const paginationId = 'pagination-' + activeTabId;
+                    const paginationEl = document.getElementById(paginationId);
+                    if (paginationEl) {
+                      document.querySelectorAll('.tab-pagination').forEach(p => p.style.display = 'none');
+                      paginationEl.style.display = 'block';
+                    }
+                  });
+                </script>
               </div>
             </div>
           </div>

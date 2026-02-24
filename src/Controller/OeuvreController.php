@@ -18,13 +18,14 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Attribute\Route;
 use Meilisearch\Bundle\SearchManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 
 #[Route('/oeuvre')]
 final class OeuvreController extends AbstractController
 {
 
     #[Route(name: 'oeuvres')]
-    public function indexx(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request, SearchManagerInterface $searchManager): Response
+    public function indexx(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request, SearchManagerInterface $searchManager, PaginatorInterface $paginator): Response
     {
         $query = $request->query->get('q', '');
         $sortBy = $request->query->get('sort', '');
@@ -44,46 +45,80 @@ final class OeuvreController extends AbstractController
                 // Extract IDs in Meilisearch relevance order
                 $ids = array_map(fn($oeuvre) => $oeuvre->getId(), $hits);
                 
-                // Fetch from DB with optional sorting, or preserve Meilisearch order
+                // Fetch results - apply sorting if selected, else keep Meilisearch relevance order
                 if ($sortBy && in_array($sortBy, ['likes', 'commentaires', 'favoris', 'titre'])) {
                     $searchResults = $oeuvreRepository->findByIdsWithSort($ids, $sortBy, $sortOrder);
                 } else {
                     // Keep Meilisearch relevance order
                     $searchResults = $oeuvreRepository->findByIdsWithSort($ids, '', 'ASC');
                 }
+                
                 // Show flash message with count
                 $this->addFlash('info', count($searchResults) . ' résultat(s) trouvé(s)');
             }
         }
 
-        // Get oeuvres by type with sorting
-        $peintures = $oeuvreRepository->findByTypeWithSort(
-            TypeOeuvre::PEINTURE,
-            $sortBy ?: 'titre',
-            $sortOrder
-        );
+        // Apply PHP sorting to search results if sortBy is specified
+        if ($query && $searchResults && $sortBy) {
+            $searchResults = $this->sortOeuvreArray($searchResults, $sortBy, $sortOrder);
+        }
 
-        $sculptures = $oeuvreRepository->findByTypeWithSort(
-           TypeOeuvre::SCULPTURE,
-           $sortBy ?: 'titre',
-           $sortOrder
-        );
-
-        $photos = $oeuvreRepository->findByTypeWithSort(
-           TypeOeuvre::PHOTOGRAPHIE,
-           $sortBy ?: 'titre',
-           $sortOrder
-        );
+        // Get oeuvres by type - fetch without sorting first
+        $peintures = $oeuvreRepository->findByTypeWithSort(TypeOeuvre::PEINTURE, 'titre', 'ASC');
+        $sculptures = $oeuvreRepository->findByTypeWithSort(TypeOeuvre::SCULPTURE, 'titre', 'ASC');
+        $photos = $oeuvreRepository->findByTypeWithSort(TypeOeuvre::PHOTOGRAPHIE, 'titre', 'ASC');
+        $all = $oeuvreRepository->findAllWithSort('titre', 'ASC');
         
-        // Apply sorting to all oeuvres if needed
-        $all = $oeuvreRepository->findAllWithSort($sortBy ?: 'titre', $sortOrder);
+        // Sort in PHP based on sortBy parameter (so pagination works with sorting)
+        if ($sortBy) {
+            $all = $this->sortOeuvreArray($all, $sortBy, $sortOrder);
+            $peintures = $this->sortOeuvreArray($peintures, $sortBy, $sortOrder);
+            $sculptures = $this->sortOeuvreArray($sculptures, $sortBy, $sortOrder);
+            $photos = $this->sortOeuvreArray($photos, $sortBy, $sortOrder);
+        } else {
+            // Default sort by title
+            $all = $this->sortOeuvreArray($all, 'titre', $sortOrder);
+            $peintures = $this->sortOeuvreArray($peintures, 'titre', $sortOrder);
+            $sculptures = $this->sortOeuvreArray($sculptures, 'titre', $sortOrder);
+            $photos = $this->sortOeuvreArray($photos, 'titre', $sortOrder);
+        }
+        
+        // Paginate the sorted arrays - 6 items per page
+        // IMPORTANT: Disable paginator's auto-sorting since we handle sorting in PHP
+        $paginatorOptions = [
+            'pageParameterName' => 'page',
+            'sortFieldParameterName' => 'disable_sort',
+            'sortDirectionParameterName' => 'disable_dir'
+        ];
+        $oeuvres = $paginator->paginate($all, $request->query->getInt('page', 1), 6, $paginatorOptions);
+        
+        $paginatorOptionsType = [
+            'pageParameterName' => 'page_peinture',
+            'sortFieldParameterName' => 'disable_sort',
+            'sortDirectionParameterName' => 'disable_dir'
+        ];
+        $peinturesPaginated = $paginator->paginate($peintures, $request->query->getInt('page_peinture', 1), 6, $paginatorOptionsType);
+        
+        $paginatorOptionsType2 = [
+            'pageParameterName' => 'page_sculpture',
+            'sortFieldParameterName' => 'disable_sort',
+            'sortDirectionParameterName' => 'disable_dir'
+        ];
+        $sculpturesPaginated = $paginator->paginate($sculptures, $request->query->getInt('page_sculpture', 1), 6, $paginatorOptionsType2);
+        
+        $paginatorOptionsType3 = [
+            'pageParameterName' => 'page_photo',
+            'sortFieldParameterName' => 'disable_sort',
+            'sortDirectionParameterName' => 'disable_dir'
+        ];
+        $photosPaginated = $paginator->paginate($photos, $request->query->getInt('page_photo', 1), 6, $paginatorOptionsType3);
         
         return $this->render('oeuvre/oeuvres.html.twig', [
             'controller_name' => 'OeuvreController',
-            'oeuvres' => $all,
-            'peintures' => $peintures,
-            'sculptures' => $sculptures,
-            'photos' => $photos,
+            'oeuvres' => $oeuvres,
+            'peintures' => $peinturesPaginated,
+            'sculptures' => $sculpturesPaginated,
+            'photos' => $photosPaginated,
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
             'searchResults' => $searchResults,
@@ -331,6 +366,65 @@ final class OeuvreController extends AbstractController
 
         $this->addFlash('success', count($ids) . ' œuvre(s) supprimée(s) avec succès.');
         return $this->redirectToRoute('oeuvres', [], Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * Sort an array of Oeuvre objects by given criteria
+     */
+    private function sortOeuvreArray(array $oeuvres, string $sortBy, string $sortOrder): array
+    {
+        // Validate sortOrder
+        if ($sortOrder !== 'ASC' && $sortOrder !== 'DESC') {
+            $sortOrder = 'ASC';
+        }
+        
+        // Create array with counts for sorting
+        $oeuvresWithCounts = [];
+        foreach ($oeuvres as $oeuvre) {
+            $count = 0;
+            switch ($sortBy) {
+                case 'likes':
+                    $count = $oeuvre->getLikes()?->filter(fn($like) => $like->isLiked())->count() ?? 0;
+                    break;
+                case 'commentaires':
+                    $count = $oeuvre->getCommentaires()?->count() ?? 0;
+                    break;
+                case 'favoris':
+                    $count = $oeuvre->getUserFav()?->count() ?? 0;
+                    break;
+                case 'titre':
+                default:
+                    $count = 0;
+            }
+            $oeuvresWithCounts[] = [
+                'oeuvre' => $oeuvre,
+                'count' => $count,
+                'titre' => $oeuvre->getTitre() ?? ''
+            ];
+        }
+        
+        // Sort using usort
+        usort($oeuvresWithCounts, function($a, $b) use ($sortBy, $sortOrder) {
+            if ($sortBy === 'titre') {
+                $cmp = strcmp($a['titre'], $b['titre']);
+                return ($sortOrder === 'DESC') ? -$cmp : $cmp;
+            }
+            
+            // For numeric sorts: likes, commentaires, favoris
+            if ($sortOrder === 'ASC') {
+                return $a['count'] <=> $b['count'];  // Small to large
+            } else {
+                return $b['count'] <=> $a['count'];  // Large to small
+            }
+        });
+        
+        // Extract sorted oeuvres
+        $sorted = [];
+        foreach ($oeuvresWithCounts as $item) {
+            $sorted[] = $item['oeuvre'];
+        }
+        
+        return $sorted;
     }
 
     

@@ -21,18 +21,18 @@ final class UserController extends AbstractController
     #[Route('/recherche', name: 'app_user_search', methods: ['GET'])]
     public function search(Request $request, UserRepository $userRepository, PaginatorInterface $paginator): Response
     {
-        $nom = $request->query->get('nom');
+        $nomPrenom = $request->query->get('nom');
         $order = strtoupper($request->query->get('order', 'ASC'));
         if (!in_array($order, ['ASC', 'DESC'])) {
             $order = 'ASC';
         }
-        $query = $userRepository->searchByNomQuery($nom, $order);
+        $query = $userRepository->searchByNomPrenomQuery($nomPrenom, $order);
         $page = $request->query->getInt('page', 1);
         $pagination = $paginator->paginate($query, $page, 10);
         return $this->render('user/index.html.twig', [
             'users' => $pagination,
             'page_title' => 'Recherche utilisateurs',
-            'search_nom' => $nom,
+            'search_nom' => $nomPrenom,
             'search_order' => $order
         ]);
     }
@@ -43,7 +43,7 @@ final class UserController extends AbstractController
         if (!in_array($order, ['ASC', 'DESC'])) {
             $order = 'ASC';
         }
-        $query = $userRepository->searchByNomQuery(null, $order);
+        $query = $userRepository->searchByNomPrenomQuery(null, $order);
         $page = $request->query->getInt('page', 1);
         $pagination = $paginator->paginate($query, $page, 10);
         return $this->render('user/index.html.twig', [
@@ -58,22 +58,29 @@ final class UserController extends AbstractController
     #[Route('/artistes', name: 'app_user_artistes', methods: ['GET'])]
     public function artistes(Request $request, UserRepository $userRepository, PaginatorInterface $paginator): Response
     {
+        $nomPrenom = $request->query->get('nom');
         $order = strtoupper($request->query->get('order', 'ASC'));
         if (!in_array($order, ['ASC', 'DESC'])) {
             $order = 'ASC';
         }
         $qb = $userRepository->createQueryBuilder('u')
             ->andWhere('u.role = :role')
-            ->setParameter('role', Role::ARTISTE)
-            ->orderBy('u.nom', $order)
-            ->addOrderBy('u.prenom', $order);
+            ->setParameter('role', Role::ARTISTE);
+        if ($nomPrenom && strpos(trim($nomPrenom), ' ') !== false) {
+            $qb->andWhere("CONCAT(LOWER(u.nom), ' ', LOWER(u.prenom)) LIKE :nomPrenom")
+               ->setParameter('nomPrenom', '%' . strtolower($nomPrenom) . '%');
+        } elseif ($nomPrenom) {
+            $qb->andWhere('1=0');
+        }
+        $qb->orderBy('u.nom', $order)
+           ->addOrderBy('u.prenom', $order);
         $page = $request->query->getInt('page', 1);
         $pagination = $paginator->paginate($qb, $page, 10);
         return $this->render('user/index.html.twig', [
             'users' => $pagination,
             'page_title' => 'Liste des Artistes',
             'current_filter' => 'ARTISTE',
-            'search_nom' => null,
+            'search_nom' => $nomPrenom,
             'search_order' => $order
         ]);
     }
@@ -82,22 +89,29 @@ final class UserController extends AbstractController
     #[Route('/amateurs', name: 'app_user_amateurs', methods: ['GET'])]
     public function amateurs(Request $request, UserRepository $userRepository, PaginatorInterface $paginator): Response
     {
+        $nomPrenom = $request->query->get('nom');
         $order = strtoupper($request->query->get('order', 'ASC'));
         if (!in_array($order, ['ASC', 'DESC'])) {
             $order = 'ASC';
         }
         $qb = $userRepository->createQueryBuilder('u')
             ->andWhere('u.role = :role')
-            ->setParameter('role', Role::AMATEUR)
-            ->orderBy('u.nom', $order)
-            ->addOrderBy('u.prenom', $order);
+            ->setParameter('role', Role::AMATEUR);
+        if ($nomPrenom && strpos(trim($nomPrenom), ' ') !== false) {
+            $qb->andWhere("CONCAT(LOWER(u.nom), ' ', LOWER(u.prenom)) LIKE :nomPrenom")
+               ->setParameter('nomPrenom', '%' . strtolower($nomPrenom) . '%');
+        } elseif ($nomPrenom) {
+            $qb->andWhere('1=0');
+        }
+        $qb->orderBy('u.nom', $order)
+           ->addOrderBy('u.prenom', $order);
         $page = $request->query->getInt('page', 1);
         $pagination = $paginator->paginate($qb, $page, 10);
         return $this->render('user/index.html.twig', [
             'users' => $pagination,
             'page_title' => 'Liste des Amateurs',
             'current_filter' => 'AMATEUR',
-            'search_nom' => null,
+            'search_nom' => $nomPrenom,
             'search_order' => $order
         ]);
     }

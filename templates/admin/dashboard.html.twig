@@ -138,11 +138,11 @@
     </div>
 
     <div class="row g-4 mb-4">
-        <!-- Graphique activité + répartition rôles -->
+        <!-- Graphique inscriptions -->
         <div class="col-lg-8">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Activité & Inscriptions</h5>
+                    <h5 class="mb-0">Inscriptions (6 derniers mois)</h5>
                     <span class="badge bg-light text-dark">Mois courant</span>
                 </div>
                 <div class="card-body">
@@ -263,7 +263,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/fr.global.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Chart activité
+    // Chart inscriptions
     if (window.Chart) {
         var ctx = document.getElementById('activityChart').getContext('2d');
         var activityLabels = {{ activity_labels|default(['Jan','Fév','Mar','Avr','Mai','Juin'])|json_encode|raw }};

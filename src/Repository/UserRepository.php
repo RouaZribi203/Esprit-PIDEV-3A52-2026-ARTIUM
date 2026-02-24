@@ -19,15 +19,23 @@ class UserRepository extends ServiceEntityRepository
      * @return User[]
      */
     /**
-     * Retourne un Query pour pagination
+     * Recherche les utilisateurs par nom et prénom combinés (partiel)
+     *
+     * @param string|null $nomPrenom
+     * @param string $order 'ASC' ou 'DESC'
+     * @return User[]
      */
-    public function searchByNomQuery(?string $nom, string $order = 'ASC')
+    public function searchByNomPrenomQuery(?string $nomPrenom, string $order = 'ASC')
     {
         $qb = $this->createQueryBuilder('u');
-        if ($nom) {
-            $qb->andWhere('LOWER(u.nom) LIKE :nom')
-               ->setParameter('nom', '%' . strtolower($nom) . '%');
+        if ($nomPrenom && strpos(trim($nomPrenom), ' ') !== false) {
+            $qb->andWhere("CONCAT(LOWER(u.nom), ' ', LOWER(u.prenom)) LIKE :nomPrenom")
+               ->setParameter('nomPrenom', '%' . strtolower($nomPrenom) . '%');
+        } elseif ($nomPrenom) {
+            // Si nomPrenom ne contient pas d'espace, retourne aucun résultat
+            $qb->andWhere('1=0');
         }
+        // Si nomPrenom est null ou vide, ne filtre pas
         $qb->orderBy('u.nom', $order)
            ->addOrderBy('u.prenom', $order);
         return $qb->getQuery();

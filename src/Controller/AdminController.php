@@ -75,9 +75,10 @@ final class AdminController extends AbstractController
         $activity_labels = [];
         $activity_data = [];
         $now = new \DateTime();
+        $mois_fr = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
         for ($i = 5; $i >= 0; $i--) {
             $month = (clone $now)->modify("-$i month");
-            $label = $month->format('M Y');
+            $label = $mois_fr[((int)$month->format('n')) - 1] . ' ' . $month->format('Y');
             $activity_labels[] = $label;
             $count = $userRepository->createQueryBuilder('u')
                 ->select('COUNT(u.id)')

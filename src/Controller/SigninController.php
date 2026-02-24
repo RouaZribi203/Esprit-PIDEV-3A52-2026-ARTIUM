@@ -73,8 +73,7 @@ final class SigninController extends AbstractController
         );
         if ($result) {
             // Connexion automatique
-            $userAuthenticator->authenticateUser($user, $faceAuthenticator, $request);
-            return new Response("Login Success");
+            return $userAuthenticator->authenticateUser($user, $faceAuthenticator, $request);
         }
         return new Response("Face Not Recognized", 401);
     }

@@ -38,15 +38,15 @@
       <!-- Card Header avec barre de recherche -->
       <div class="p-4 row">
         {# BLOC 2 : RECHERCHE + TRI #}
-        <form class="row g-2 align-items-center" method="get" action="{{ path('galeries') }}">
+        <form class="row g-2 align-items-center" method="get" action="{{ path('galeries') }}" id="searchForm">
           <input type="hidden" name="filter_field" value="nom">
           <div class="col-12 col-md-6 col-lg-4">
             <div class="position-relative">
               <span class="position-absolute ps-3 search-icon" style="top: 50%; transform: translateY(-50%);">
                 <i class="fe fe-search"></i>
               </span>
-              <input type="text" name="filter_value" class="form-control ps-6" placeholder="Rechercher galerie"
-                value="{{ filter_value }}">
+              <input type="text" name="filter_value" id="searchInput" class="form-control ps-6" placeholder="Rechercher galerie"
+                value="{{ filter_value }}" autocomplete="off">
             </div>
           </div>
           <div class="col-12 col-md-6 col-lg-5"></div>
@@ -303,212 +303,25 @@
 </div>
 {% endfor %}
 
-{% endblock %}
+<script>
+// Recherche AJAX automatique
+document.addEventListener('DOMContentLoaded', function() {
+  const searchForm = document.getElementById('searchForm');
+  const searchInput = document.getElementById('searchInput');
+  let searchTimeout;
+  
+  if (searchInput && searchForm) {
+    searchInput.addEventListener('input', function() {
+      // Annuler le timeout précédent si l'utilisateur continue de taper
+      clearTimeout(searchTimeout);
+      
+      // Attendre 500ms après la dernière frappe avant de soumettre
+      searchTimeout = setTimeout(function() {
+        searchForm.submit();
+      }, 500);
+    });
+  }
+});
+</script>
 
-{#**
-* ═══════════════════════════════════════════════════════════════════════════════════════════
-* LOGIQUE COMPLÈTE DU TEMPLATE DE GESTION DES GALERIES (galeries.html.twig)
-* ═══════════════════════════════════════════════════════════════════════════════════════════
-*
-* STRUCTURE GÉNÉRALE
-* ══════════════════
-* Le template affiche une page administrative complète de gestion des galeries avec :
-* - Un tableau dynamique listant toutes les galeries paginées (10 par page)
-* - Un système d'offcanvas (panneaux latéraux) pour ajouter et modifier les galeries
-* - Une pagination dynamique qui apparaît seulement s'il y a plus d'une page
-* - Un système de suppression avec confirmation et token CSRF
-*
-* BLOC 1 : EN-TÊTE DE PAGE
-* ════════════════════════
-* - Affiche le titre "Gestion des galeries"
-* - Breadcrumb navigation : Tableau de bord > Galeries
-* - Bouton "Ajouter Galerie" qui ouvre l'offcanvas d'ajout (offcanvasAddGalerie)
-*
-* BLOC 2 : BARRE DE RECHERCHE
-* ═════════════════════════════
-* - Formulaire de recherche (fonctionnalité non implémentée actuellement)
-* - Peut être utilisée pour filtrer les galeries au besoin
-*
-* BLOC 3 : TABLEAU DYNAMIQUE DES GALERIES
-* ════════════════════════════════════════
-*
-* BLOC 3.1 - EN-TÊTES DU TABLEAU
-* ┌─────────────────────────────────────┐
-* │ Nom | Adresse | Localisation | ... │
-* └─────────────────────────────────────┘
-* Colonnes :
-* - Nom : nom de la galerie
-* - Adresse : adresse physique
-* - Localisation : ville/région
-* - Capacité maximale : nombre de personnes max
-* - Description : infos supplémentaires
-* - Actions : boutons modifier/supprimer
-*
-* BLOC 3.2 - BODY DU TABLEAU (BOUCLE DYNAMIQUE)
-* ──────────────────────────────────────────────
-* {% for galerie in galeries %}
-* Itère sur chaque galerie du contrôleur
-* Affiche une ligne <tr> avec les données de la galerie
-  * Si aucune galerie : affiche "Aucune galerie trouvée"
-  *
-  * BLOC 3.3 - COLONNE ACTIONS
-  * ─────────────────────────
-  * Dropdown menu "..." pour chaque galerie :
-  * 1. MODIFIER
-  * - Ouvre l'offcanvas edit correspondant : #offcanvasEditGalerie{{ galerie.id }}
-  * - L'offcanvas contient le formulaire pré-rempli avec les données
-  * - Click → offcanvas glisse de droite, utilisateur modifie, clique Enregistrer
-  * - POST vers /galerie?page=X (conservation page)
-  *
-  * 2. SUPPRIMER
-  * - Formulaire POST avec confirmation JavaScript
-  * - Token CSRF pour sécurité
-  * - Action : DELETE /galerie/{id}?page=X
-  * - Après suppression : redirection vers /galerie?page=X
-  *
-  * BLOC 5 : PAGINATION DYNAMIQUE
-  * ═════════════════════════════
-  * {% if total_pages > 1 %}
-  * Affiche uniquement si plus d'une page
-  *
-  * BLOC 5.1 - BOUTON PREVIOUS
-  * ──────────────────────────
-  * - Lien : /galerie?page={{ current_page - 1 }}
-  * - Disabled si current_page == 1
-  * - Navigation : < chevron gauche * * BLOC 5.2 - BOUTONS DE PAGE (1, 2, 3, ...) *
-    ───────────────────────────────────────── * {% for p in 1..total_pages %} * - Crée un bouton pour chaque page * -
-    Lien : /galerie?page={{ p }} * - Classe 'active' si p==current_page * * BLOC 5.3 - BOUTON NEXT *
-    ───────────────────── * - Lien : /galerie?page={{ current_page + 1 }} * - Disabled si current_page==total_pages * -
-    Navigation :> chevron droit
-    *
-    * BLOC 6 : OFFCANVAS D'AJOUT (offcanvasAddGalerie)
-    * ═════════════════════════════════════════════════
-    * Panneau latéral 600px qui glisse par la droite
-    *
-    * BLOC 6.1 - FORMULAIRE D'AJOUT
-    * ────────────────────────────
-    * {{ form_start(new_form) }} ... {{ form_end(new_form) }}
-    * - Formulaire GalerieType pré-construit dans le contrôleur
-    * - Action : POST /galerie?page=X
-    * - Champs :
-    * • nom (required)
-    * • adresse (required)
-    * • localisation (required)
-    * • capacite_max (required)
-    * • description (optional)
-    * - Theme : bootstrap_5_layout pour CSS styling
-    *
-    * BLOC 6.2 - BOUTONS
-    * ──────────────────
-    * - Enregistrer : type=submit
-    * - Fermer : type=button data-bs-dismiss="offcanvas"
-    *
-    * BLOC 7 : OFFCANVAS D'ÉDITION (offcanvasEditGalerie{{ galerie.id }})
-    * ═════════════════════════════════════════════════════════════════════
-    * Une offcanvas par galerie affichée (générée en boucle)
-    * ID unique : offcanvasEditGalerie1, offcanvasEditGalerie2, etc.
-    *
-    * BLOC 7.1 - APPLICATION DU THÈME
-    * ──────────────────────────────
-    * {% form_theme edit_forms[galerie.id] 'bootstrap_5_layout.html.twig' %}
-    * - Applique le thème Bootstrap à chaque formulaire d'édition
-    *
-    * BLOC 7.2 - FORMULAIRE D'ÉDITION
-    * ───────────────────────────────
-    * {{ form_start(edit_forms[galerie.id]) }} ... {{ form_end(...) }}
-    * - Formulaire GalerieType pré-rempli avec les données de la galerie
-    * - Action : POST /galerie?page=X
-    * - Champs : mêmes que l'ajout, mais pré-remplis
-    * - La galerie est modifiée en place (pas d'objet nouveau)
-    *
-    * BLOC 7.3 - BOUTONS
-    * ──────────────────
-    * - Enregistrer : type=submit
-    * - Fermer : type=button data-bs-dismiss="offcanvas"
-    *
-    * FLUX D'INTERACTION UTILISATEUR
-    * ════════════════════════════════
-    *
-    * SCÉNARIO 1 : AJOUTER UNE GALERIE
-    * ────────────────────────────────
-    * 1. Utilisateur clique "Ajouter Galerie"
-    * 2. Offcanvas #offcanvasAddGalerie glisse par la droite
-    * 3. Utilisateur remplit le formulaire new_form
-    * 4. Utilisateur clique "Enregistrer"
-    * 5. POST /galerie (formulaire_new détecté par handleRequest())
-    * 6. Contrôleur valide et persiste la nouvelle galerie
-    * 7. Flush en BD
-    * 8. Redirect /galerie?page=X (même page)
-    * 9. Page se recharge, nouvelle galerie apparaît
-    *
-    * SCÉNARIO 2 : MODIFIER UNE GALERIE
-    * ─────────────────────────────────
-    * 1. Utilisateur clique sur "..." à droite d'une ligne
-    * 2. Dropdown menu s'ouvre
-    * 3. Utilisateur clique "Modifier"
-    * 4. Offcanvas #offcanvasEditGalerie{ID} glisse par la droite
-    * 5. Formulaire edit_forms[galerie.id] est pré-rempli
-    * 6. Utilisateur modifie les champs
-    * 7. Utilisateur clique "Enregistrer"
-    * 8. POST /galerie (formulaire_edit_ID détecté par handleRequest())
-    * 9. Contrôleur valide et flush les changements en BD
-    * 10. Redirect /galerie?page=X (même page)
-    * 11. Page se recharge, galerie mise à jour apparaît
-    *
-    * SCÉNARIO 3 : SUPPRIMER UNE GALERIE
-    * ──────────────────────────────────
-    * 1. Utilisateur clique sur "..." à droite d'une ligne
-    * 2. Dropdown menu s'ouvre
-    * 3. Utilisateur clique "Supprimer"
-    * 4. JavaScript alert() : confirm("Supprimer cette galerie ?")
-    * 5. Si OK : formulaire POST est soumis
-    * 6. POST /galerie/{id}?page=X (delete action)
-    * 7. Contrôleur valide token CSRF
-    * 8. Remove la galerie et flush en BD
-    * 9. Redirect /galerie?page=X (même page)
-    * 10. Page se recharge, galerie disparaît
-    *
-    * SCÉNARIO 4 : NAVIGUER EN PAGINATION
-    * ────────────────────────────────────
-    * - Si total > 10 galeries : pagination apparaît automatiquement
-    * - Utilisateur clique page 2
-    * - GET /galerie?page=2
-    * - Contrôleur récupère page=2 du query string
-    * - Affiche galeries 11-20
-    * - Bouton page 2 devient 'active'
-    *
-    * ASPECTS TECHNIQUES
-    * ══════════════════
-    *
-    * DONNÉES PASSÉES PAR CONTRÔLEUR
-    * ──────────────────────────────
-    * - galeries : array de Galerie, paginées (10 max)
-    * - new_form : FormView pour ajout (formulaire vierge)
-    * - edit_forms : array de FormView, clés = galerie IDs (formulaires pré-remplis)
-    * - current_page : int (numéro page actuelle)
-    * - total_pages : int (nombre total pages)
-    *
-    * SÉCURITÉ
-    * ────────
-    * - CSRF Token : chaque formulaire de suppression a un token CSRF unique
-    * - Token généré : {{ csrf_token('delete' ~ galerie.id) }}
-    * - Validation côté serveur : if ($this->isCsrfTokenValid(...))
-    * - Prévient les attaques par formulaires forgery
-    *
-    * RESPONSIVE DESIGN
-    * ─────────────────
-    * - col-12 : pleine largeur (mobile)
-    * - col-md-6 : demi-largeur (tablette+)
-    * - Offcanvas width: 600px se réduit sur petit écran
-    * - Tableau scrollable horizontalement sur petit écran
-    *
-    * THÈME BOOTSTRAP 5
-    * ─────────────────
-    * {% form_theme new_form 'bootstrap_5_layout.html.twig' %}
-    * {% form_theme edit_forms[...] 'bootstrap_5_layout.html.twig' %}
-    * - Applique les classes Bootstrap aux champs de formulaire
-    * - Labels, inputs, messages d'erreur stylisés automatiquement
-    * - Classes : form-control, form-label, invalid-feedback, etc.
-    *
-    * ═══════════════════════════════════════════════════════════════════════════════════════════
-    */#}
+{% endblock %}

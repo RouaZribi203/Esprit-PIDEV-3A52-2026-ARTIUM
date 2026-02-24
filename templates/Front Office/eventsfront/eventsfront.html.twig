@@ -15,6 +15,7 @@
             name="query" 
             class="form-control" 
             placeholder="Search event idea (AI powered)..."
+            value="{{ search_query|default('') }}"
             aria-label="Search events">
           <button type="submit" class="btn btn-sm btn-primary">
             Search
@@ -54,7 +55,12 @@
                   </div>
                   <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between mb-2">
-                      <h5 class="mb-2 text-dark">{{ evenement.titre }}</h5>
+                      <h5 class="mb-2 text-dark">
+                        {{ evenement.titre }}
+                        {% if row.ai_score is defined %}
+                          <span class="badge bg-success ms-2">{{ row.ai_score }}/10</span>
+                        {% endif %}
+                      </h5>
                       <form method="post" action="{{ path('app_eventdetails', { id: evenement.id }) }}" style="position: relative; z-index: 10;">
                         <input type="hidden" name="_token" value="{{ csrf_token('buy_ticket_' ~ evenement.id) }}">
                         <button class="btn btn-sm btn-outline-primary" type="submit" aria-label="Acheter ticket">
@@ -110,7 +116,12 @@
                     </div>
                     <div class="card-body">
                       <div class="d-flex align-items-start justify-content-between mb-2">
-                        <h5 class="mb-2 text-dark">{{ evenement.titre }}</h5>
+                          <h5 class="mb-2 text-dark">
+                            {{ evenement.titre }}
+                            {% if row.ai_score is defined %}
+                              <span class="badge bg-success ms-2">{{ row.ai_score }}/10</span>
+                            {% endif %}
+                          </h5>
                         <form method="post" action="{{ path('app_eventdetails', { id: evenement.id }) }}" style="position: relative; z-index: 10;">
                           <input type="hidden" name="_token" value="{{ csrf_token('buy_ticket_' ~ evenement.id) }}">
                           <button class="btn btn-sm btn-outline-primary" type="submit" aria-label="Acheter ticket">

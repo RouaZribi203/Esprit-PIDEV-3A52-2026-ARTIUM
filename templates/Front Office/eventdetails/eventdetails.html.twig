@@ -3,6 +3,16 @@
 {% block title %}{{ evenement.titre }} - {{ 'Détails'|trans }}{% endblock %}
 
 {% block amateur_content %}
+    {# Messages flash #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
     <div class="card card-body">
         <!-- Image de couverture -->
         <div class="mb-4">
@@ -27,7 +37,7 @@
                         <span class="badge bg-primary">{{ evenement.type ? evenement.type.value : '' }}</span>
                     </div>
                 </div>
-                <form method="post" action="{{ path('app_eventdetails', { id: evenement.id }) }}">
+                <form method="post" action="{{ path('app_payment_checkout', { id: evenement.id }) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('buy_ticket_' ~ evenement.id) }}">
                     <button class="btn btn-primary" type="submit">
                         <i class="bi bi-ticket-perforated me-2"></i>Acheter ticket

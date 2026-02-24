@@ -44,20 +44,10 @@ final class EventdetailsController extends AbstractController
         }
 
         if ($request->isMethod('POST') && $this->isCsrfTokenValid('buy_ticket_' . $evenement->getId(), $request->request->get('_token'))) {
-            $payload = $this->buildTicketPayload($evenement, $user);
-
-            $ticket = new Ticket();
-            $ticket->setEvenement($evenement);
-            $ticket->setUser($user);
-            $ticket->setDateAchat(new \DateTime());
-            $ticket->setCodeQr($payload);
-
-            $entityManager->persist($ticket);
-            $entityManager->flush();
-
-            $this->sendTicketEmail($mailer, $logger, $user, $evenement, $ticket, $payload);
-
-            return $this->redirectToRoute('app_eventdetails', ['id' => $evenement->getId()]);
+            // Rediriger vers la route de paiement Stripe
+            return $this->redirectToRoute('app_payment_checkout', [
+                'id' => $evenement->getId(),
+            ]);
         }
 
         $tickets = $ticketRepository->findBy(

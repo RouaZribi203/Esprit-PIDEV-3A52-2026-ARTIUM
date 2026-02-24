@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Reclamation;
 use App\Entity\User;
 use App\Enum\StatutReclamation;
+use App\Enum\TypeReclamation;
 use App\Form\Reclamation1Type;
 use App\Repository\ReclamationRepository;
 use App\Repository\UserRepository;
@@ -28,13 +29,55 @@ final class ReclamationArtisteController extends AbstractController
             $statut = StatutReclamation::tryFrom($statutValue);
         }
 
+        $typeValue = $request->query->get('type');
+        $type = null;
+        if (is_string($typeValue) && $typeValue !== '') {
+            $type = TypeReclamation::tryFrom($typeValue);
+        }
+
+        $dateFrom = $request->query->get('date_from', '');
+
         $reclamations = [];
         if ($user instanceof User) {
-            $reclamations = $reclamationRepository->findByUserFilters(
-                $user,
-                $search !== '' ? $search : null,
-                $statut
-            );
+            // Build query with all filters
+            $qb = $reclamationRepository->createQueryBuilder('r')
+                ->andWhere('r.user = :user')
+                ->setParameter('user', $user)
+                ->orderBy('r.date_creation', 'DESC');
+
+            // Add search filter
+            if ($search !== '') {
+                $qb->andWhere('r.texte LIKE :search')
+                    ->setParameter('search', '%' . $search . '%');
+            }
+
+            // Add status filter
+            if ($statut !== null) {
+                $qb->andWhere('r.statut = :statut')
+                    ->setParameter('statut', $statut);
+            }
+
+            // Add type filter
+            if ($type !== null) {
+                $qb->andWhere('r.type = :type')
+                    ->setParameter('type', $type);
+            }
+
+            // Add date filter
+            if ($dateFrom !== '') {
+                $dateFromObj = \DateTime::createFromFormat('Y-m-d', $dateFrom);
+                if ($dateFromObj) {
+                    $startOfDay = clone $dateFromObj;
+                    $startOfDay->setTime(0, 0, 0);
+                    $endOfDay = clone $dateFromObj;
+                    $endOfDay->setTime(23, 59, 59);
+                    $qb->andWhere('r.date_creation >= :startOfDay AND r.date_creation <= :endOfDay')
+                        ->setParameter('startOfDay', $startOfDay)
+                        ->setParameter('endOfDay', $endOfDay);
+                }
+            }
+
+            $reclamations = $qb->getQuery()->getResult();
         }
 
         $form = $this->createForm(Reclamation1Type::class, new Reclamation(), [
@@ -56,6 +99,8 @@ final class ReclamationArtisteController extends AbstractController
             'edit_forms' => $editForms,
             'search_query' => $search ?? '',
             'selected_statut' => $statut?->value ?? '',
+            'selected_type' => $type?->value ?? '',
+            'date_from' => $dateFrom,
         ]);
     }
 
@@ -96,7 +141,12 @@ final class ReclamationArtisteController extends AbstractController
 
             $reclamations = [];
             if ($user instanceof User) {
-                $reclamations = $reclamationRepository->findByUserFilters($user, null, null);
+                $reclamations = $reclamationRepository->createQueryBuilder('r')
+                    ->andWhere('r.user = :user')
+                    ->setParameter('user', $user)
+                    ->orderBy('r.date_creation', 'DESC')
+                    ->getQuery()
+                    ->getResult();
             }
 
             $editForms = [];
@@ -113,6 +163,8 @@ final class ReclamationArtisteController extends AbstractController
                 'edit_forms' => $editForms,
                 'search_query' => '',
                 'selected_statut' => '',
+                'selected_type' => '',
+                'date_from' => '',
             ]);
         }
 
@@ -144,7 +196,7 @@ final class ReclamationArtisteController extends AbstractController
 
             $reclamations = [];
             if ($user instanceof User) {
-                $reclamations = $reclamationRepository->findByUserFilters($user, null, null);
+                $reclamations = $reclamationRepository->findByUserFilters($user, null, null, null);
             }
 
             $editForms = [];
@@ -171,6 +223,7 @@ final class ReclamationArtisteController extends AbstractController
                 'edit_forms' => $editForms,
                 'search_query' => '',
                 'selected_statut' => '',
+                'selected_type' => '',
             ]);
         }
 

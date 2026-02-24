@@ -33,7 +33,7 @@
       <div class="col-md-6">
         <div class="d-flex gap-2">
           <div class="flex-grow-1">
-            <label for="searchInput" class="form-label small mb-2">Rechercher par nom ou description</label>
+            <label for="searchInput" class="form-label small mb-2">Rechercher par titre, description ou artiste</label>
             <input type="text" class="form-control" id="searchInput" placeholder="Rechercher des chansons..." value="{{ searchTerm }}">
           </div>
           <button type="button" class="btn btn-outline-primary align-self-end" id="searchBtn">
@@ -118,6 +118,10 @@
                 <h6 class="mt-3"> 
                   <a href="#!"> {{ musique.titre }} </a> 
                 </h6>
+                {% set artistFullName = ((musique.artiste_prenom|default('')) ~ ' ' ~ (musique.artiste_nom|default('')))|trim %}
+                <p class="mb-2 small text-muted">
+                  <i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}
+                </p>
                 
                 <!-- Description -->
                 <p class="mb-2 small text-muted">

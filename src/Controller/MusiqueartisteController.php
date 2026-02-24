@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Musique;
+use App\Entity\User;
 use App\Enum\TypeOeuvre;
 use App\Form\MusiqueType;
 use App\Repository\CollectionsRepository;
@@ -27,7 +28,12 @@ final class MusiqueartisteController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
-        $artistCollections = $collectionsRepository->findBy([], ['titre' => 'ASC']);
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof User) {
+            throw $this->createAccessDeniedException('You must be logged in as an artist.');
+        }
+
+        $artistCollections = $collectionsRepository->findBy(['artiste' => $currentUser], ['titre' => 'ASC']);
 
         // Create new Musique entity
         $musique = new Musique();
@@ -73,9 +79,9 @@ final class MusiqueartisteController extends AbstractController
                 }
                 
                 if ($searchTerm) {
-                    $musiques = $musiqueRepository->searchAndFilter($searchTerm, $sortBy, $sortOrder);
+                    $musiques = $musiqueRepository->searchAndFilter($searchTerm, $sortBy, $sortOrder, $currentUser->getId());
                 } else {
-                    $musiques = $musiqueRepository->searchAndFilter(null, $sortBy, $sortOrder);
+                    $musiques = $musiqueRepository->searchAndFilter(null, $sortBy, $sortOrder, $currentUser->getId());
                 }
                 
                 return $this->render('Front Office/musiqueartiste/musiqueartiste.html.twig', [
@@ -145,6 +151,10 @@ final class MusiqueartisteController extends AbstractController
                 if (!$selectedCollection->getId()) {
                     throw new \Exception('Invalid collection selected.');
                 }
+
+                if ($selectedCollection->getArtiste()?->getId() !== $currentUser->getId()) {
+                    throw new \Exception('You can only add music to your own collections.');
+                }
                 
                 // Save to database
                 $entityManager->persist($musique);
@@ -188,9 +198,9 @@ final class MusiqueartisteController extends AbstractController
         
         // Use search/filter method or fallback to all
         if ($searchTerm) {
-            $musiques = $musiqueRepository->searchAndFilter($searchTerm, $sortBy, $sortOrder);
+            $musiques = $musiqueRepository->searchAndFilter($searchTerm, $sortBy, $sortOrder, $currentUser->getId());
         } else {
-            $musiques = $musiqueRepository->searchAndFilter(null, $sortBy, $sortOrder);
+            $musiques = $musiqueRepository->searchAndFilter(null, $sortBy, $sortOrder, $currentUser->getId());
         }
         
         return $this->render('Front Office/musiqueartiste/musiqueartiste.html.twig', [
@@ -253,9 +263,24 @@ final class MusiqueartisteController extends AbstractController
         HttpClientInterface $httpClient
     ): JsonResponse
     {
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof User) {
+            return $this->json([
+                'success' => false,
+                'message' => 'You must be logged in as an artist.'
+            ], 403);
+        }
+
         $musique = $musiqueRepository->find($id);
 
         if (!$musique) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Song not found.'
+            ], 404);
+        }
+
+        if ($musique->getCollection()?->getArtiste()?->getId() !== $currentUser->getId()) {
             return $this->json([
                 'success' => false,
                 'message' => 'Song not found.'
@@ -353,10 +378,20 @@ final class MusiqueartisteController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof User) {
+            throw $this->createAccessDeniedException('You must be logged in as an artist.');
+        }
+
         $musique = $musiqueRepository->find($id);
         
         if (!$musique) {
             $this->addFlash('error', 'Music not found.');
+            return $this->redirectToRoute('app_musiqueartiste');
+        }
+
+        if ($musique->getCollection()?->getArtiste()?->getId() !== $currentUser->getId()) {
+            $this->addFlash('error', 'You can only edit your own songs.');
             return $this->redirectToRoute('app_musiqueartiste');
         }
 
@@ -485,6 +520,14 @@ final class MusiqueartisteController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof User) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return $this->json(['success' => false, 'message' => 'Access denied.'], 403);
+            }
+            throw $this->createAccessDeniedException('You must be logged in as an artist.');
+        }
+
         // Check if this is an AJAX request
         $isAjax = $request->headers->get('X-Requested-With') === 'XMLHttpRequest';
         
@@ -506,6 +549,14 @@ final class MusiqueartisteController extends AbstractController
                 return $this->json(['success' => false, 'message' => 'Music not found.'], 404);
             }
             $this->addFlash('error', 'Music not found.');
+            return $this->redirectToRoute('app_musiqueartiste');
+        }
+
+        if ($musique->getCollection()?->getArtiste()?->getId() !== $currentUser->getId()) {
+            if ($isAjax) {
+                return $this->json(['success' => false, 'message' => 'You can only delete your own songs.'], 403);
+            }
+            $this->addFlash('error', 'You can only delete your own songs.');
             return $this->redirectToRoute('app_musiqueartiste');
         }
         

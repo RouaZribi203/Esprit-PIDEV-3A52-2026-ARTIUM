@@ -43,8 +43,15 @@ final class MusicfrontController extends AbstractController
             $musiques = array_values(array_filter($musiques, function ($musique) use ($searchTerm) {
                 $titre = $musique->getTitre() ?? '';
                 $description = $musique->getDescription() ?? '';
+                $artistNom = $musique->getCollection()?->getArtiste()?->getNom() ?? '';
+                $artistPrenom = $musique->getCollection()?->getArtiste()?->getPrenom() ?? '';
+                $artistFullName = trim($artistPrenom . ' ' . $artistNom);
+
                 return stripos($titre, $searchTerm) !== false
-                    || stripos($description, $searchTerm) !== false;
+                    || stripos($description, $searchTerm) !== false
+                    || stripos($artistNom, $searchTerm) !== false
+                    || stripos($artistPrenom, $searchTerm) !== false
+                    || stripos($artistFullName, $searchTerm) !== false;
             }));
         }
 

@@ -273,7 +273,12 @@ final class MusicfrontController extends AbstractController
     }
 
     #[Route('/playlist/{id}/songs', name: 'app_playlist_songs', methods: ['GET'])]
-    public function getPlaylistSongs(int $id, PlaylistRepository $playlistRepository): Response
+    public function getPlaylistSongs(
+        int $id,
+        PlaylistRepository $playlistRepository,
+        MusiqueRepository $musiqueRepository,
+        UserRepository $userRepository
+    ): Response
     {
         $playlist = $playlistRepository->find($id);
         
@@ -281,16 +286,79 @@ final class MusicfrontController extends AbstractController
             throw $this->createNotFoundException('Playlist not found');
         }
 
+        $user = $this->getUser();
+        if (!$user) {
+            $guestUser = $userRepository->find(2);
+            if (!$guestUser || $playlist->getUser()->getId() !== $guestUser->getId()) {
+                return new JsonResponse(['error' => 'Playlist introuvable.'], 404);
+            }
+        } elseif ($playlist->getUser() !== $user) {
+            return new JsonResponse(['error' => 'Playlist introuvable.'], 404);
+        }
+
         $songs = [];
+        $playlistSongIds = [];
+        $playlistGenres = [];
+        $playlistArtists = [];
+
         foreach ($playlist->getMusique() as $musique) {
+            $genre = $musique->getGenre()?->value ?? '';
+            $artistName = trim((string) (($musique->getCollection()?->getArtiste()?->getPrenom() ?? '') . ' ' . ($musique->getCollection()?->getArtiste()?->getNom() ?? '')));
+
             $songs[] = [
                 'id' => $musique->getId(),
                 'titre' => $musique->getTitre(),
                 'audioSrc' => $this->generateUrl('app_musiqueartiste_audio', ['id' => $musique->getId()]),
+                'genre' => $genre,
+                'artist' => $artistName !== '' ? $artistName : 'Artiste inconnu',
             ];
+
+            $playlistSongIds[] = $musique->getId();
+            if ($genre !== '') {
+                $playlistGenres[] = mb_strtolower($genre);
+            }
+            if ($artistName !== '') {
+                $playlistArtists[] = mb_strtolower($artistName);
+            }
         }
 
-        return new JsonResponse(['songs' => $songs]);
+        $playlistSongIds = array_values(array_unique($playlistSongIds));
+        $playlistGenres = array_values(array_unique($playlistGenres));
+        $playlistArtists = array_values(array_unique($playlistArtists));
+
+        $smartPool = [];
+        if (!empty($playlistGenres) || !empty($playlistArtists)) {
+            foreach ($musiqueRepository->findAll() as $candidate) {
+                $candidateId = $candidate->getId();
+                if (!$candidateId || in_array($candidateId, $playlistSongIds, true)) {
+                    continue;
+                }
+
+                $candidateGenre = mb_strtolower((string) ($candidate->getGenre()?->value ?? ''));
+                $candidateArtist = trim((string) (($candidate->getCollection()?->getArtiste()?->getPrenom() ?? '') . ' ' . ($candidate->getCollection()?->getArtiste()?->getNom() ?? '')));
+                $candidateArtistLower = mb_strtolower($candidateArtist);
+
+                $genreMatch = $candidateGenre !== '' && in_array($candidateGenre, $playlistGenres, true);
+                $artistMatch = $candidateArtistLower !== '' && in_array($candidateArtistLower, $playlistArtists, true);
+
+                if (!$genreMatch && !$artistMatch) {
+                    continue;
+                }
+
+                $smartPool[] = [
+                    'id' => $candidateId,
+                    'titre' => $candidate->getTitre() ?? 'Titre inconnu',
+                    'audioSrc' => $this->generateUrl('app_musiqueartiste_audio', ['id' => $candidateId]),
+                    'genre' => $candidate->getGenre()?->value ?? '',
+                    'artist' => $candidateArtist !== '' ? $candidateArtist : 'Artiste inconnu',
+                ];
+            }
+        }
+
+        return new JsonResponse([
+            'songs' => $songs,
+            'smartPool' => $smartPool,
+        ]);
     }
 
     #[Route('/playlist/{playlistId}/remove-song/{musicId}', name: 'app_playlist_remove_song', methods: ['POST'])]
@@ -366,7 +434,7 @@ final class MusicfrontController extends AbstractController
             }
         } else {
             // For logged-in users, verify they own the playlist
-            if ($playlist->getUser()->getId() !== $user->getId()) {
+            if ($playlist->getUser() !== $user) {
                 if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
                     return new JsonResponse(['error' => 'Vous netes pas autorise a supprimer cette playlist.'], 403);
                 }
@@ -429,7 +497,7 @@ final class MusicfrontController extends AbstractController
             }
         } else {
             // For logged-in users, verify they own the playlist
-            if ($playlist->getUser()->getId() !== $user->getId()) {
+            if ($playlist->getUser() !== $user) {
                 if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
                     return new JsonResponse(['error' => 'Vous netes pas autorise a modifier cette playlist.'], 403);
                 }

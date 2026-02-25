@@ -532,7 +532,7 @@
                                             </p>
                                             <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ playlist.dateCreation|date('M d, Y') }} </p>
                                             <div class="d-flex gap-2 mt-2 flex-wrap">
-                                                <button class="btn btn-sm btn-outline-primary flex-grow-1" type="button" data-bs-toggle="modal" data-bs-target="#viewPlaylistModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom }}">
+                                                <button class="btn btn-sm btn-outline-primary flex-grow-1 playlist-open-inline" type="button" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom }}">
                                                     <i class="bi bi-play-circle"></i> Écouter
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-success flex-grow-1" type="button" data-bs-toggle="modal" data-bs-target="#addSongsModal" data-playlist-id="{{ playlist.id }}" data-playlist-name="{{ playlist.nom }}">
@@ -550,6 +550,22 @@
                                 </div>
                             {% endfor %}
                         {% endif %}
+                    </div>
+
+                    <div id="playlistInlineViewer" class="card bg-dark border-secondary mt-4 d-none">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0" id="playlistInlineTitle">Playlist</h6>
+                            <button type="button" class="btn btn-sm btn-outline-light" id="playlistInlineCloseBtn">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div class="card-body" id="playlistInlineBody">
+                            <div class="text-center py-3">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <!-- Playlists tab END -->
@@ -673,6 +689,7 @@
         let currentTrackIndex = -1;
         let isSeeking = false;
         let pendingSeekPercent = null;
+        let isPlaylistModalPlaybackActive = false;
         const PLAYER_STORAGE_KEY = 'artium_music_player_state_v1';
         const PLAYER_QUEUE_KEY = 'artium_music_player_queue_v1';
         let currentSortOrder = '{{ sortOrder }}';
@@ -1079,24 +1096,11 @@
 
         let currentPlaylistId = null;
 
-        const viewPlaylistModal = document.getElementById('viewPlaylistModal');
-        if (viewPlaylistModal) {
-            viewPlaylistModal.addEventListener('show.bs.modal', function(event) {
-                const button = event.relatedTarget;
-                currentPlaylistId = button.getAttribute('data-playlist-id');
-                const playlistName = button.getAttribute('data-playlist-name');
-                
-                const modalLabel = document.getElementById('viewPlaylistModalLabel');
-                if (modalLabel) {
-                    modalLabel.textContent = `"${playlistName}"`;
-                }
-
-                loadPlaylistSongs();
-            });
-        }
-
-        function loadPlaylistSongs() {
-            const modalBody = document.getElementById('viewPlaylistModalBody');
+        function loadPlaylistSongs(targetContainer = null) {
+            const container = targetContainer || document.getElementById('playlistInlineBody');
+            if (!container) {
+                return;
+            }
 
             fetch('{{ path("app_playlist_songs", {"id": "__PLAYLIST_ID__"}) }}'.replace('__PLAYLIST_ID__', currentPlaylistId), {
                 headers: {
@@ -1108,20 +1112,38 @@
                 const songs = data.songs;
                 
                 if (songs.length === 0) {
-                    modalBody.innerHTML = '<p class="text-muted text-center py-4">Aucune musique dans cette playlist</p>';
+                    container.innerHTML = '<p class="text-muted text-center py-4">Aucune musique dans cette playlist</p>';
                     return;
                 }
 
                 const removeSongUrlTemplate = "{{ path('app_playlist_remove_song', {'playlistId': 'PLAYLIST_ID', 'musicId': 'MUSIC_ID'}) }}";
+                const smartPool = Array.isArray(data.smartPool) ? data.smartPool : [];
                 let songsHtml = '<div class="list-group">';
+
+                songsHtml += `
+                    <div class="list-group-item bg-light border mb-2">
+                        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                            <span class="fw-semibold small">Mode de lecture playlist</span>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Playback mode">
+                                <button type="button" class="btn btn-outline-secondary playlist-mode-btn active" data-mode="normal">Normal</button>
+                                <button type="button" class="btn btn-outline-secondary playlist-mode-btn" data-mode="shuffle">Shuffle</button>
+                                <button type="button" class="btn btn-outline-secondary playlist-mode-btn" data-mode="smart">Smart Shuffle</button>
+                            </div>
+                        </div>
+                        <div class="small text-muted mt-2">Smart Shuffle ajoute 1 morceau hors playlist toutes les 2 musiques.</div>
+                    </div>
+                `;
                 
                 songs.forEach(song => {
+                    const safeTitle = String(song.titre || 'Titre inconnu').replace(/"/g, '&quot;');
+                    const safeArtist = String(song.artist || 'Artiste inconnu').replace(/"/g, '&quot;');
+                    const safeGenre = String(song.genre || '').replace(/"/g, '&quot;');
                     songsHtml += `
                         <div class="list-group-item">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>${song.titre}</span>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-outline-primary playlist-play-btn" data-audio-id="${song.id}" data-audio-src="${song.audioSrc}" data-title="${song.titre}">
+                                    <button class="btn btn-sm btn-outline-primary playlist-play-btn" data-audio-id="${song.id}" data-audio-src="${song.audioSrc}" data-title="${safeTitle}" data-artist="${safeArtist}" data-genre="${safeGenre}" data-is-smart-injected="0">
                                         <i class="bi bi-play-fill"></i>
                                     </button>
                                     <form method="post" action="${removeSongUrlTemplate.replace('PLAYLIST_ID', currentPlaylistId).replace('MUSIC_ID', song.id)}" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr?');">
@@ -1137,15 +1159,183 @@
                 });
                 
                 songsHtml += '</div>';
-                modalBody.innerHTML = songsHtml;
+                container.innerHTML = songsHtml;
 
-                const playButtons = modalBody.querySelectorAll('.playlist-play-btn');
+                const playButtons = container.querySelectorAll('.playlist-play-btn');
                 let currentlyPlaying = null;
+                let playlistMode = 'normal';
+                let currentPlaylistIndex = -1;
+                let playedSinceSmartInject = 0;
+
+                const baseQueue = songs.map(song => ({
+                    id: String(song.id),
+                    audioSrc: song.audioSrc,
+                    title: song.titre || 'Titre inconnu',
+                    artist: song.artist || 'Artiste inconnu',
+                    genre: song.genre || '',
+                    isSmartInjected: false,
+                }));
+
+                const smartQueue = smartPool.map(song => ({
+                    id: String(song.id),
+                    audioSrc: song.audioSrc,
+                    title: song.titre || 'Titre inconnu',
+                    artist: song.artist || 'Artiste inconnu',
+                    genre: song.genre || '',
+                    isSmartInjected: true,
+                }));
+
+                function isTrackInPlaylist(trackId) {
+                    return baseQueue.some(item => item.id === String(trackId));
+                }
+
+                function resetModeButtons() {
+                    container.querySelectorAll('.playlist-mode-btn').forEach(btn => {
+                        btn.classList.remove('active', 'btn-primary');
+                        btn.classList.add('btn-outline-secondary');
+                    });
+                }
+
+                function setMode(mode) {
+                    playlistMode = mode;
+                    playedSinceSmartInject = 0;
+                    resetModeButtons();
+                    const activeBtn = container.querySelector(`.playlist-mode-btn[data-mode="${mode}"]`);
+                    if (activeBtn) {
+                        activeBtn.classList.remove('btn-outline-secondary');
+                        activeBtn.classList.add('active', 'btn-primary');
+                    }
+                }
+
+                function syncPlaylistPlayButtons(currentId) {
+                    playButtons.forEach(btn => {
+                        const icon = btn.querySelector('i');
+                        if (!icon) {
+                            return;
+                        }
+                        if (currentId && btn.dataset.audioId === currentId && !audioPlayer.paused) {
+                            icon.className = 'bi bi-pause-fill';
+                        } else {
+                            icon.className = 'bi bi-play-fill';
+                        }
+                    });
+                }
+
+                function setGlobalPlayerMeta(title, artist) {
+                    const titleEl = document.getElementById('playerTrackTitle');
+                    const artistEl = document.getElementById('playerTrackSubtitle');
+                    if (titleEl) {
+                        titleEl.textContent = title || 'Titre inconnu';
+                    }
+                    if (artistEl) {
+                        artistEl.textContent = artist || 'Artiste inconnu';
+                    }
+                    audioPlayer.dataset.title = title || 'Titre inconnu';
+                    audioPlayer.dataset.artist = artist || 'Artiste inconnu';
+                }
+
+                function getRandomTrack(excludedId = null) {
+                    const pool = baseQueue.filter(track => track.id !== excludedId);
+                    if (!pool.length) {
+                        return null;
+                    }
+                    return pool[Math.floor(Math.random() * pool.length)];
+                }
+
+                function getSmartInjectedTrack() {
+                    const candidates = smartQueue.filter(track => track.id !== currentlyPlaying);
+                    if (!candidates.length) {
+                        return null;
+                    }
+                    return candidates[Math.floor(Math.random() * candidates.length)];
+                }
+
+                function pickNextTrack() {
+                    if (!baseQueue.length) {
+                        return null;
+                    }
+
+                    if (playlistMode === 'shuffle') {
+                        return getRandomTrack(currentlyPlaying);
+                    }
+
+                    if (playlistMode === 'smart') {
+                        if (playedSinceSmartInject >= 2) {
+                            const injected = getSmartInjectedTrack();
+                            if (injected) {
+                                playedSinceSmartInject = 0;
+                                return injected;
+                            }
+                        }
+
+                        if (currentPlaylistIndex < 0) {
+                            currentPlaylistIndex = 0;
+                        } else {
+                            currentPlaylistIndex = (currentPlaylistIndex + 1) % baseQueue.length;
+                        }
+
+                        playedSinceSmartInject += 1;
+                        return baseQueue[currentPlaylistIndex];
+                    }
+
+                    if (currentPlaylistIndex < 0) {
+                        currentPlaylistIndex = 0;
+                    } else {
+                        currentPlaylistIndex = (currentPlaylistIndex + 1) % baseQueue.length;
+                    }
+
+                    return baseQueue[currentPlaylistIndex];
+                }
+
+                function playTrack(track) {
+                    if (!track || !track.audioSrc) {
+                        return;
+                    }
+
+                    const trackId = String(track.id || '');
+                    const inPlaylist = isTrackInPlaylist(trackId);
+
+                    if ((playlistMode === 'normal' || playlistMode === 'shuffle') && !inPlaylist) {
+                        const fallbackIndex = currentPlaylistIndex >= 0 ? currentPlaylistIndex : 0;
+                        const fallbackTrack = baseQueue[fallbackIndex] || baseQueue[0];
+                        if (!fallbackTrack) {
+                            return;
+                        }
+                        track = fallbackTrack;
+                    }
+
+                    isPlaylistModalPlaybackActive = true;
+                    audioPlayer.src = track.audioSrc;
+                    audioPlayer.play().catch(() => {});
+                    currentlyPlaying = track.id;
+
+                    const baseIndex = baseQueue.findIndex(item => item.id === track.id);
+                    if (baseIndex >= 0) {
+                        currentPlaylistIndex = baseIndex;
+                    }
+
+                    setGlobalPlayerMeta(track.title, track.artist);
+                    syncPlaylistPlayButtons(currentlyPlaying);
+                }
+
+                container.querySelectorAll('.playlist-mode-btn').forEach(modeBtn => {
+                    modeBtn.addEventListener('click', function () {
+                        const mode = this.dataset.mode || 'normal';
+                        setMode(mode);
+                    });
+                });
 
                 playButtons.forEach(button => {
                     button.addEventListener('click', function() {
                         const audioSrc = this.getAttribute('data-audio-src');
                         const audioId = this.getAttribute('data-audio-id');
+                        const title = this.getAttribute('data-title') || 'Titre inconnu';
+                        const artist = this.getAttribute('data-artist') || 'Artiste inconnu';
+
+                        const clickedBaseIndex = baseQueue.findIndex(item => item.id === String(audioId));
+                        if (clickedBaseIndex >= 0) {
+                            currentPlaylistIndex = clickedBaseIndex;
+                        }
                         
                         if (currentlyPlaying === audioId && !audioPlayer.paused) {
                             audioPlayer.pause();
@@ -1156,30 +1346,88 @@
                             this.innerHTML = '<i class="bi bi-pause-fill"></i>';
                         } 
                         else {
-                            audioPlayer.src = audioSrc;
-                            audioPlayer.play();
-                            
-                            playButtons.forEach(btn => {
-                                btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                            playTrack({
+                                id: String(audioId),
+                                audioSrc,
+                                title,
+                                artist,
+                                genre: this.getAttribute('data-genre') || '',
+                                isSmartInjected: this.getAttribute('data-is-smart-injected') === '1'
                             });
-                            this.innerHTML = '<i class="bi bi-pause-fill"></i>';
-                            currentlyPlaying = audioId;
                         }
                     });
                 });
 
                 audioPlayer.onended = function() {
-                    playButtons.forEach(btn => {
-                        btn.innerHTML = '<i class="bi bi-play-fill"></i>';
-                    });
+                    if (!isPlaylistModalPlaybackActive) {
+                        return;
+                    }
+
+                    if (!currentPlaylistId || !baseQueue.length) {
+                        syncPlaylistPlayButtons(null);
+                        currentlyPlaying = null;
+                        return;
+                    }
+
+                    const nextTrack = pickNextTrack();
+                    if (nextTrack) {
+                        if ((playlistMode === 'normal' || playlistMode === 'shuffle') && !isTrackInPlaylist(nextTrack.id)) {
+                            const safeTrack = baseQueue[currentPlaylistIndex >= 0 ? currentPlaylistIndex : 0] || baseQueue[0];
+                            if (safeTrack) {
+                                playTrack(safeTrack);
+                                return;
+                            }
+                        }
+                        playTrack(nextTrack);
+                        return;
+                    }
+
+                    syncPlaylistPlayButtons(null);
                     currentlyPlaying = null;
                 };
+
+                setMode('normal');
             })
             .catch(error => {
                 console.error('Error:', error);
-                modalBody.innerHTML = '<p class="text-danger">Erreur lors du chargement de la playlist</p>';
+                container.innerHTML = '<p class="text-danger">Erreur lors du chargement de la playlist</p>';
             });
         }
+
+        document.addEventListener('click', function(e) {
+            const openBtn = e.target.closest('.playlist-open-inline');
+            if (openBtn) {
+                const viewer = document.getElementById('playlistInlineViewer');
+                const title = document.getElementById('playlistInlineTitle');
+                const body = document.getElementById('playlistInlineBody');
+                if (!viewer || !title || !body) {
+                    return;
+                }
+
+                currentPlaylistId = openBtn.getAttribute('data-playlist-id');
+                const playlistName = openBtn.getAttribute('data-playlist-name') || 'Playlist';
+                title.textContent = `"${playlistName}"`;
+                viewer.classList.remove('d-none');
+                viewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                body.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Chargement...</span></div></div>';
+                loadPlaylistSongs(body);
+                return;
+            }
+
+            const closeBtn = e.target.closest('#playlistInlineCloseBtn');
+            if (closeBtn) {
+                const viewer = document.getElementById('playlistInlineViewer');
+                const body = document.getElementById('playlistInlineBody');
+                if (viewer) {
+                    viewer.classList.add('d-none');
+                }
+                if (body) {
+                    body.innerHTML = '';
+                }
+                isPlaylistModalPlaybackActive = false;
+                currentPlaylistId = null;
+            }
+        });
 
         const addSongsModal = document.getElementById('addSongsModal');
         if (addSongsModal) {
@@ -1540,6 +1788,9 @@
             persistPlayerState();
         });
         audioPlayer.addEventListener('ended', () => {
+            if (isPlaylistModalPlaybackActive) {
+                return;
+            }
             playTrackByOffset(1);
         });
 

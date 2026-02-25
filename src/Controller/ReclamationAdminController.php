@@ -4,10 +4,12 @@ namespace App\Controller;
 
 use App\Entity\Reclamation;
 use App\Entity\Reponse;
+use App\Enum\StatutReclamation;
 use App\Form\ReclamationType;
 use App\Form\ReponseType;
 use App\Repository\ReclamationRepository;
 use App\Service\AIResponseService;
+use App\Service\ReclamationArchiveService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,8 +21,11 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ReclamationAdminController extends AbstractController
 {
     #[Route(name: 'app_reclamation_admin_index', methods: ['GET'])]
-    public function index(Request $request, ReclamationRepository $reclamationRepository, AIResponseService $aiService, PaginatorInterface $paginator): Response
+    public function index(Request $request, ReclamationRepository $reclamationRepository, AIResponseService $aiService, ReclamationArchiveService $archiveService, PaginatorInterface $paginator): Response
     {
+        // Archiver les réclamations éligibles au chargement de la page
+        $archiveService->archiveEligibleReclamations();
+        
         $responseCreateForms = [];
         $responseEditForms = [];
         $aiSuggestions = [];
@@ -162,6 +167,28 @@ final class ReclamationAdminController extends AbstractController
     {
         if ($this->isCsrfTokenValid('delete'.$reclamation->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($reclamation);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/archive', name: 'app_reclamation_admin_archive', methods: ['POST'])]
+    public function archive(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('archive'.$reclamation->getId(), $request->getPayload()->getString('_token'))) {
+            $reclamation->setStatut(StatutReclamation::ARCHIVE);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/unarchive', name: 'app_reclamation_admin_unarchive', methods: ['POST'])]
+    public function unarchive(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('unarchive'.$reclamation->getId(), $request->getPayload()->getString('_token'))) {
+            $reclamation->setStatut(StatutReclamation::TRAITEE);
             $entityManager->flush();
         }
 

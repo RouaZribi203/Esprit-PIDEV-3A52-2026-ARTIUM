@@ -90,7 +90,7 @@
                 <div class="tab-pane fade {% if (search_query|default('')) is not empty or (selected_statut|default('')) is not empty or (selected_type|default('')) is not empty %}show active{% endif %}" id="tab-2">
                     <div class="mt-4">
                         <!-- Search and Filter -->
-                        <form class="row g-1 mb-4" method="get" id="filterForm">
+                        <form class="row g-1 mb-4" method="get" id="filterForm" data-turbo="false">
                             <div class="col-md-3">
                                 <input type="search" name="q" id="searchInput" class="form-control" placeholder="Rechercher" value="{{ search_query|default('') }}">
                             </div>
@@ -100,7 +100,6 @@
                                     <option value="Traitée" {% if (selected_statut|default('')) == 'Traitée' %}selected{% endif %}>Traité</option>
                                     <option value="Non traitée" {% if (selected_statut|default('')) == 'Non traitée' %}selected{% endif %}>Non traité</option>
                                     <option value="Archivée" {% if (selected_statut|default('')) == 'Archivée' %}selected{% endif %}>Archivé</option>
-
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -125,32 +124,85 @@
                                 const dateInput = document.getElementById('dateInput');
                                 const filterForm = document.getElementById('filterForm');
 
-                                // Auto-submit on select change
-                                statutSelect.addEventListener('change', function() {
-                                    filterForm.submit();
+                                if (!filterForm) {
+                                    return;
+                                }
+
+                                function debounce(fn, delay) {
+                                    let timer = null;
+                                    return function(...args) {
+                                        if (timer) {
+                                            clearTimeout(timer);
+                                        }
+                                        timer = setTimeout(() => fn.apply(this, args), delay);
+                                    };
+                                }
+
+                                async function loadReclamations(url) {
+                                    const response = await fetch(url, {
+                                        headers: {
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        }
+                                    });
+
+                                    if (!response.ok) {
+                                        return;
+                                    }
+
+                                    const html = await response.text();
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+                                    const incoming = doc.querySelector('#reclamationsContent');
+                                    const current = document.querySelector('#reclamationsContent');
+
+                                    if (incoming && current) {
+                                        current.innerHTML = incoming.innerHTML;
+                                    }
+                                }
+
+                                const submitForm = () => {
+                                    const params = new URLSearchParams(new FormData(filterForm));
+                                    const url = `${window.location.pathname}?${params.toString()}`;
+                                    history.replaceState(null, '', url);
+                                    loadReclamations(url);
+                                };
+
+                                filterForm.addEventListener('submit', function(event) {
+                                    event.preventDefault();
+                                    submitForm();
                                 });
 
-                                typeSelect.addEventListener('change', function() {
-                                    filterForm.submit();
+                                filterForm.addEventListener('keydown', function(event) {
+                                    if (event.key === 'Enter') {
+                                        event.preventDefault();
+                                        submitForm();
+                                    }
                                 });
 
-                                dateInput.addEventListener('change', function() {
-                                    filterForm.submit();
-                                });
+                                filterForm.submit = () => submitForm();
+                                filterForm.requestSubmit = () => submitForm();
 
-                                // Auto-submit on input with debounce
-                                let searchTimeout;
-                                searchInput.addEventListener('input', function() {
-                                    clearTimeout(searchTimeout);
-                                    searchTimeout = setTimeout(function() {
-                                        filterForm.submit();
-                                    }, 500);
-                                });
+                                if (searchInput) {
+                                    searchInput.addEventListener('input', debounce(submitForm, 400));
+                                }
+
+                                if (statutSelect) {
+                                    statutSelect.addEventListener('change', submitForm);
+                                }
+
+                                if (typeSelect) {
+                                    typeSelect.addEventListener('change', submitForm);
+                                }
+
+                                if (dateInput) {
+                                    dateInput.addEventListener('change', submitForm);
+                                }
                             });
                         </script>
                         
                         <!-- Reclamations List -->
-                        <div class="row g-3">
+                        <div id="reclamationsContent">
+                            <div class="row g-3">
                             {% if reclamations is empty %}
                                 <div class="col-12">
                                     <div class="text-center py-5">
@@ -290,6 +342,7 @@
                                     </div>
                                 {% endfor %}
                             {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>

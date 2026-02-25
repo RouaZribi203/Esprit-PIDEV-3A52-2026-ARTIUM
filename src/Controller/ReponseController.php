@@ -135,7 +135,7 @@ final class ReponseController extends AbstractController
             // Send notification email to the reclamation creator
             $this->sendReplyNotificationEmail($mailer, $logger, $reponse);
 
-            return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
         }
 
         if ($form->isSubmitted() && !$form->isValid()) {
@@ -170,11 +170,16 @@ final class ReponseController extends AbstractController
                 'reclamations' => $reclamations,
                 'responseCreateForms' => $responseCreateForms,
                 'responseEditForms' => $responseEditForms,
+                'aiSuggestions' => [],
                 'search_query' => '',
+                'selected_statut' => '',
+                'date_from' => '',
+                'current_page' => 1,
+                'total_pages' => 1,
             ]);
         }
 
-        return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/admin/{id}/edit', name: 'app_reponse_admin_edit', methods: ['POST'])]
@@ -189,7 +194,7 @@ final class ReponseController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
         }
 
         if ($form->isSubmitted() && !$form->isValid()) {
@@ -225,11 +230,16 @@ final class ReponseController extends AbstractController
                 'reclamations' => $reclamations,
                 'responseCreateForms' => $responseCreateForms,
                 'responseEditForms' => $responseEditForms,
+                'aiSuggestions' => [],
                 'search_query' => '',
+                'selected_statut' => '',
+                'date_from' => '',
+                'current_page' => 1,
+                'total_pages' => 1,
             ]);
         }
 
-        return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/admin/{id}', name: 'app_reponse_admin_delete', methods: ['POST'])]
@@ -248,7 +258,7 @@ final class ReponseController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
     }
 
     private function sendReplyNotificationEmail(

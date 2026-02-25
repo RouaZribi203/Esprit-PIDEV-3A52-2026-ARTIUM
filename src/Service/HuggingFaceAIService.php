@@ -28,7 +28,7 @@ class HuggingFaceAIService
     /**
      * Génère une réponse IA pour une réclamation
      */
-    public function generateResponse(string $reclamationText, string $type, string $userName): ?string
+    public function generateResponse(string $reclamationText, string $type, string $userName, int $reclamationId = 0): ?string
     {
         // Essayer chaque modèle jusqu'à ce qu'un fonctionne
         foreach (self::MODELS as $model) {
@@ -49,12 +49,12 @@ class HuggingFaceAIService
                             ],
                             [
                                 'role' => 'user',
-                                'content' => $this->buildUserPrompt($reclamationText, $type, $userName)
+                                'content' => $this->buildUserPrompt($reclamationText, $type, $userName, $reclamationId)
                             ]
                         ],
                         'max_tokens' => 300,
-                        'temperature' => 0.7,
-                        'top_p' => 0.9,
+                        'temperature' => 0.95,
+                        'top_p' => 0.95,
                     ],
                     'timeout' => 30,
                 ]);
@@ -89,18 +89,28 @@ class HuggingFaceAIService
         return null;
     }
 
-    private function buildUserPrompt(string $text, string $type, string $userName): string
+    private function buildUserPrompt(string $text, string $type, string $userName, int $reclamationId = 0): string
     {
+        // Créer une variation basée sur l'ID unique de la réclamation
+        $tonIndex = abs($reclamationId) % 3;
+        $tonVariable = match($tonIndex) {
+            0 => 'avec empathie et rapidité',
+            1 => 'avec professionnalisme et bienveillance',
+            2 => 'avec attention particulière et assurance',
+        };
+        
         return <<<PROMPT
-Réclamation de type "$type" de $userName:
+Réclamation de type "$type" de $userName (ID: $reclamationId):
 "$text"
 
-Rédige une réponse professionnelle, empathique et personnalisée en français. La réponse doit:
+Rédige une réponse UNIQUE et personnalisée $tonVariable en français. La réponse doit:
 - Commencer par "Bonjour $userName,"
 - Reconnaître précisément le problème mentionné
-- Proposer une solution concrète
+- Proposer une solution concrète et adaptée
+- Varier la structure et le langage (ne pas utiliser de template générique)
 - Être concise (2-3 paragraphes maximum)
 - Se terminer par "Cordialement, L'équipe ARTIUM"
+IMPORTANT: Chaque réponse DOIT être unique, même pour des réclamations du même type.
 PROMPT;
     }
 

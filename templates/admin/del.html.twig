@@ -174,10 +174,40 @@
                   <button class="btn btn-sm btn-outline-primary" title="Add to favorites">
                     <i class="bi bi-heart"></i>
                   </button>
+                  {% if is_granted('ROLE_ADMIN') and musique.user is defined and musique.user.id is defined %}
+                  <button class="btn btn-outline-info btn-sm show-user-connection-history" data-user-id="{{ musique.user.id }}" title="Voir les connexions aujourd'hui">
+                    <i class="bi bi-arrow-right-circle"></i> Connexions aujourd'hui
+                  </button>
+                  {% endif %}
                   <!-- More options dropdown -->
                   <div class="dropdown">
                     <button class="btn btn-sm btn-outline-primary" type="button" id="dropdownMenu{{ musique.id }}" data-bs-toggle="dropdown" aria-expanded="false">
                       <i class="bi bi-three-dots"></i>
+                    <!-- Modal Bootstrap globale pour l'historique de connexion -->
+                    <div class="modal fade" id="connectionHistoryModal" tabindex="-1" aria-labelledby="connectionHistoryModalLabel" aria-hidden="true">
+                      <div class="modal-dialog modal-lg">
+                        <div class="modal-content" id="connection-history-modal-content">
+                          <!-- Contenu chargé dynamiquement -->
+                        </div>
+                      </div>
+                    </div>
+
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        document.querySelectorAll('.show-user-connection-history').forEach(function(btn) {
+                            btn.addEventListener('click', function() {
+                                const userId = btn.getAttribute('data-user-id');
+                                fetch(`/admin/user/${userId}/connections/popup?today=1`)
+                                    .then(response => response.text())
+                                    .then(html => {
+                                        document.getElementById('connection-history-modal-content').innerHTML = html;
+                                        const modal = new bootstrap.Modal(document.getElementById('connectionHistoryModal'));
+                                        modal.show();
+                                    });
+                            });
+                        });
+                    });
+                    </script>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ musique.id }}">
                       <li>

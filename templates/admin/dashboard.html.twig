@@ -256,116 +256,145 @@
             </div>
         </div>
     </div>
-</div>
+    <div class="row mb-4">
+        <div class="col-12 text-end">
+            <button id="show-connection-history" class="btn btn-outline-primary" data-user-id="{{ app.user.id }}">
+                <i class="bi bi-clock-history"></i> Historique de mes connexions
+            </button>
+        </div>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/fr.global.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Chart inscriptions
-    if (window.Chart) {
-        var ctx = document.getElementById('activityChart').getContext('2d');
-        var activityLabels = {{ activity_labels|default(['Jan','Fév','Mar','Avr','Mai','Juin'])|json_encode|raw }};
-        var activityData = {{ activity_data|default([5,8,6,10,7,12])|json_encode|raw }};
-        // Fallback: if no data, show zeros
-        if (!activityLabels || activityLabels.length === 0) {
-            activityLabels = ['Jan','Fév','Mar','Avr','Mai','Juin'];
-        }
-        if (!activityData || activityData.length === 0) {
-            activityData = [0,0,0,0,0,0];
-        }
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: activityLabels,
-                datasets: [{
-                    label: 'Inscriptions',
-                    data: activityData,
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0,123,255,0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+    <!-- Modal Bootstrap -->
+    <div class="modal fade" id="connectionHistoryModal" tabindex="-1" aria-labelledby="connectionHistoryModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="connection-history-modal-content">
+          <!-- Contenu chargé dynamiquement -->
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales/fr.global.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart inscriptions
+        if (window.Chart) {
+            var ctx = document.getElementById('activityChart').getContext('2d');
+            var activityLabels = {{ activity_labels|default(['Jan','Fév','Mar','Avr','Mai','Juin'])|json_encode|raw }};
+            var activityData = {{ activity_data|default([5,8,6,10,7,12])|json_encode|raw }};
+            // Fallback: if no data, show zeros
+            if (!activityLabels || activityLabels.length === 0) {
+                activityLabels = ['Jan','Fév','Mar','Avr','Mai','Juin'];
             }
-        });
-        // Chart rôles
-        var ctx2 = document.getElementById('rolesChart').getContext('2d');
-        var rolesData = {{ roles_data|default([2,10,20])|json_encode|raw }};
-        if (!rolesData || rolesData.length === 0) {
-            rolesData = [0,0,0];
-        }
-        new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: ['Admin', 'Artistes', 'Amateurs'],
-                datasets: [{
-                    data: rolesData,
-                    backgroundColor: ['#2196f3','#8e24aa','#ff9800'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                plugins: { legend: { position: 'bottom' } }
+            if (!activityData || activityData.length === 0) {
+                activityData = [0,0,0,0,0,0];
             }
-        });
-    }
-    // Calendar
-    if (window.FullCalendar) {
-        var calendarEl = document.getElementById('calendar');
-        var eventFilterEl = document.getElementById('eventFilter');
-        var allEvents = {{ events_data|default([])|json_encode|raw }};
-        if (calendarEl) {
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                height: 250,
-                locale: 'fr',
-                events: allEvents,
-                eventDidMount: function(info) {
-                    // Highlight today's events
-                    var today = new Date();
-                    var eventDate = new Date(info.event.start);
-                    if (
-                        eventDate.getDate() === today.getDate() &&
-                        eventDate.getMonth() === today.getMonth() &&
-                        eventDate.getFullYear() === today.getFullYear()
-                    ) {
-                        info.el.style.backgroundColor = '#ff9800';
-                        info.el.style.color = '#fff';
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: activityLabels,
+                    datasets: [{
+                        label: 'Inscriptions',
+                        data: activityData,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0,123,255,0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            // Chart rôles
+            var ctx2 = document.getElementById('rolesChart').getContext('2d');
+            var rolesData = {{ roles_data|default([2,10,20])|json_encode|raw }};
+            if (!rolesData || rolesData.length === 0) {
+                rolesData = [0,0,0];
+            }
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Admin', 'Artistes', 'Amateurs'],
+                    datasets: [{
+                        data: rolesData,
+                        backgroundColor: ['#2196f3','#8e24aa','#ff9800'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+        // Calendar
+        if (window.FullCalendar) {
+            var calendarEl = document.getElementById('calendar');
+            var eventFilterEl = document.getElementById('eventFilter');
+            var allEvents = {{ events_data|default([])|json_encode|raw }};
+            if (calendarEl) {
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    height: 250,
+                    locale: 'fr',
+                    events: allEvents,
+                    eventDidMount: function(info) {
+                        // Highlight today's events
+                        var today = new Date();
+                        var eventDate = new Date(info.event.start);
+                        if (
+                            eventDate.getDate() === today.getDate() &&
+                            eventDate.getMonth() === today.getMonth() &&
+                            eventDate.getFullYear() === today.getFullYear()
+                        ) {
+                            info.el.style.backgroundColor = '#ff9800';
+                            info.el.style.color = '#fff';
+                        }
                     }
-                }
-            });
-            calendar.render();
+                });
+                calendar.render();
 
-            eventFilterEl.addEventListener('change', function() {
-                var filter = eventFilterEl.value;
-                var filteredEvents = allEvents;
-                var today = new Date();
-                if (filter === 'upcoming') {
-                    filteredEvents = allEvents.filter(function(e) {
-                        var start = new Date(e.start);
-                        return start >= today;
+                eventFilterEl.addEventListener('change', function() {
+                    var filter = eventFilterEl.value;
+                    var filteredEvents = allEvents;
+                    var today = new Date();
+                    if (filter === 'upcoming') {
+                        filteredEvents = allEvents.filter(function(e) {
+                            var start = new Date(e.start);
+                            return start >= today;
+                        });
+                    } else if (filter === 'today') {
+                        filteredEvents = allEvents.filter(function(e) {
+                            var start = new Date(e.start);
+                            return (
+                                start.getDate() === today.getDate() &&
+                                start.getMonth() === today.getMonth() &&
+                                start.getFullYear() === today.getFullYear()
+                            );
+                        });
+                    }
+                    calendar.removeAllEvents();
+                    calendar.addEventSource(filteredEvents);
+                });
+            }
+        }
+        // Connection history
+        const btn = document.getElementById('show-connection-history');
+        if (btn) {
+            btn.addEventListener('click', function() {
+                const userId = btn.getAttribute('data-user-id');
+                fetch(`/admin/user/${userId}/connections/popup`)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('connection-history-modal-content').innerHTML = html;
+                        const modal = new bootstrap.Modal(document.getElementById('connectionHistoryModal'));
+                        modal.show();
                     });
-                } else if (filter === 'today') {
-                    filteredEvents = allEvents.filter(function(e) {
-                        var start = new Date(e.start);
-                        return (
-                            start.getDate() === today.getDate() &&
-                            start.getMonth() === today.getMonth() &&
-                            start.getFullYear() === today.getFullYear()
-                        );
-                    });
-                }
-                calendar.removeAllEvents();
-                calendar.addEventSource(filteredEvents);
             });
         }
-    }
-});
-</script>
+    });
+    </script>
 {% endblock %}

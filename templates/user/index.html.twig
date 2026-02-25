@@ -74,7 +74,7 @@
                             <th>Spécialité/Intérêt</th>
                             <th>Statut</th>
                             <th>Inscription</th>
-                            <th>Actions</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -131,7 +131,7 @@
                             </td>
                             <td>{{ user.dateInscription ? user.dateInscription|date('d/m/Y') : '-' }}</td>
                             <td>
-                                <div class="hstack gap-3">
+                                <div class="hstack gap-3 justify-content-center">
                                     <a href="{{ path('app_user_show', {'id': user.id}) }}" 
                                        class="text-primary" 
                                        data-bs-toggle="tooltip" 
@@ -162,6 +162,36 @@
                                        onclick="confirmDelete({{ user.id }}); return false;">
                                         <i class="fe fe-trash"></i>
                                     </a>
+                                    {% if is_granted('ROLE_ADMIN') %}
+                                    <button class="btn btn-outline-info btn-sm show-user-connection-history fw-semibold px-3" style="font-size: 0.98rem; letter-spacing: 0.5px;" data-user-id="{{ user.id }}" title="Voir les connexions aujourd'hui">
+                                        <i class="bi bi-arrow-right-circle me-1"></i> Connexions aujourd'hui
+                                    </button>
+                                    {% endif %}
+                                <!-- Modal Bootstrap globale pour l'historique de connexion -->
+                                <div class="modal fade" id="connectionHistoryModal" tabindex="-1" aria-labelledby="connectionHistoryModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content" id="connection-history-modal-content">
+                                            <!-- Contenu chargé dynamiquement -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                        document.querySelectorAll('.show-user-connection-history').forEach(function(btn) {
+                                                btn.addEventListener('click', function() {
+                                                        const userId = btn.getAttribute('data-user-id');
+                                                        fetch(`/admin/user/${userId}/connections/popup?today=1`)
+                                                                .then(response => response.text())
+                                                                .then(html => {
+                                                                        document.getElementById('connection-history-modal-content').innerHTML = html;
+                                                                        const modal = new bootstrap.Modal(document.getElementById('connectionHistoryModal'));
+                                                                        modal.show();
+                                                                });
+                                                });
+                                        });
+                                });
+                                </script>
                                 </div>
                             </td>
                         </tr>

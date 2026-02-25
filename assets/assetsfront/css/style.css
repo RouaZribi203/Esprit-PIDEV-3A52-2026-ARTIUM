@@ -17950,3 +17950,10 @@ a.badge:hover {
 
 /*User CSS*/
 /*# sourceMappingURL=style.css.map */
+
+.event-description {
+  max-width: 400px; /* ajustez selon votre design */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

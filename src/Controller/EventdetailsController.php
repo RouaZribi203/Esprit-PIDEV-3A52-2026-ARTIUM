@@ -234,20 +234,18 @@ final class EventdetailsController extends AbstractController
 
     private function extractTicketPayload(Ticket $ticket): string
     {
-        $code = $ticket->getCodeQr();
-        if (is_resource($code)) {
-            $data = stream_get_contents($code);
-        } elseif (is_string($code)) {
-            $data = $code;
-        } else {
-            $data = null;
-        }
+        $user = $ticket->getUser();
+        $evenement = $ticket->getEvenement();
 
-        if ($data === null || $data === false || $data === '') {
-            $data = (string) $ticket->getId();
-        }
-
-        return $data;
+        return json_encode([
+            'ticket_id' => $ticket->getId(),
+            'user_id' => $user ? $user->getId() : null,
+            'user_nom' => $user ? $user->getNom() : null,
+            'user_prenom' => $user ? $user->getPrenom() : null,
+            'evenement_id' => $evenement ? $evenement->getId() : null,
+            'evenement' => $evenement ? $evenement->getTitre() : null,
+            'issued_at' => (new \DateTime())->format('c'),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     private function sendTicketEmail(
@@ -269,6 +267,7 @@ final class EventdetailsController extends AbstractController
             $writer = new SvgWriter();
             $result = $writer->write($qrCode);
             $svg = $result->getString();
+            $qrCodeDataUri = 'data:image/svg+xml;base64,' . base64_encode($svg);
 
             // Prepare logo attachment
             $logoPath = $this->getParameter('kernel.project_dir') . '/assets/assetsback/images/logo2.png';
@@ -283,6 +282,7 @@ final class EventdetailsController extends AbstractController
                     'user' => $user,
                     'evenement' => $evenement,
                     'ticket' => $ticket,
+                    'qrCodeDataUri' => $qrCodeDataUri,
                 ])
                 ->attach($logoContent, 'artium-logo', 'image/png')
                 ->attach($svg, 'QR-Code-' . $ticket->getId() . '.svg', 'image/svg+xml');

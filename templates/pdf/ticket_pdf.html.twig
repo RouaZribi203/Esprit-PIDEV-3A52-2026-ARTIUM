@@ -101,7 +101,7 @@
         <!-- Header -->
         <div class="ticket-header">
             {% if logo %}
-            <img src="{{ logo }}" alt="ARTIUM" class="logo">
+            <img src="{{ logo }}" alt="ARTIUM" style="width: 400px;;">
             {% endif %}
             <h1 class="event-title">{{ evenement.titre }}</h1>
             <p class="event-date">
@@ -115,52 +115,41 @@
 
         <!-- Content -->
         <div class="ticket-content">
-            <div class="info-section">
-                <div class="info-item">
-                    <span class="info-label">Attendee</span>
-                    <span class="info-value">{{ user.prenom }} {{ user.nom }}</span>
+            <div class="info-section" style="display: flex; flex-wrap: wrap; gap: 18px 32px; background: #f4f7fb; border-radius: 8px; padding: 18px 12px 10px 12px; box-shadow: 0 2px 8px rgba(102,126,234,0.07); margin-bottom: 18px; justify-content: center; text-align: center;">
+                <div class="info-item" style="flex: 1 1 160px; min-width: 140px;">
+                    <span class="info-label" style="color: #764ba2; font-size: 10px;">Client</span><br>
+                    <span class="info-value" style="font-size: 15px; color: #222; font-weight: 600; letter-spacing: 0.5px;">{{ user.prenom }} {{ user.nom }}</span>
                 </div>
-
-                <div class="info-item">
-                    <span class="info-label">Ticket ID</span>
-                    <span class="info-value large">ARTIUM-{{ ticket.id }}</span>
+                <div class="info-item" style="flex: 1 1 120px; min-width: 120px;">
+                    <span class="info-label" style="color: #667eea; font-size: 10px;">Numero de ticket</span><br>
+                    <span class="info-value large" style="font-size: 15px; color: #667eea; font-weight: 700;">ARTIUM-{{ ticket.id }}</span>
                 </div>
-
                 {% if evenement.dateDebut %}
-                <div class="info-item">
-                    <span class="info-label">Date</span>
-                    <span class="info-value">{{ evenement.dateDebut|date('d/m/Y') }}</span>
+                <div class="info-item" style="flex: 1 1 100px; min-width: 100px;">
+                    <span class="info-label">Date de l'événement</span><br>
+                    <span class="info-value" style="font-size: 13px;">{{ evenement.dateDebut|date('d/m/Y') }}</span>
                 </div>
-
-                <div class="info-item">
-                    <span class="info-label">Time</span>
-                    <span class="info-value">{{ evenement.dateDebut|date('H:i') }}</span>
+                <div class="info-item" style="flex: 1 1 80px; min-width: 80px;">
+                    <span class="info-label">Heure de début de l'événement</span><br>
+                    <span class="info-value" style="font-size: 13px;">{{ evenement.dateDebut|date('H:i') }}</span>
                 </div>
                 {% endif %}
-
-                <div class="info-item">
-                    <span class="info-label">Location</span>
-                    <span class="info-value">
-                        {% if evenement.galerie %}
-                            {{ evenement.galerie.nom }}
-                        {% else %}
-                            ARTIUM
-                        {% endif %}
-                    </span>
+                <div class="info-item" style="flex: 1 1 140px; min-width: 120px;">
+                    <span class="info-label">Galerie</span><br>
+                    <span class="info-value" style="font-size: 13px;">{% if evenement.galerie %}{{ evenement.galerie.nom }}{% else %}ARTIUM{% endif %}</span>
                 </div>
-
-                <div class="info-item">
-                    <span class="info-label">Price</span>
-                    <span class="info-value">{{ evenement.prixTicket|default('Free') }} DT</span>
+                <div class="info-item" style="flex: 1 1 80px; min-width: 80px;">
+                    <span class="info-label">Prix Ticket</span><br>
+                    <span class="info-value" style="font-size: 13px; color: #764ba2; font-weight: 600;">{{ evenement.prixTicket|default('Free') }} DT</span>
                 </div>
             </div>
 
-            <div class="description">
-                Valid ticket for one person only.<br/>
+            <div class="description" style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: #fff; font-size: 12px; border-radius: 6px; padding: 14px 18px; margin-bottom: 22px; text-align: center; font-weight: 500; letter-spacing: 0.2px; box-shadow: 0 2px 8px rgba(102,126,234,0.07);">
+                <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">Valid ticket for one person only.</span><br/>
                 Non-transferable. Present at entrance.
             </div>
 
-            <div class="qr-placeholder">
+            <div class="qr-placeholder" style="text-align: center; padding: 18px; margin-top: 30px; border-top: 1px dashed #e0e0e0; font-size: 11px; color: #667eea; font-weight: 700; letter-spacing: 1px;">
                 SCAN QR CODE AT ENTRANCE
             </div>
         </div>

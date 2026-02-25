@@ -61,7 +61,8 @@
                           <span class="badge bg-success ms-2">{{ row.ai_score }}/10</span>
                         {% endif %}
                       </h5>
-                      <form method="post" action="{{ path('app_eventdetails', { id: evenement.id }) }}" style="position: relative; z-index: 10;">
+                      
+                      <form method="post" action="{{ path('app_payment_checkout', { id: evenement.id }) }}" style="position: relative; z-index: 10;">
                         <input type="hidden" name="_token" value="{{ csrf_token('buy_ticket_' ~ evenement.id) }}">
                         <button class="btn btn-sm btn-outline-primary" type="submit" aria-label="Acheter ticket">
                           <i class="bi bi-ticket-perforated"></i>

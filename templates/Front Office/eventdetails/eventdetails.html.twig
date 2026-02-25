@@ -130,7 +130,9 @@
             <i class="bi bi-ticket-perforated me-2"></i>Vos tickets
         </h5>
         <div class="list-group">
-            {% for ticket in tickets %}
+            {% set maxTickets = 3 %}
+            {# Afficher les 3 premiers tickets #}
+            {% for ticket in tickets|slice(0, maxTickets) %}
                 <div class="list-group-item d-flex flex-wrap align-items-center justify-content-between">
                     <div>
                         <div class="fw-semibold">Ticket #{{ ticket.id }}</div>
@@ -149,8 +151,51 @@
                     </div>
                 </div>
             {% endfor %}
+            {# Les tickets suivants, dans une div masquée #}
+            {% if tickets|length > maxTickets %}
+                <div id="moreTickets" style="display:none;">
+                {% for ticket in tickets|slice(maxTickets) %}
+                    <div class="list-group-item d-flex flex-wrap align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-semibold">Ticket #{{ ticket.id }}</div>
+                            <div class="small text-muted">Acheté le {{ ticket.dateAchat ? ticket.dateAchat|date('d M Y') : '-' }}</div>
+                        </div>
+                        <div class="text-muted small">
+                            {{ evenement.titre }} · {{ evenement.prixTicket }} DT
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_ticket_qr', { id: ticket.id }) }}" target="_blank" rel="noopener" title="Afficher le code QR">
+                                <i class="bi bi-qr-code"></i> QR Code
+                            </a>
+                            <a class="btn btn-sm btn-outline-primary" href="{{ path('app_ticket_download', { id: ticket.id }) }}" title="Télécharger le ticket en PDF">
+                                <i class="bi bi-download"></i> Télécharger
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
         </div>
+        {% if tickets|length > maxTickets %}
+            <div class="text-center mt-3">
+                <button class="btn btn-outline-primary" id="showMoreTicketsBtn" type="button">
+                    Voir plus
+                </button>
+            </div>
+        {% endif %}
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('showMoreTicketsBtn');
+        const more = document.getElementById('moreTickets');
+        if (btn && more) {
+            btn.addEventListener('click', function() {
+                more.style.display = '';
+                btn.style.display = 'none';
+            });
+        }
+    });
+    </script>
     {% endif %}
 
     <!-- Section Localisation (pleine largeur) -->

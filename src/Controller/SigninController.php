@@ -111,21 +111,24 @@ final class SigninController extends AbstractController
             throw $this->createNotFoundException('Utilisateur non trouvé');
         }
         $repo = $em->getRepository(\App\Entity\UserConnection::class);
-        $connections = [];
-        if ($request->query->get('today')) {
-            $start = (new \DateTimeImmutable('today'))->setTime(0,0,0);
-            $end = (new \DateTimeImmutable('today'))->setTime(23,59,59);
-            $qb = $repo->createQueryBuilder('c')
-                ->where('c.user = :user')
-                ->andWhere('c.connectedAt BETWEEN :start AND :end')
-                ->setParameter('user', $user)
-                ->setParameter('start', $start)
-                ->setParameter('end', $end)
-                ->orderBy('c.connectedAt', 'DESC');
-            $connections = $qb->getQuery()->getResult();
-        } else {
-            $connections = $repo->findBy(['user' => $user], ['connectedAt' => 'DESC']);
-        }
+        // Supprimer toutes les connexions de tous les utilisateurs qui ne sont pas d'aujourd'hui
+        $start = (new \DateTimeImmutable('today'))->setTime(0,0,0);
+        $end = (new \DateTimeImmutable('today'))->setTime(23,59,59);
+        $qbDelete = $repo->createQueryBuilder('c')
+            ->delete()
+            ->where('c.connectedAt < :start OR c.connectedAt > :end')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end);
+        $qbDelete->getQuery()->execute();
+        // Récupérer uniquement les connexions du jour
+        $qb = $repo->createQueryBuilder('c')
+            ->where('c.user = :user')
+            ->andWhere('c.connectedAt BETWEEN :start AND :end')
+            ->setParameter('user', $user)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->orderBy('c.connectedAt', 'DESC');
+        $connections = $qb->getQuery()->getResult();
 
         // Parse User-Agent for each connection
         $uaParser = new \App\Service\UserAgentParser();

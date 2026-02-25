@@ -103,7 +103,8 @@ final class FeedController extends AbstractController
             throw $this->createNotFoundException('User not found');
         }
 
-        $recommendedOeuvres = $recommendationService->getRecommendedOeuvres($user);
+        #$recommendedOeuvres = $recommendationService->getRecommendedOeuvres($user);
+        $recommendedOeuvres = $recommendationService->getRecommendedOeuvresHybrid($user);
 
         $initialDisplayCount = $this->getInitialDisplayCount($recommendedOeuvres, $request);
 

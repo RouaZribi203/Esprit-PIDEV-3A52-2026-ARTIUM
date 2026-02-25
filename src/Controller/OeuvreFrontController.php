@@ -8,6 +8,7 @@ use App\Enum\Specialite;
 use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
 use App\Service\EmbeddingService;
+use App\Service\ImageEmbeddingService;
 use App\Repository\OeuvreRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -43,7 +44,7 @@ final class OeuvreFrontController extends AbstractController
         ]);
     }
     #[Route('/new_oeuvre', name: 'app_oeuvre_new', methods: ['GET','POST'])]
-    public function new(Request $request,EntityManagerInterface $entityManager,EmbeddingService $embeddingService,MessageBusInterface $bus): Response {
+    public function new(Request $request,EntityManagerInterface $entityManager,EmbeddingService $embeddingService,ImageEmbeddingService $imageEmbeddingService,MessageBusInterface $bus): Response {
         
         $oeuvre = new Oeuvre();
         $user = $this->getUser();
@@ -81,6 +82,23 @@ final class OeuvreFrontController extends AbstractController
 
             $imageFile->move($tempDir, $newName);
 
+    /*// --- HERE: wrap moved file and send to embedding service ---
+    $uploadedFile = new \Symfony\Component\HttpFoundation\File\UploadedFile(
+        $tempDir . '/' . $newName,
+        $newName,
+        null,
+        null,
+        true // mark as "test" so Symfony doesn’t try to move it again
+    );
+
+    // send blob to FastAPI via your service
+    $imageEmbedding = $imageEmbeddingService->getEmbeddingFromBlob($uploadedFile);
+
+    // save embedding in your Oeuvre entity
+    $oeuvre->setEmbedding($imageEmbedding);
+
+    // --- END embedding call ---*/
+
             if ($tempImageName) {
                 $oldPath = $tempDir . '/' . $tempImageName;
                 if (is_file($oldPath)) {
@@ -93,7 +111,6 @@ final class OeuvreFrontController extends AbstractController
         }
 
     if ($form->isSubmitted() && $form->isValid()) {
-
         $tempPath = $tempImageName ? $tempDir . '/' . $tempImageName : null;
         if ($tempPath && is_file($tempPath)) {
             $blobData = fopen($tempPath, 'rb');
@@ -110,14 +127,10 @@ final class OeuvreFrontController extends AbstractController
         $entityManager->flush();
 
         $this->addFlash('success', 'Œuvre ajoutée avec succès 🎨');
-        // --- generate embedding synchronously for testing ---
-        /*$text = trim($oeuvre->getTitre() . ' ' . $oeuvre->getDescription());
-        $embedding = $embeddingService->embed($text);
-        $oeuvre->setEmbedding($embedding);
-
-        $entityManager->persist($oeuvre);
-        $entityManager->flush(); // save embedding*/
-        $bus->dispatch(new GenerateEmbeddingMessage($oeuvre->getId()));
+        try {
+            $bus->dispatch(new GenerateEmbeddingMessage($oeuvre->getId()));
+        } catch (\Throwable) {
+        }
 
         return $this->redirectToRoute('app_oeuvre_front');
        }

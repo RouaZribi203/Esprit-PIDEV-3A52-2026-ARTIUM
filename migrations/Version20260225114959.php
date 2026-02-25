@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20260221201902 extends AbstractMigration
+final class Version20260225114959 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -28,7 +28,7 @@ final class Version20260221201902 extends AbstractMigration
         $this->addSql('CREATE TABLE livre (categorie VARCHAR(255) NOT NULL, prix_location DOUBLE PRECISION NOT NULL, fichier_pdf LONGBLOB NOT NULL, id INT NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('CREATE TABLE location_livre (id INT AUTO_INCREMENT NOT NULL, date_debut DATETIME NOT NULL, etat VARCHAR(255) NOT NULL, user_id INT NOT NULL, livre_id INT NOT NULL, INDEX IDX_DA3F0ABCA76ED395 (user_id), INDEX IDX_DA3F0ABC37D925CB (livre_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('CREATE TABLE musique (genre VARCHAR(255) NOT NULL, audio LONGBLOB NOT NULL, id INT NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4');
-        $this->addSql('CREATE TABLE oeuvre (id INT AUTO_INCREMENT NOT NULL, titre VARCHAR(255) NOT NULL, description LONGTEXT NOT NULL, date_creation DATE NOT NULL, image LONGBLOB NOT NULL, type VARCHAR(255) NOT NULL, embedding JSON DEFAULT NULL, collection_id INT NOT NULL, classe VARCHAR(255) NOT NULL, INDEX IDX_35FE2EFE514956FD (collection_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('CREATE TABLE oeuvre (id INT AUTO_INCREMENT NOT NULL, titre VARCHAR(255) NOT NULL, description LONGTEXT NOT NULL, date_creation DATE NOT NULL, image LONGBLOB NOT NULL, type VARCHAR(255) NOT NULL, embedding JSON DEFAULT NULL, image_embedding JSON DEFAULT NULL, collection_id INT NOT NULL, classe VARCHAR(255) NOT NULL, INDEX IDX_35FE2EFE514956FD (collection_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('CREATE TABLE oeuvre_user (oeuvre_id INT NOT NULL, user_id INT NOT NULL, INDEX IDX_7A340C0F88194DE8 (oeuvre_id), INDEX IDX_7A340C0FA76ED395 (user_id), PRIMARY KEY(oeuvre_id, user_id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('CREATE TABLE playlist (id INT AUTO_INCREMENT NOT NULL, nom VARCHAR(255) NOT NULL, description VARCHAR(255) DEFAULT NULL, date_creation DATE NOT NULL, image LONGBLOB DEFAULT NULL, user_id INT NOT NULL, INDEX IDX_D782112DA76ED395 (user_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('CREATE TABLE playlist_musique (playlist_id INT NOT NULL, musique_id INT NOT NULL, INDEX IDX_512241A66BBD148 (playlist_id), INDEX IDX_512241A625E254A1 (musique_id), PRIMARY KEY(playlist_id, musique_id)) DEFAULT CHARACTER SET utf8mb4');

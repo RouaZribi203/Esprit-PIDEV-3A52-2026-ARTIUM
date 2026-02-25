@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Service\EmbeddingService;
+use App\Service\ImageEmbeddingService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -41,5 +42,6 @@ class TestEmbeddingController extends AbstractController
             'preview' => array_slice($embedding, 0, 5), // show first 5 values for check
         ]);
     }
+    
 
 }

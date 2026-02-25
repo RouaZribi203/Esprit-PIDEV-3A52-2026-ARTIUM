@@ -80,6 +80,9 @@ class Oeuvre
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $embedding = null;
 
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $imageEmbedding = null;
+
 
     public function __construct()
     {
@@ -260,6 +263,18 @@ class Oeuvre
     public function setEmbedding(array $embedding): self
     {
     $this->embedding = $embedding;
+    return $this;
+    }
+
+    public function getImageEmbedding(): ?array
+    {
+    return $this->imageEmbedding;
+    }
+
+    public function setImageEmbedding(?array $imageEmbedding): self
+    {
+    $this->imageEmbedding = $imageEmbedding;
+
     return $this;
     }
 }

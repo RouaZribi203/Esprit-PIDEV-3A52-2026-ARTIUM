@@ -168,4 +168,38 @@ class Galerie
 
         return $this;
     }
+
+    /**
+     * Extract latitude from localisation field (format: "lat, lng")
+     */
+    public function getLatitude(): ?float
+    {
+        if (!$this->localisation) {
+            return null;
+        }
+
+        $parts = array_map('trim', explode(',', $this->localisation));
+        if (count($parts) >= 1 && is_numeric($parts[0])) {
+            return (float) $parts[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract longitude from localisation field (format: "lat, lng")
+     */
+    public function getLongitude(): ?float
+    {
+        if (!$this->localisation) {
+            return null;
+        }
+
+        $parts = array_map('trim', explode(',', $this->localisation));
+        if (count($parts) >= 2 && is_numeric($parts[1])) {
+            return (float) $parts[1];
+        }
+
+        return null;
+    }
 }

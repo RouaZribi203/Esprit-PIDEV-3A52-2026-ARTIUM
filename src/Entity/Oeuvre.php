@@ -8,6 +8,9 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Ignore;
+use Meilisearch\Bundle\Search\Attributes\Searchable;
 
 #[ORM\Entity(repositoryClass: OeuvreRepository::class)]
 #[ORM\InheritanceType("JOINED")]
@@ -17,6 +20,7 @@ use Doctrine\ORM\Mapping as ORM;
     "livre" => Livre::class,
     "musique" => Musique::class
 ])]
+#[Searchable(['titre', 'collection.titre', 'collection.artiste.nom', 'collection.artiste.prenom', 'description'])]
 class Oeuvre
 {
     #[ORM\Id]
@@ -25,6 +29,7 @@ class Oeuvre
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le titre ne peut pas etre vide')]
     private ?string $titre = null;
     #[Assert\NotBlank(message: "Le titre est obligatoire.")]
     #[Assert\Length(
@@ -36,6 +41,7 @@ class Oeuvre
 
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'La description ne peut pas etre vide')]
     private ?string $description = null;
     #[Assert\NotBlank(message: "La description est obligatoire.")]
     #[Assert\Length(
@@ -47,35 +53,52 @@ class Oeuvre
 
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Assert\NotNull(message: 'La date d\'ajout ne peut pas être vide', groups: ['edit'])]
+    #[Assert\LessThanOrEqual('today', message: 'La date d\'ajout ne peut pas être dans le futur', groups: ['edit'])]
     private ?\DateTime $date_creation = null;
 
     #[ORM\Column(type: Types::BLOB)]
+    #[Ignore]
     private mixed $image = null;
 
-    #[ORM\Column(enumType: TypeOeuvre::class)]
+    
+    #[ORM\Column(type: 'string', enumType: TypeOeuvre::class)]
     private ?TypeOeuvre $type = null;
+
+
 
     #[ORM\ManyToOne(inversedBy: 'oeuvres')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: 'Veuillez choisir une collection')]
     private ?Collections $collection = null;
 
     /**
      * @var Collection<int, Commentaire>
      */
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'oeuvre', orphanRemoval: true)]
+    #[Ignore]
     private Collection $commentaires;
 
     /**
      * @var Collection<int, User>
      */
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'fav_user')]
+    #[Ignore]
     private Collection $user_fav;
 
     /**
      * @var Collection<int, Like>
      */
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'oeuvre')]
+    #[Ignore]
     private Collection $likes;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $embedding = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $imageEmbedding = null;
+
 
     public function __construct()
     {
@@ -94,7 +117,7 @@ class Oeuvre
         return $this->titre;
     }
 
-    public function setTitre(string $titre): static
+    public function setTitre(?string $titre): static
     {
         $this->titre = $titre;
 
@@ -106,7 +129,7 @@ class Oeuvre
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 
@@ -118,7 +141,7 @@ class Oeuvre
         return $this->date_creation;
     }
 
-    public function setDateCreation(\DateTime $date_creation): static
+    public function setDateCreation(?\DateTime $date_creation): static
     {
         $this->date_creation = $date_creation;
 
@@ -164,6 +187,7 @@ class Oeuvre
     /**
      * @return Collection<int, Commentaire>
      */
+    #[Ignore]
     public function getCommentaires(): Collection
     {
         return $this->commentaires;
@@ -194,6 +218,7 @@ class Oeuvre
     /**
      * @return Collection<int, User>
      */
+    #[Ignore]
     public function getUserFav(): Collection
     {
         return $this->user_fav;
@@ -218,6 +243,7 @@ class Oeuvre
     /**
      * @return Collection<int, Like>
      */
+    #[Ignore]
     public function getLikes(): Collection
     {
         return $this->likes;
@@ -243,5 +269,28 @@ class Oeuvre
         }
 
         return $this;
+    }
+
+    public function getEmbedding(): ?array
+    {
+    return $this->embedding;
+    }
+
+    public function setEmbedding(array $embedding): self
+    {
+    $this->embedding = $embedding;
+    return $this;
+    }
+
+    public function getImageEmbedding(): ?array
+    {
+    return $this->imageEmbedding;
+    }
+
+    public function setImageEmbedding(?array $imageEmbedding): self
+    {
+    $this->imageEmbedding = $imageEmbedding;
+
+    return $this;
     }
 }

@@ -9,4 +9,15 @@ enum TypeOeuvre: string
     case PHOTOGRAPHIE = 'Photographie';
     case MUSIQUE = 'Musique';
     case LIVRE = 'Livre';
+
+    public function getColor(): string
+    {
+        return match($this) {
+            self::PEINTURE => 'primary',
+            self::SCULPTURE => 'success',
+            self::PHOTOGRAPHIE => 'info',
+            self::MUSIQUE => 'warning',
+            self::LIVRE => 'dark',
+        };
+    }
 }

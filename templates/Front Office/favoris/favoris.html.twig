@@ -3,11 +3,12 @@
 {% block title %}{{ 'Favoris'|trans }}{% endblock %}
 
 {% block amateur_content %}
-    <!-- Card feed item START -->
-					<div class="card">
+<!-- Card START -->
+				<div class="card">
 					<!-- Card header START -->
 					<div class="card-header d-sm-flex text-center align-items-center justify-content-between border-0 pb-0">
 						<h1 class="card-title h4">Favoris</h1>
+						
 					</div>
 					<!-- Card header START -->
 					<!-- Card body START -->
@@ -15,7 +16,8 @@
 
 						<!-- Tab nav line START -->
 						<ul class="nav nav-tabs nav-bottom-line justify-content-center justify-content-md-start">
-							<li class="nav-item"> <a class="nav-link active" data-bs-toggle="tab" href="#tab-1"> Peintures </a> </li>
+							<li class="nav-item"> <a class="nav-link active" data-bs-toggle="tab" href="#tab-0"> Toutes les oeuvres </a> </li>
+							<li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-1"> Peintures </a> </li>
 							<li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-2"> Sculptures </a> </li>
 							<li class="nav-item"> <a class="nav-link" data-bs-toggle="tab" href="#tab-3"> Photographies </a> </li>
 						</ul>
@@ -24,1759 +26,605 @@
 						<!-- Album Tab content START -->
 						<div class="tab-content mb-0 pb-0">
 
-							<!-- Photos of you tab START -->
-							<div class="tab-pane fade show active" id="tab-1">
-								<div class="row g-3">
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/01.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
+							<!-- Toutes les oeuvres tab START -->
+							<div class="tab-pane fade show active" id="tab-0">
+								<div class="row g-3 align-items-start">
+									{% if favorites is not empty %}
+										{% for oeuvre in favorites %}
+											<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
+												<div class="position-absolute bottom-0 end-0">
+													<div class="dropdown mb-2 me-3">
+														<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEditAll{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
+															<i class="bi bi-pencil-fill"></i>
+														</a>
+														<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEditAll{{ oeuvre.id }}">
+													<li>
+														<a class="dropdown-item favorite-remove-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-favorited="true">
+															<i class="bi bi-star-fill text-warning fa-fw pe-1"></i> Retirer des favoris
+														</a>
+													</li>
+														</ul>
 													</div>
 												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
+												{% if oeuvre.image %}
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
+														<img class="rounded img-fluid" src="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
 													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
+												{% else %}
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
+														<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="{{ oeuvre.titre }}">
 													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
+												{% endif %}
 										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit2" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit2">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/02.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/02.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction2" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction2">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction2" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction2">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit3" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit3">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/03.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/03.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction3" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction3">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction3" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction3">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit4" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit4">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/04.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/04.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction4" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction4">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction4" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction4">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit5" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit5">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/05.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/05.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="assets/images/avatar/04.jpg" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction5" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction5">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction5" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction5">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit6" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit6">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/06.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/06.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction6" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction6">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction6" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction6">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
+									{% endfor %}
+								{% else %}
+									<p class="text-center text-muted">L'utilisateur n'a pas encore de favoris.</p>
+								{% endif %}
 								</div>
 							</div>
-							<!-- Photos of you tab END -->
+							<!-- Toutes les oeuvres tab END -->
 
-							<!-- Your photos tab START -->
+							<!-- Peintures tab START -->
+							<div class="tab-pane fade" id="tab-1">
+								<div class="row g-3 align-items-start">
+									{% if favoritesPeintures is not empty %}
+										{% for oeuvre in favoritesPeintures %}
+											<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
+												<div class="position-absolute bottom-0 end-0">
+													<div class="dropdown mb-2 me-3">
+														<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
+															<i class="bi bi-pencil-fill"></i>
+														</a>
+														<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit{{ oeuvre.id }}">
+															<li>
+																<a class="dropdown-item favorite-remove-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-favorited="true">
+															<i class="bi bi-star-fill text-warning fa-fw pe-1"></i> Retirer des favoris
+														</a>
+													</li>
+														</ul>
+													</div>
+												</div>
+												{% if oeuvre.image %}
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
+														<img class="rounded img-fluid" src="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
+													</a>
+												{% else %}
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
+														<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="{{ oeuvre.titre }}">
+													</a>
+												{% endif %}
+											</div>
+										{% endfor %}
+								{% else %}
+									<p class="text-center text-muted">Aucune oeuvre favorite dans cette categorie.</p>
+								{% endif %}
+
+								</div>
+							</div>
+							<!-- Peintures tab END -->
+
+							<!-- Sculptures tab START -->
 							<div class="tab-pane fade" id="tab-2">
-								<div class="row g-3">
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit7" data-bs-toggle="dropdown" aria-expanded="false">
+								<div class="row g-3 align-items-start">
+								{% if favoritesSculptures is not empty %}
+									{% for oeuvre in favoritesSculptures %}
+										<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
+											<div class="position-absolute bottom-0 end-0">
+												<div class="dropdown mb-2 me-3">
+												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
 													<i class="bi bi-pencil-fill"></i>
 												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit7">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/01.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction7" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction7">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
+												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit{{ oeuvre.id }}">
+											<li>
+												<a class="dropdown-item favorite-remove-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-favorited="true">
+																<i class="bi bi-star-fill text-warning fa-fw pe-1"></i> Retirer des favoris
+															</a>
+														</li>
 													</ul>
 												</div>
-												<!-- Card feed action dropdown END -->
 											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction7" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction7">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="assets/images/avatar/04.jpg" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="assets/images/avatar/05.jpg" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="postActionEdit2" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
+											{% if oeuvre.image %}
+												<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
+													<img class="rounded img-fluid" src="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
 												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postActionEdit2">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/02.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/02.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction8" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction8">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction8" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction8">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="assets/images/avatar/04.jpg" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit8" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
+											{% else %}
+												<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
+													<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="{{ oeuvre.titre }}">
 												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit8">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
+											{% endif %}
 										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/03.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/03.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction9" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction9">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction9" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction9">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-								</div>
+									{% endfor %}
+								{% else %}
+									<p class="text-center text-muted">Aucune oeuvre favorite dans cette categorie.</p>
+								{% endif %}
 							</div>
-							<!-- Your photos tab END -->
+						</div>
+						<!-- Sculptures tab END -->
 							
-							<!-- Recently added tab START -->
+							<!-- Photographies tab START -->
 							<div class="tab-pane fade" id="tab-3">
-								<div class="row g-3">
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit9" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit9">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/01.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
+								<div class="row g-3 align-items-start">
+									{% if favoritesPhotographies is not empty %}
+										{% for oeuvre in favoritesPhotographies %}
+											<div class="col-6 col-lg-3 position-relative" data-favorite-card data-oeuvre-id="{{ oeuvre.id }}">
+												<div class="position-absolute bottom-0 end-0">
+													<div class="dropdown mb-2 me-3">
+													<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit{{ oeuvre.id }}" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false">
+															<i class="bi bi-pencil-fill"></i>
+														</a>
+														<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit{{ oeuvre.id }}">
+													<li>
+														<a class="dropdown-item favorite-remove-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-favorited="true">
+															<i class="bi bi-star-fill text-warning fa-fw pe-1"></i> Retirer des favoris
+														</a>
+													</li>
+														</ul>
 													</div>
 												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction10" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
+												{% if oeuvre.image %}
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
+														<img class="rounded img-fluid" src="{{ path('favoris_oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
 													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction10">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction10" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
+												{% else %}
+													<a href="#" class="favorite-post-open" data-bs-toggle="modal" data-bs-target="#favorisPostModal{{ oeuvre.id }}">
+														<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="{{ oeuvre.titre }}">
 													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction10">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
+												{% endif %}
 											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit10" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit10">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/02.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/02.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction11" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction11">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction11" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction11">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
-
-									<!-- Photo item START -->
-									<div class="col-6 col-lg-3 position-relative">
-										<div class="position-absolute bottom-0 end-0">
-											<!-- Dropdown START -->
-											<div class="dropdown mb-2 me-3">
-												<a href="#" class="icon-sm bg-primary text-white rounded-circle" id="photoActionEdit12" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-pencil-fill"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit12">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-tag fa-fw pe-1"></i> Remove Tag</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person fa-fw pe-1"></i> Make Profile Picture</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-person-bounding-box fa-fw pe-1"></i> Make Cover Photo</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report photo</a></li>
-												</ul>
-											</div>
-										</div>
-										<!-- Dropdown END -->
-										<a href="{{ asset('assetsfront/images/albums/03.jpg') }}" data-gallery="image-popup" data-glightbox="description: .custom-desc2; descPosition: left;">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/03.jpg') }}" alt="">
-										</a>
-										<!-- glightbox Albums left bar START -->
-										<div class="glightbox-desc custom-desc2">
-											<div class="d-flex align-items-center justify-content-between">
-												<div class="d-flex align-items-center">
-													<!-- Avatar -->
-													<div class="avatar me-2">
-														<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-													</div>
-													<!-- Info -->
-													<div>
-														<div class="nav nav-divider">
-															<h6 class="nav-item card-title mb-0">Lori Ferguson</h6>
-															<span class="nav-item small"> 2hr</span>
-														</div>
-														<p class="mb-0 small">Web Developer at Webestica</p>
-													</div>
-												</div>
-												<!-- Card feed action dropdown START -->
-												<div class="dropdown">
-													<a href="#" class="text-secondary btn btn-secondary-soft-hover py-1 px-2" id="cardFeedAction12" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-three-dots"></i>
-													</a>
-													<!-- Card feed action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardFeedAction12">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark fa-fw pe-2"></i>Save post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-person-x fa-fw pe-2"></i>Unfollow lori ferguson </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-x-circle fa-fw pe-2"></i>Hide post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-slash-circle fa-fw pe-2"></i>Block</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-2"></i>Report post</a></li>
-													</ul>
-												</div>
-												<!-- Card feed action dropdown END -->
-											</div>
-											<p class="mt-3 mb-0">I'm so privileged to be involved in the @bootstrap hiring process! <a href="#">#internship #inclusivebusiness</a> <a href="#">#internship</a> <a href="#"> #hiring</a> <a href="#">#apply</a> </p>
-											<ul class="nav nav-stack py-3 small">
-												<li class="nav-item">
-													<a class="nav-link active" href="#!"> <i class="bi bi-hand-thumbs-up-fill pe-1"></i>Liked (56)</a>
-												</li>
-												<li class="nav-item">
-													<a class="nav-link" href="#!"> <i class="bi bi-chat-fill pe-1"></i>Comments (12)</a>
-												</li>
-												<!-- Card share action START -->
-												<li class="nav-item dropdown ms-auto">
-													<a class="nav-link mb-0" href="#" id="cardShareAction12" data-bs-toggle="dropdown" aria-expanded="false">
-														<i class="bi bi-reply-fill fa-flip-horizontal pe-1"></i>Share (3)
-													</a>
-													<!-- Card share action dropdown menu -->
-													<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cardShareAction12">
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-envelope fa-fw pe-2"></i>Send via Direct Message</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-bookmark-check fa-fw pe-2"></i>Bookmark </a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-link fa-fw pe-2"></i>Copy link to post</a></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-share fa-fw pe-2"></i>Share post via …</a></li>
-														<li><hr class="dropdown-divider"></li>
-														<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil-square fa-fw pe-2"></i>Share to News Feed</a></li>
-													</ul>
-												</li>
-												<!-- Card share action END -->
-											</ul>
-											<!-- Add comment -->
-											<div class="d-flex mb-3">
-												<!-- Avatar -->
-												<div class="avatar avatar-xs me-2">
-													<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/04.jpg') }}" alt="">
-												</div>
-												<!-- Comment box  -->
-												<form class="position-relative w-100">
-													<textarea class="form-control pe-4 bg-light" rows="1" placeholder="Add a comment..."></textarea>
-												</form>
-											</div>
-											<!-- Comment wrap START -->
-											<ul class="comment-wrap list-unstyled ">
-												<!-- Comment item START -->
-												<li class="comment-item">
-													<div class="d-flex">
-														<!-- Avatar -->
-														<div class="avatar avatar-xs">
-															<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/05.jpg') }}" alt="">
-														</div>
-														<div class="ms-2">
-															<!-- Comment by -->
-															<div class="bg-light rounded-start-top-0 p-3 rounded">
-																<div class="d-flex justify-content-center">
-																	<div class="me-2">
-																		<h6 class="mb-1"> <a href="#!"> Frances Guerrero </a></h6>
-																		<p class="small mb-0">Removed demands expense account in outward tedious do.</p>
-																	</div>
-																	<small>5hr</small>
-																</div>
-															</div>
-															<!-- Comment react -->
-															<ul class="nav nav-divider py-2 small">
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Like (3)</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> Reply</a>
-																</li>
-																<li class="nav-item">
-																	<a class="nav-link" href="#!"> View 5 replies</a>
-																</li>
-															</ul>
-														</div>
-													</div>
-												</li>
-											</ul>
-											<!-- Comment wrap END -->
-										</div>
-										<!-- glightbox Albums left bar END  -->
-									</div>
-									<!-- Photo item END -->
+										{% endfor %}
+									{% else %}
+										<p class="text-center text-muted">Aucune oeuvre favorite dans cette categorie.</p>
+									{% endif %}
 								</div>
 							</div>
-							<!-- Recently added tab END -->
+							<!-- Photographies tab END -->
 
-							<!-- Family tab START -->
-							<div class="tab-pane fade text-center" id="tab-4">
-								<div class="my-sm-5 py-sm-5">
-									<i class="display-1 text-body-secondary bi bi-file-earmark-x"> </i>
-									<h4 class="mt-2 mb-3 text-body">No photos or videos</h4>
-									<button class="btn btn-primary-soft btn-sm" data-bs-toggle="modal" data-bs-target="#modalCreateAlbum"> Click here to add </button>
-								</div>
-							</div>
-							<!-- Family tab END -->
-
-							<!-- Albums START -->
-							<div class="tab-pane fade" id="tab-5">
-								<div class="row g-3">
-
-									<!-- Album item START -->
-									<div class="col-6 col-lg-3">
-										<!-- Album poster -->
-										<a href="#">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/01.jpg') }}" alt="">
-										</a>
-										<!-- Album name -->
-										<div class="hstack mt-3">
-											<div>
-												<h6 class="mb-0"> <a href="#!"> Cover Photos </a> </h6>
-												<a class="text-secondary small" href="#!">5 Items</a>
-											</div>
-											<!-- Dropdown START -->
-											<div class="dropdown ms-auto">
-												<a href="#" class="icon-sm bg-light text-secondary rounded-circle" id="photoActionEdit17" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-three-dots"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="photoActionEdit17">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil fa-fw pe-1"></i> Edit</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-trash fa-fw pe-1"></i> Delete</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report album</a></li>
-												</ul>
-											</div>
-												<!-- Dropdown END -->
-										</div>
-									</div>
-									<!-- Album item END -->
-
-									<!-- Album item START -->
-									<div class="col-6 col-lg-3">
-										<!-- Album poster -->
-										<a href="#">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/02.jpg') }}" alt="">
-										</a>
-										<!-- Album name -->
-										<div class="hstack mt-3">
-											<div>
-												<h6 class="mb-0"> <a href="#!"> Profile pictures </a> </h6>
-												<a class="text-secondary small" href="#!">20 Items</a>
-											</div>
-											<!-- Dropdown START -->
-											<div class="dropdown ms-auto">
-												<a href="#" class="icon-sm bg-light text-secondary rounded-circle" id="albumActionSetting2" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-three-dots"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="albumActionSetting2">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil fa-fw pe-1"></i> Edit</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-trash fa-fw pe-1"></i> Delete</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report album</a></li>
-												</ul>
-											</div>
-												<!-- Dropdown END -->
-										</div>
-									</div>
-									<!-- Album item END -->
-
-									<!-- Album item START -->
-									<div class="col-6 col-lg-3">
-										<!-- Album poster -->
-										<a href="#">
-											<img class="rounded img-fluid" src="{{ asset('assetsfront/images/albums/03.jpg') }}" alt="">
-										</a>
-										<!-- Album name -->
-										<div class="hstack mt-3">
-											<div>
-												<h6 class="mb-0"> <a href="#!"> Untitled pictures </a> </h6>
-												<a class="text-secondary small" href="#!">12 Items</a>
-											</div>
-											<!-- Dropdown START -->
-											<div class="dropdown ms-auto">
-												<a href="#" class="icon-sm bg-light text-secondary rounded-circle" id="albumActionSetting3" data-bs-toggle="dropdown" aria-expanded="false">
-													<i class="bi bi-three-dots"></i>
-												</a>
-												<!-- Dropdown menu -->
-												<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="albumActionSetting3">
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-pencil fa-fw pe-1"></i> Edit</a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-download fa-fw pe-1"></i> Download </a></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-trash fa-fw pe-1"></i> Delete</a></li>
-													<li><hr class="dropdown-divider"></li>
-													<li><a class="dropdown-item" href="#"> <i class="bi bi-flag fa-fw pe-1"></i> Report album</a></li>
-												</ul>
-											</div>
-												<!-- Dropdown END -->
-										</div>
-									</div>
-									<!-- Album item END -->
-								</div>
-							</div>
-						<!-- Albums END -->
 						</div>
 
 					<!-- Album Tab content END -->
 					</div>
 				<!-- Card body END -->
 				</div>
+			<!-- Card END -->
+
+			{% if favorites is not empty %}
+				{% for oeuvre in favorites %}
+					{% set oeuvreImageUrl = oeuvre.image ? path('favoris_oeuvre_image', {'id': oeuvre.id}) : asset('assetsfront/images/albums/01.jpg') %}
+					{% include 'Front Office/favoris/_favoris_post_modal.html.twig' with { oeuvre: oeuvre, imageUrl: oeuvreImageUrl } %}
+				{% endfor %}
+			{% endif %}
+
+<script>
+function updateFavorisCommentCount(frame) {
+	if (!frame || !frame.id || !frame.id.startsWith('comments-fav-')) {
+		return;
+	}
+
+	const oeuvreId = frame.id.replace('comments-fav-', '');
+	const count = frame.querySelectorAll('.comment-item').length;
+	if (!oeuvreId) {
+		return;
+	}
+
+	document.querySelectorAll(`.comment-count[data-oeuvre-id="${oeuvreId}"]`).forEach((el) => {
+		el.textContent = count;
+	});
+}
+
+function syncFavorisComments(frame) {
+	if (!frame || !frame.id || !frame.id.startsWith('comments-fav-')) {
+		return;
+	}
+
+	// Check if comments were previously expanded
+	if (frame.dataset.commentsExpanded === 'true') {
+		frame.querySelectorAll('.comment-item.hidden-comment.d-none').forEach((item) => {
+			item.classList.remove('d-none');
+		});
+
+		// Hide the load more button since all comments are visible
+		const loadMoreBtn = frame.querySelector('.fav-comments-load-more');
+		if (loadMoreBtn) {
+			const btnContainer = loadMoreBtn.closest('.pt-2');
+			if (btnContainer) {
+				btnContainer.style.display = 'none';
+			}
+		}
+	}
+}
+
+document.addEventListener('turbo:frame-load', function (event) {
+	updateFavorisCommentCount(event.target);
+	syncFavorisComments(event.target);
+});
+
+document.addEventListener('click', function (event) {
+	const commentsBtn = event.target.closest('.fav-comments-load-more');
+	if (commentsBtn) {
+		event.preventDefault();
+
+		if (commentsBtn.classList.contains('active')) {
+			return;
+		}
+
+		commentsBtn.classList.add('active');
+		const loader = commentsBtn.querySelector('.comments-loader');
+		const text = commentsBtn.querySelector('.comments-load-text');
+		if (loader) {
+			loader.style.display = 'inline-flex';
+		}
+		if (text) {
+			text.textContent = 'Chargement...';
+		}
+
+		setTimeout(() => {
+			const scope = commentsBtn.closest('.fav-comments-container')
+				|| commentsBtn.closest('.glightbox-desc')
+				|| commentsBtn.closest('.gdesc-inner')
+				|| commentsBtn.closest('.favoris-post-details');
+			if (!scope) {
+				commentsBtn.classList.remove('active');
+				if (loader) {
+					loader.style.display = 'none';
+				}
+				if (text) {
+					text.textContent = 'Voir plus de commentaires';
+				}
+				return;
+			}
+
+			// Mark the turbo-frame as expanded
+			const turboFrame = scope.closest('turbo-frame');
+			if (turboFrame) {
+				turboFrame.dataset.commentsExpanded = 'true';
+			}
+
+			const hiddenComments = Array.from(scope.querySelectorAll('.comment-item.hidden-comment.d-none'));
+			hiddenComments.forEach((comment) => {
+				comment.classList.remove('d-none');
+			});
+
+			const remaining = scope.querySelectorAll('.comment-item.hidden-comment.d-none').length;
+			if (remaining === 0) {
+				const btnContainer = commentsBtn.closest('.pt-2');
+				if (btnContainer) {
+					btnContainer.style.display = 'none';
+				}
+				return;
+			} else if (text) {
+				text.textContent = 'Voir plus de commentaires';
+			}
+
+			commentsBtn.classList.remove('active');
+			if (loader) {
+				loader.style.display = 'none';
+			}
+		}, 450);
+
+		return;
+	}
+
+	// Like toggle functionality
+	const likeLink = event.target.closest('.like-toggle');
+	if (likeLink) {
+		event.preventDefault();
+		const oeuvreId = likeLink.dataset.oeuvreId;
+		const icon = likeLink.querySelector('i');
+		const countSpan = likeLink.querySelector('.like-count');
+
+		fetch(`/oeuvre/${oeuvreId}/like-ajax`, {
+			method: 'POST',
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest'
+			}
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.success) {
+				if (data.liked) {
+					icon.classList.add('bi-heart-fill', 'text-danger');
+					icon.classList.remove('bi-heart');
+					likeLink.dataset.liked = 'true';
+				} else {
+					icon.classList.remove('bi-heart-fill', 'text-danger');
+					icon.classList.add('bi-heart');
+					likeLink.dataset.liked = 'false';
+				}
+				countSpan.textContent = data.likeCount;
+
+				// Update all like-toggle links for this oeuvre across all tabs/glightbox instances
+				document.querySelectorAll(`.like-toggle[data-oeuvre-id="${oeuvreId}"]`).forEach((link) => {
+					const linkIcon = link.querySelector('i');
+					const linkCount = link.querySelector('.like-count');
+					if (linkIcon) {
+						if (data.liked) {
+							linkIcon.classList.add('bi-heart-fill', 'text-danger');
+							linkIcon.classList.remove('bi-heart');
+						} else {
+							linkIcon.classList.remove('bi-heart-fill', 'text-danger');
+							linkIcon.classList.add('bi-heart');
+						}
+					}
+					if (linkCount) {
+						linkCount.textContent = data.likeCount;
+					}
+					link.dataset.liked = data.liked ? 'true' : 'false';
+				});
+			}
+		})
+		.catch(error => {
+			console.error('Error toggling like:', error);
+		});
+		return;
+	}
+
+	const removeLink = event.target.closest('.favorite-remove-toggle');
+	if (!removeLink) {
+		return;
+	}
+
+	event.preventDefault();
+
+	const oeuvreId = removeLink.dataset.oeuvreId;
+	if (!oeuvreId || removeLink.dataset.loading === 'true') {
+		return;
+	}
+
+	removeLink.dataset.loading = 'true';
+
+	fetch(`/oeuvre/${oeuvreId}/favorite-ajax`, {
+		method: 'POST',
+		headers: {
+			'X-Requested-With': 'XMLHttpRequest'
+		}
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (!data.success) {
+			return;
+		}
+
+		if (data.favorited === false) {
+			document.querySelectorAll(`[data-favorite-card][data-oeuvre-id="${oeuvreId}"]`).forEach((card) => {
+				card.remove();
+			});
+
+			const emptyMessages = {
+				'tab-0': "L'utilisateur n'a pas encore de favoris.",
+				'tab-1': 'Aucune oeuvre favorite dans cette categorie.',
+				'tab-2': 'Aucune oeuvre favorite dans cette categorie.',
+				'tab-3': 'Aucune oeuvre favorite dans cette categorie.'
+			};
+
+			document.querySelectorAll('.tab-pane .row.g-3').forEach((row) => {
+				const tabPane = row.closest('.tab-pane');
+				if (!tabPane) {
+					return;
+				}
+
+				const hasCards = row.querySelector('[data-favorite-card]') !== null;
+				let emptyState = row.querySelector('.favorite-empty-state');
+
+				if (!hasCards && !emptyState) {
+					emptyState = document.createElement('p');
+					emptyState.className = 'col-12 text-center text-muted favorite-empty-state';
+					emptyState.textContent = emptyMessages[tabPane.id] || 'Aucune oeuvre favorite dans cette categorie.';
+					row.appendChild(emptyState);
+				}
+
+				if (hasCards && emptyState) {
+					emptyState.remove();
+				}
+			});
+		}
+	})
+	.catch(() => {})
+	.finally(() => {
+		removeLink.dataset.loading = 'false';
+	});
+});
+
+// Reload page when GLightbox closes
+document.addEventListener('keydown', function(e) {
+	if (e.key === 'Escape' && document.querySelector('.glightbox-container:not(.inactive)')) {
+		setTimeout(() => {
+			location.reload();
+		}, 100);
+	}
+});
+
+document.addEventListener('click', function(e) {
+	if (!document.querySelector('.glightbox-container:not(.inactive)')) {
+		return;
+	}
+
+	const overlay = e.target.closest('.goverlay');
+	if (overlay) {
+		setTimeout(() => {
+			location.reload();
+		}, 100);
+	}
+
+	const closeBtn = e.target.closest('.gclose');
+	if (closeBtn) {
+		setTimeout(() => {
+			location.reload();
+		}, 100);
+	}
+});
+
+// Auto-reopen GLightbox after comment submission and page reload
+document.addEventListener('DOMContentLoaded', function() {
+	const storedOeuvreId = sessionStorage.getItem('reopenGlightboxOeuvreId');
+	if (storedOeuvreId) {
+		sessionStorage.removeItem('reopenGlightboxOeuvreId');
+
+		const modalElement = document.getElementById(`favorisPostModal${storedOeuvreId}`);
+		if (modalElement && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+			setTimeout(() => {
+				bootstrap.Modal.getOrCreateInstance(modalElement).show();
+			}, 200);
+			return;
+		}
+		
+		// Find and click the gallery link for this oeuvre
+		setTimeout(() => {
+			const galleryLink = document.querySelector(`a[data-gallery="favorites"][data-glightbox*="custom-desc-${storedOeuvreId}"]`);
+			if (galleryLink) {
+				galleryLink.click();
+			}
+		}, 300);
+	}
+});
+
+// Store oeuvre ID when comment form is submitted inside GLightbox
+document.addEventListener('submit', function(e) {
+	const form = e.target;
+	
+	// For add/edit/delete comment - check for oeuvre_id input
+	const oeuvreInput = form.querySelector('input[name="oeuvre_id"]');
+	if (oeuvreInput && oeuvreInput.value) {
+		sessionStorage.setItem('reopenGlightboxOeuvreId', oeuvreInput.value);
+		return;
+	}
+	
+	// For add comment without oeuvre_id input
+	if (form.action && form.action.includes('/oeuvre/') && form.action.includes('/commentaire')) {
+		const match = form.action.match(/\/oeuvre\/(\d+)\/commentaire/);
+		if (match) {
+			const oeuvreId = match[1];
+			sessionStorage.setItem('reopenGlightboxOeuvreId', oeuvreId);
+		}
+	}
+});
+
+// Inline comment edit toggle
+document.addEventListener('click', function(e) {
+	const editToggle = e.target.closest('.comment-edit-toggle');
+	if (editToggle) {
+		const editId = editToggle.dataset.editId;
+		const viewId = editToggle.dataset.viewId;
+		const editForm = document.getElementById(editId);
+		const textView = document.getElementById(viewId);
+
+		if (editForm && textView) {
+			textView.classList.add('d-none');
+			editForm.classList.remove('d-none');
+			const textarea = editForm.querySelector('textarea[name="contenu"]');
+			if (textarea) {
+				textarea.focus();
+				textarea.selectionStart = textarea.value.length;
+			}
+		}
+	}
+
+	const cancelToggle = e.target.closest('.comment-edit-cancel');
+	if (cancelToggle) {
+		const editId = cancelToggle.dataset.editId;
+		const viewId = cancelToggle.dataset.viewId;
+		const editForm = document.getElementById(editId);
+		const textView = document.getElementById(viewId);
+
+		if (editForm && textView) {
+			editForm.classList.add('d-none');
+			textView.classList.remove('d-none');
+		}
+	}
+});
+</script>
+
+<style>
+	.favoris-post-modal .modal-dialog {
+		max-width: min(1240px, calc(100vw - 48px));
+		margin: 24px auto;
+	}
+
+	.favoris-post-modal .modal-content {
+		border-radius: 0.9rem;
+		overflow: hidden;
+		max-height: calc(100vh - 48px);
+	}
+
+	.favoris-post-close {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		z-index: 3;
+		background-color: rgba(255, 255, 255, 0.9);
+		border-radius: 50%;
+	}
+
+	.favoris-post-modal .modal-body {
+		padding: 0;
+	}
+
+	.favoris-post-modal .row {
+		min-height: min(760px, calc(100vh - 110px));
+	}
+
+	.favoris-post-media-wrap {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--bs-light);
+		padding: 18px;
+	}
+
+	.favoris-post-media-wrap img {
+		max-width: 100%;
+		max-height: min(700px, calc(100vh - 150px));
+		width: auto;
+		height: auto;
+		object-fit: contain;
+	}
+
+	.favoris-post-details {
+		height: min(760px, calc(100vh - 110px));
+		overflow: hidden;
+		overflow-x: hidden;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.favoris-post-scroll {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-y: auto;
+		padding-right: 6px;
+	}
+
+	.favoris-post-modal .fav-comments-container .comment-item {
+		margin-bottom: 0.9rem;
+	}
+
+	.favoris-post-modal .fav-comments-container .comment-item:last-child {
+		margin-bottom: 0;
+	}
+
+	@media (max-width: 991px) {
+		.favoris-post-modal .modal-dialog {
+			max-width: calc(100vw - 20px);
+			margin: 10px auto;
+		}
+
+		.favoris-post-modal .modal-content {
+			max-height: calc(100vh - 20px);
+		}
+
+		.favoris-post-modal .row,
+		.favoris-post-details {
+			height: auto;
+		}
+
+		.favoris-post-scroll {
+			overflow: visible;
+			padding-right: 0;
+		}
+
+		.favoris-post-media-wrap img {
+			max-height: 48vh;
+		}
+	}
+</style>
 {% endblock %}

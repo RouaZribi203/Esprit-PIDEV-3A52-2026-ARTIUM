@@ -6,6 +6,7 @@ use App\Entity\Reclamation;
 use App\Entity\Reponse;
 use App\Entity\User;
 use App\Enum\StatutReclamation;
+use App\Enum\TypeReclamation;
 use App\Form\Reclamation1Type;
 use App\Form\ReponseType;
 use App\Repository\ReclamationRepository;
@@ -35,9 +36,17 @@ final class ReclamationController extends AbstractController
             $statut = StatutReclamation::tryFrom($statutValue);
         }
 
+        $typeValue = $request->query->get('type');
+        $type = null;
+        if (is_string($typeValue) && $typeValue !== '') {
+            $type = TypeReclamation::tryFrom($typeValue);
+        }
+
+        $dateFrom = $request->query->get('date_from', '');
+
         // Admin voit toutes les reclamations, user voit seulement les siennes
         if ($isAdmin) {
-            if ($search !== '' || $statut !== null) {
+            if ($search !== '' || $statut !== null || $type !== null || $dateFrom !== '') {
                 $qb = $reclamationRepository->createQueryBuilder('r')
                     ->orderBy('r.date_creation', 'DESC');
                     
@@ -51,6 +60,26 @@ final class ReclamationController extends AbstractController
                         ->setParameter('statut', $statut);
                 }
                 
+                if ($type !== null) {
+                    $qb->andWhere('r.type = :type')
+                        ->setParameter('type', $type);
+                }
+                
+                if ($dateFrom !== '') {
+                    $dateFromObj = \DateTime::createFromFormat('Y-m-d', $dateFrom);
+                    if ($dateFromObj) {
+                        $startOfDay = clone $dateFromObj;
+                        $startOfDay->setTime(0, 0, 0);
+                        
+                        $endOfDay = clone $dateFromObj;
+                        $endOfDay->setTime(23, 59, 59);
+                        
+                        $qb->andWhere('r.date_creation >= :startOfDay AND r.date_creation <= :endOfDay')
+                            ->setParameter('startOfDay', $startOfDay)
+                            ->setParameter('endOfDay', $endOfDay);
+                    }
+                }
+                
                 $reclamations = $qb->getQuery()->getResult();
             } else {
                 $reclamations = $reclamationRepository->findBy([], ['date_creation' => 'DESC']);
@@ -58,11 +87,42 @@ final class ReclamationController extends AbstractController
         } else {
             $reclamations = [];
             if ($user instanceof User) {
-                $reclamations = $reclamationRepository->findByUserFilters(
-                    $user,
-                    $search !== '' ? $search : null,
-                    $statut
-                );
+                $qb = $reclamationRepository->createQueryBuilder('r')
+                    ->where('r.user = :user')
+                    ->setParameter('user', $user)
+                    ->orderBy('r.date_creation', 'DESC');
+                
+                if ($search !== '') {
+                    $qb->andWhere('r.texte LIKE :search')
+                        ->setParameter('search', '%' . $search . '%');
+                }
+                
+                if ($statut !== null) {
+                    $qb->andWhere('r.statut = :statut')
+                        ->setParameter('statut', $statut);
+                }
+                
+                if ($type !== null) {
+                    $qb->andWhere('r.type = :type')
+                        ->setParameter('type', $type);
+                }
+                
+                if ($dateFrom !== '') {
+                    $dateFromObj = \DateTime::createFromFormat('Y-m-d', $dateFrom);
+                    if ($dateFromObj) {
+                        $startOfDay = clone $dateFromObj;
+                        $startOfDay->setTime(0, 0, 0);
+                        
+                        $endOfDay = clone $dateFromObj;
+                        $endOfDay->setTime(23, 59, 59);
+                        
+                        $qb->andWhere('r.date_creation >= :startOfDay AND r.date_creation <= :endOfDay')
+                            ->setParameter('startOfDay', $startOfDay)
+                            ->setParameter('endOfDay', $endOfDay);
+                    }
+                }
+                
+                $reclamations = $qb->getQuery()->getResult();
             }
         }
 
@@ -116,6 +176,8 @@ final class ReclamationController extends AbstractController
             'responseEditForms' => $responseEditForms,
             'search_query' => $search ?? '',
             'selected_statut' => $statut?->value ?? '',
+            'selected_type' => $type?->value ?? '',
+            'date_from' => $dateFrom,
         ]);
     }
 
@@ -162,7 +224,7 @@ final class ReclamationController extends AbstractController
 
             $reclamations = [];
             if ($user instanceof User) {
-                $reclamations = $reclamationRepository->findByUserFilters($user, null, null);
+                $reclamations = $reclamationRepository->findByUserFilters($user, null, null, null);
             }
 
             $editForms = [];
@@ -216,7 +278,7 @@ final class ReclamationController extends AbstractController
 
             $reclamations = [];
             if ($user instanceof User) {
-                $reclamations = $reclamationRepository->findByUserFilters($user, null, null);
+                $reclamations = $reclamationRepository->findByUserFilters($user, null, null, null);
             }
 
             $editForms = [];

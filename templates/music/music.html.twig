@@ -34,9 +34,9 @@
   <div class="card-body">
     <!-- View Toggle START -->
     <div class="mb-3">
-      <label for="viewSelector" class="form-label">View:</label>
+      <label for="viewSelector" class="form-label">Afficher:</label>
       <select class="form-select" id="viewSelector" style="max-width: 200px;">
-        <option value="music" {% if currentView == 'music' %}selected{% endif %}>Music</option>
+        <option value="music" {% if currentView == 'music' %}selected{% endif %}>Musiques</option>
         <option value="playlists" {% if currentView == 'playlists' %}selected{% endif %}>Playlists</option>
       </select>
     </div>
@@ -48,15 +48,15 @@
       <div class="col-md-6">
         <div class="d-flex gap-2">
           <div class="flex-grow-1">
-            <label for="searchInput" class="form-label small mb-2">Search by name or description</label>
+            <label for="searchInput" class="form-label small mb-2">rechercher par nom ou description</label>
             <input type="text" class="form-control" id="searchInput" placeholder="Search songs..." value="{{ searchTerm }}">
           </div>
           <button type="button" class="btn btn-outline-primary align-self-end" id="searchBtn">
-            <i class="bi bi-search"></i> Search
+            <i class="bi bi-search"></i> Rechercher
           </button>
           {% if searchTerm %}
             <button type="button" class="btn btn-outline-secondary align-self-end" id="clearSearchBtn">
-              <i class="bi bi-x-circle"></i> Clear
+              <i class="bi bi-x-circle"></i> Effacer
             </button>
           {% endif %}
         </div>
@@ -65,10 +65,10 @@
       <div class="col-md-6">
         <div class="d-flex gap-2">
           <div class="flex-grow-1">
-            <label for="sortBy" class="form-label small mb-2">Sort by</label>
+            <label for="sortBy" class="form-label small mb-2">Trier par</label>
             <select class="form-select" id="sortBy">
-              <option value="date" {% if sortBy == 'date' %}selected{% endif %}>Date Added</option>
-              <option value="titre" {% if sortBy == 'titre' %}selected{% endif %}>Title (A-Z)</option>
+              <option value="date" {% if sortBy == 'date' %}selected{% endif %}>Date d'ajout</option>
+              <option value="titre" {% if sortBy == 'titre' %}selected{% endif %}>Titre (A-Z)</option>
               <option value="genre" {% if sortBy == 'genre' %}selected{% endif %}>Genre</option>
             </select>
           </div>
@@ -90,8 +90,8 @@
       {% if searchTerm %}
         <p class="text-muted small">
           <i class="bi bi-info-circle"></i> 
-          Found <strong>{{ musiques|length }}</strong> song(s) matching "{{ searchTerm }}"
-          <a href="#" onclick="clearSearch(); return false;" class="ms-2">View all songs</a>
+          <strong>{{ musiques|length }}</strong> chansons trouvée(s) pour "{{ searchTerm }}"
+          <a href="#" onclick="clearSearch(); return false;" class="ms-2">Afficher Toutes les chansons</a>
         </p>
       {% endif %}
     </div>
@@ -101,8 +101,8 @@
       <!-- No music message START -->
       <div class="text-center py-5" id="emptyMessage">
         <i class="bi bi-music-note-beamed display-1 text-muted"></i>
-        <h5 class="mt-3">No music found</h5>
-        <p class="text-muted">{% if searchTerm %}No songs match your search. Try a different keyword.{% else %}No music uploaded yet.{% endif %}</p>
+        <h5 class="mt-3">Aucune musique trouvée</h5>
+        <p class="text-muted">{% if searchTerm %}Aucune chanson ne correspond à votre recherche. Essayez un mot-clé différent.{% else %}Aucune musique n'a encore été téléchargée.{% endif %}</p>
       </div>
       <!-- No music message END -->
     {% else %}
@@ -165,9 +165,9 @@
                 <!-- Like and action buttons -->
                 <div class="d-flex mt-3 gap-2">
                   <button class="btn btn-sm btn-primary flex-grow-1 play-btn">
-                    <i class="bi bi-play-fill pe-1"></i> Play
+                    <i class="bi bi-play-fill pe-1"></i> Lecture
                   </button>
-                  <button class="btn btn-sm btn-outline-primary" title="Add to favorites">
+                  <button class="btn btn-sm btn-outline-primary" title="Ajouter aux favoris">
                     <i class="bi bi-heart"></i>
                   </button>
                   <!-- More options dropdown -->
@@ -178,10 +178,10 @@
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ musique.id }}">
                       <li>
                         <button type="button" class="dropdown-item text-danger delete-music-btn" data-music-id="{{ musique.id }}" style="border: none; background: none; cursor: pointer; width: 100%; text-align: left;">
-                          <i class="bi bi-trash pe-2"></i>Delete
+                          <i class="bi bi-trash pe-2"></i>Supprimer
                         </button>
                       </li>
-                      <li><a class="dropdown-item" href="#"> <i class="bi bi-share pe-2"></i>Share</a></li>
+                      <li><a class="dropdown-item" href="#"> <i class="bi bi-share pe-2"></i>Partager</a></li>
                     </ul>
                   </div>
                 </div>
@@ -217,12 +217,12 @@
     
     <!-- Playlists View START -->
     <div id="playlistsView" {% if currentView != 'playlists' %}style="display: none;"{% endif %}>
-      <h5 class="mb-3">All Playlists</h5>
+      <h5 class="mb-3">Toutes les playlists</h5>
       {% if playlists is empty %}
         <div class="text-center py-5">
           <i class="bi bi-collection-play display-1 text-muted"></i>
-          <h5 class="mt-3">No playlists found</h5>
-          <p class="text-muted">No playlists created yet.</p>
+          <h5 class="mt-3">Aucune playlist trouvée</h5>
+          <p class="text-muted">Aucune playlist créée pour le moment.</p>
         </div>
       {% else %}
         <div class="row g-4" id="playlistsGrid">
@@ -266,7 +266,7 @@
                   <!-- Action buttons -->
                   <div class="d-flex mt-3 gap-2">
                     <button class="btn btn-sm btn-primary flex-grow-1">
-                      <i class="bi bi-play-fill pe-1"></i> View
+                      <i class="bi bi-play-fill pe-1"></i> Afficher
                     </button>
                     <!-- More options dropdown -->
                     <div class="dropdown">
@@ -276,10 +276,10 @@
                       <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuPlaylist{{ playlist.id }}">
                         <li>
                           <button type="button" class="dropdown-item text-danger delete-playlist-btn" data-playlist-id="{{ playlist.id }}" style="border: none; background: none; cursor: pointer; width: 100%; text-align: left;">
-                            <i class="bi bi-trash pe-2"></i>Delete
+                            <i class="bi bi-trash pe-2"></i>Supprimer
                           </button>
                         </li>
-                        <li><a class="dropdown-item" href="#"> <i class="bi bi-share pe-2"></i>Share</a></li>
+                        <li><a class="dropdown-item" href="#"> <i class="bi bi-share pe-2"></i>Partager</a></li>
                       </ul>
                     </div>
                   </div>

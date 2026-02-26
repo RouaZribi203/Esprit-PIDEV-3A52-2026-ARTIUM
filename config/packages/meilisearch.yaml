@@ -1,0 +1,23 @@
+meilisearch:
+    url: '%env(MEILISEARCH_URL)%' # URL of the Meilisearch server (mandatory)
+    api_key: '%env(MEILISEARCH_API_KEY)%' # API key to access the Meilisearch server (mandatory)
+    prefix: '%env(MEILISEARCH_PREFIX)%'
+    indices:
+        - name: oeuvre
+          class: App\Entity\Oeuvre
+          primary_key: id
+          settings:
+              searchableAttributes:
+                  - titre
+                  - collection.titre
+                  - collection.artiste.nom
+                  - collection.artiste.prenom
+                  - description
+              rankingRules:
+                  - attributeRank
+                  - words
+                  - typo
+                  - proximity
+                  - sort
+                  - exactness
+        

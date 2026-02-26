@@ -8,6 +8,21 @@
       <h1 class="h4 card-title">Discover Events</h1>
     </div>
     <div class="card-body">
+      <div class="mb-4">
+        <form method="get" action="{{ path('app_eventsfrontkeyword') }}" class="d-flex gap-2">
+          <input 
+            type="text" 
+            name="query" 
+            class="form-control" 
+            placeholder="Search event idea (AI powered)..."
+            value="{{ search_query|default('') }}"
+            aria-label="Search events">
+          <button type="submit" class="btn btn-sm btn-primary">
+            Search
+          </button>
+        </form>
+      </div>
+
       <ul class="nav nav-tabs nav-bottom-line justify-content-center justify-content-md-start">
         <li class="nav-item">
           <a class="nav-link active" data-bs-toggle="tab" href="#tab-all">Tous</a>
@@ -40,8 +55,14 @@
                   </div>
                   <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between mb-2">
-                      <h5 class="mb-2 text-dark">{{ evenement.titre }}</h5>
-                      <form method="post" action="{{ path('app_eventdetails', { id: evenement.id }) }}" style="position: relative; z-index: 10;">
+                      <h5 class="mb-2 text-dark">
+                        {{ evenement.titre }}
+                        {% if row.ai_score is defined %}
+                          <span class="badge bg-success ms-2">{{ row.ai_score }}/10</span>
+                        {% endif %}
+                      </h5>
+                      
+                      <form method="post" action="{{ path('app_payment_checkout', { id: evenement.id }) }}" style="position: relative; z-index: 10;">
                         <input type="hidden" name="_token" value="{{ csrf_token('buy_ticket_' ~ evenement.id) }}">
                         <button class="btn btn-sm btn-outline-primary" type="submit" aria-label="Acheter ticket">
                           <i class="bi bi-ticket-perforated"></i>
@@ -96,7 +117,12 @@
                     </div>
                     <div class="card-body">
                       <div class="d-flex align-items-start justify-content-between mb-2">
-                        <h5 class="mb-2 text-dark">{{ evenement.titre }}</h5>
+                          <h5 class="mb-2 text-dark">
+                            {{ evenement.titre }}
+                            {% if row.ai_score is defined %}
+                              <span class="badge bg-success ms-2">{{ row.ai_score }}/10</span>
+                            {% endif %}
+                          </h5>
                         <form method="post" action="{{ path('app_eventdetails', { id: evenement.id }) }}" style="position: relative; z-index: 10;">
                           <input type="hidden" name="_token" value="{{ csrf_token('buy_ticket_' ~ evenement.id) }}">
                           <button class="btn btn-sm btn-outline-primary" type="submit" aria-label="Acheter ticket">

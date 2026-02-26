@@ -3,17 +3,18 @@
 {% block title %}{{ 'Bibliothèque'|trans }}{% endblock %}
 
 {% block artiste_content %}
-<!-- Share feed START -->
-          
-          <!-- Share feed END -->
 
-          <!-- Artist Bibliothèque (static UI) START -->
-          <div class="card mb-4">
-            <div class="card-body">
-              <div class="d-flex align-items-center justify-content-between mb-3">
-                <h4 class="mb-0">Ma Bibliothèque</h4>
-                <button class="btn btn-success" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddLivreFront" aria-controls="offcanvasAddLivreFront">Ajouter un Livre</button>
-              </div>
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="mb-0">Ma Bibliothèque</h4>
+      <button class="btn btn-success"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#offcanvasAddLivreFront">
+        Ajouter un Livre
+      </button>
+    </div>
 
               <div class="row g-3">
                 {# Render actual livres for the current user if available, otherwise fallback to placeholders #}
@@ -135,16 +136,30 @@
                             </div>
                           </div>
 
-                          <div class="d-flex flex-column align-items-center text-center">
-                            <img src="{{ asset('assetsfront/images/post/3by2/0' ~ (((i - 1) % 3) + 1) ~ '.jpg') }}" alt="Couverture livre {{ i }}" class="rounded mb-3" style="width:140px;height:200px;object-fit:cover;">
-                            <h5 class="mb-1 fw-semibold">Titre du livre {{ i }}</h5>
-                            <div class="mb-2 text-muted">Catégorie: <span class="fw-medium text-dark">Roman</span></div>
-                            <div class="mb-2"><strong class="text-primary">{{ (6 + i) }} €</strong> <small class="text-muted">/ jour</small></div>
-                            <div class="mb-2">
-                              <span class="badge {{ (i % 2) == 0 ? 'bg-success' : 'bg-secondary' }}">{{ (i % 2) == 0 ? 'Loué' : 'Non loué' }}</span>
-                            </div>
-                            <div class="text-muted small">Collection: <span class="text-dark">Collection {{ i }}</span></div>
-                          </div>
+<!-- ========================= -->
+<!-- DETAILS MODAL -->
+<!-- ========================= -->
+<div class="modal fade" id="livreDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Détails du livre</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <h5 id="detail-titre">—</h5>
+        <p><strong>ID:</strong> <span id="detail-id">—</span></p>
+        <p><strong>Date:</strong> <span id="detail-date-creation">—</span></p>
+        <p id="detail-description">—</p>
+
+        <img id="detail-image"
+             class="img-fluid mb-3"
+             style="max-height:200px;">
+
+        <div id="detail-pdf-label"></div>
+      </div>
 
                         </div>
                       </div>
@@ -638,20 +653,11 @@
               form.action = tmpl ? tmpl.replace('/0', '/' + id) : '';
 
 
-              function setField(name, value){
-                const el = form.querySelector('[name="' + name + '"]');
-                if (el) el.value = value || '';
-              }
-
-              setField('livre[titre]', dataset.titre);
-              setField('livre[description]', dataset.description);
-              setField('livre[categorie]', dataset.categorie);
-              setField('livre[prix_location]', dataset.prix);
-              setField('livre[collection]', dataset.collection);
-
-              // clear file inputs
-              const imgInput = form.querySelector('[name="livre[image]"]'); if (imgInput) imgInput.value = '';
-              const pdfInput = form.querySelector('[name="livre[fichier_pdf]"]'); if (pdfInput) pdfInput.value = '';
+    form.querySelector('[name="livre[titre]"]').value = d.titre || '';
+    form.querySelector('[name="livre[description]"]').value = d.description || '';
+    form.querySelector('[name="livre[categorie]"]').value = d.categorie || '';
+    form.querySelector('[name="livre[prix_location]"]').value = d.prix || '';
+    form.querySelector('[name="livre[collection]"]').value = d.collection || '';
 
               const off = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvasEditLivreFront'));
               off.show();

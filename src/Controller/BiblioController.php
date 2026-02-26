@@ -13,11 +13,12 @@ use App\Form\LivreType;
 use App\Repository\LivreRepository;
 use App\Enum\TypeOeuvre;
 use Knp\Component\Pager\PaginatorInterface;
+use App\Repository\LocationLivreRepository;
 
 final class BiblioController extends AbstractController
 {
     #[Route('/bibliotheque', name: 'livres')]
-    public function index(Request $request, LivreRepository $livreRepository, PaginatorInterface $paginator): Response
+    public function index(Request $request, LivreRepository $livreRepository, LocationLivreRepository $locationRepo, PaginatorInterface $paginator): Response
     {
         $form = $this->createForm(LivreType::class);
         // separate empty form instance to be used for editing (populated client-side)
@@ -47,11 +48,55 @@ final class BiblioController extends AbstractController
             8 // 👈 LIMIT PER PAGE (as you requested)
         );
 
+        $statusMap = [];
+
+foreach ($livres as $livre) {
+
+    $isActive = false;
+    $activeLocation = null;
+    $expiration = null;
+
+    foreach ($livre->getLocationLivres() as $loc) {
+
+        if (!$loc->getEtat() || $loc->getEtat()->value !== 'Active') {
+            continue;
+        }
+
+        $start = $loc->getDateDebut();
+        if (!$start) {
+            continue;
+        }
+
+        $days = $loc->getNombreDeJours();
+
+        if (!$days || $days <= 0) {
+            continue; // ignore invalid rentals
+        }
+
+        $expiration = (clone $start)->modify("+$days days");
+        $now = new \DateTime();
+
+        if ($start <= $now && $expiration > $now) {
+            $isActive = true;
+            $activeLocation = $loc;
+            break;
+        }
+    }
+
+    $statusMap[$livre->getId()] = [
+        'isActive' => $isActive ?? false,
+        'locationId' => $activeLocation?->getId() ?? null,
+        'startDate' => $activeLocation?->getDateDebut()?->format('Y-m-d H:i:s') ?? null,
+        'expirationDate' => isset($expiration) ? $expiration->format('Y-m-d H:i:s') : null
+    ];
+}
+
         return $this->render('biblio/livres.html.twig', [
             'controller_name' => 'BiblioController',
             'livreForm' => $form->createView(),
             'livreEditForm' => $editForm->createView(),
             'livres' => $livres,
+            'livreStatus' => $statusMap,
             'search_q' => $q,
             'search_sort' => $sort,
         ]);

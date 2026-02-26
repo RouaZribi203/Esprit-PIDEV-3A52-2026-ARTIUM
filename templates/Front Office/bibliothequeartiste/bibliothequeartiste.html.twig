@@ -40,7 +40,9 @@
                                      data-location-count="{{ stats.count is defined ? stats.count : 0 }}"
                                      data-total-revenue="{{ stats.total is defined ? '%.2f'|format(stats.total) : '0.00' }}"
                                      data-active-user="{{ stats.activeUserId is defined ? stats.activeUserId : '' }}"
-                                     data-current-user="{{ app.user ? app.user.id : '' }}">
+                                     data-current-user="{{ app.user ? app.user.id : '' }}"
+                                     data-nombre-jours="{{ stats.activeDays is defined ? stats.activeDays : '' }}"
+                                     data-prix="{{ livre.prixLocation is not null ? livre.prixLocation : '' }}">
                                     Détails
                                   </a>
                                 </li>
@@ -66,8 +68,32 @@
                             <div class="mb-2 text-muted">Catégorie: <span class="fw-medium text-dark">{{ livre.categorie }}</span></div>
                             <div class="mb-2"><strong class="text-primary">{{ livre.prixLocation is not null ? livre.prixLocation ~ ' €' : '-' }}</strong> <small class="text-muted">/ jour</small></div>
                             <div class="mb-2">
-                              {% set isRented = (stats.activeId is defined and stats.activeId) %}
-                              <span class="badge {{ isRented ? 'bg-success' : 'bg-secondary' }}">{{ isRented ? 'Loué' : 'Non loué' }}</span>
+                              {% set expiration = null %}
+
+                              {% if stats.activeDate is defined
+                               and stats.activeDate
+                               and stats.activeDays is defined
+                               and stats.activeDays|trim != ''
+                              %}
+                                {% set expiration =
+                                  (stats.activeDate|date)
+                                  |date_modify('+' ~ stats.activeDays ~ ' days')
+                                %}
+                              {% endif %}
+
+                              {% set today = "now"|date("Y-m-d") %}
+                              {% set expirationDateOnly =
+                                expiration ? expiration|date("Y-m-d") : null
+                              %}
+
+                              {% set isActive =
+                                expirationDateOnly
+                                and expirationDateOnly >= today
+                              %}
+
+                              <span class="badge {{ isActive ? 'bg-success' : 'bg-secondary' }}">
+                                {{ isActive ? 'Loué' : 'Non loué' }}
+                              </span>
                             </div>
                             <div class="text-muted small">Collection: <span class="text-dark">{{ livre.collection ? livre.collection.titre : '-' }}</span></div>
                           </div>
@@ -139,6 +165,13 @@
             </div>
             <div class="offcanvas-body">
               <form id="addLivreFormFront" class="needs-validation" novalidate method="post" action="{{ path('artiste_livre_create') }}" enctype="multipart/form-data">
+                <div class="d-flex justify-content-end mb-3">
+                  <button type="button" id="generateAiBtn" class="btn btn-primary">
+                    ✨ Générer automatiquement
+                  </button>
+                </div>
+                <!-- Alert Container -->
+                <div id="aiAlertContainer"></div>
                 <div class="mb-3">
                   <label class="form-label">Titre</label>
                   <input type="text" class="form-control" name="titre" placeholder="Titre du livre" required minlength="2" maxlength="255">
@@ -302,6 +335,8 @@
                                       <p class="mb-1"><strong>ID location:</strong> <span id="detail-location-id">-</span></p>
                                       <p class="mb-1"><strong>Date début:</strong> <span id="detail-location-date">-</span></p>
                                       <p class="mb-1"><strong>Date d'expiration:</strong> <span id="detail-location-expiration">-</span></p>
+                                      <div id="calendar-holder" style="margin-top:15px;background:white;padding:10px;border-radius:8px;">
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -385,33 +420,198 @@
                         document.getElementById('detail-location-id').textContent = activeId || '-';
                         document.getElementById('detail-location-date').textContent = activeDate || '-';
 
-                        // expiration: add 7 days to activeDate if present
                         const expEl = document.getElementById('detail-location-expiration');
+
+                        let startDate = null;
+                        let expirationDate = null;
+                        let days = parseInt(dataset.nombreJours || dataset.nombre_jours || '7', 10) || 7;
+
                         if (activeDate) {
-                          const d = new Date(activeDate);
-                          d.setDate(d.getDate() + 7);
-                          expEl.textContent = d.toISOString().slice(0,19).replace('T',' ');
-                        } else {
-                          expEl.textContent = '-';
+
+                          // Prefer ISO-like input (replace space with T) for reliable parsing
+                          const isoActive = activeDate.includes('T') ? activeDate : activeDate.replace(' ', 'T');
+                          startDate = new Date(isoActive);
+
+                          if (isNaN(startDate)) {
+                            expEl.textContent = '-';
+                          } else {
+                            expirationDate = new Date(startDate);
+
+                            // Read nombre_de_jours from dataset (fallback to 7)
+                            // (days already read above)
+                            expirationDate.setDate(startDate.getDate() + days);
+
+                            // Format locally to avoid UTC shift from toISOString()
+                            function fmtLocal(d){
+                              const z = n => String(n).padStart(2,'0');
+                              return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`;
+                            }
+
+                            expEl.textContent = fmtLocal(expirationDate);
+
+
+                          const calendarEl =document.getElementById('calendar-holder');
+
+
+                        if (window.bookCalendar) {
+                          window.bookCalendar.destroy();
                         }
+
+
+                          window.bookCalendar =
+                          new FullCalendar.Calendar(calendarEl, {
+
+                          initialView: 'dayGridMonth',
+                          height: 300,
+                          events: (function(){
+                            // Create a visual background range for the rental period
+                            // Use date-only strings (YYYY-MM-DD) and allDay=true to avoid timezone shifts
+                            function toDateOnly(d){
+                              const z = n => String(n).padStart(2,'0');
+                              return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
+                            }
+
+                            const startStr = toDateOnly(startDate);
+                            const expStr = toDateOnly(expirationDate);
+
+                            const rangeEnd = new Date(expirationDate);
+                            rangeEnd.setDate(rangeEnd.getDate() + 1); // end is exclusive
+                            const rangeEndStr = toDateOnly(rangeEnd);
+
+                            return [
+                              // Background highlight for the entire renting period (all-day)
+                              {
+                                title: '',
+                                start: startStr,
+                                end: rangeEndStr,
+                                display: 'background',
+                                allDay: true,
+                                backgroundColor: '#bbf592',
+                                borderColor: 'transparent'
+                              },
+                              // Start day marker (distinct color)
+                              {
+                                title: "Début",
+                                start: startStr,
+                                allDay: true,
+                                color: '#0d6efd',
+                                textColor: '#ffffff'
+                              },
+                              // Expiration day marker (distinct color)
+                              {
+                                title: "Expiration",
+                                start: expStr,
+                                allDay: true,
+                                color: '#dc3545',
+                                textColor: '#ffffff'
+                              }
+                            ];
+                          })()
+
+                    });
+
+
+                window.bookCalendar.render();
+
+          }}
+          else {
+              expEl.textContent = "-";
+              }
 
                         // Stats
                         const count = parseInt(dataset.locationCount || '0', 10);
-                        const total = parseFloat(dataset.totalRevenue || '0');
+                        const price = parseFloat(dataset.prix || dataset.prixLocation || '0');
+                        const daysPer = parseInt(dataset.nombreJours || dataset.nombre_jours || '0', 10) || 0;
+
+                        // compute expected total locally
+                        let computed = 0;
+                        if (price > 0 && daysPer > 0) {
+                          computed = count * daysPer * price;
+                        }
+
+                        // server-provided total (fallback / authoritative)
+                        const serverTotal = parseFloat(dataset.totalRevenue || '0');
+
+                        // prefer the server total when it is larger (accounts for multiple past rentals)
+                        const total = serverTotal > computed ? serverTotal : computed;
+
                         document.getElementById('stat-count').textContent = count;
                         document.getElementById('stat-total').textContent = total.toFixed(2);
 
-                        // rental section styling
                         const rentalSection = document.getElementById('rental-section');
                         const rentalBadge = document.getElementById('rental-badge');
-                        if (!activeId) {
-                          rentalSection.style.opacity = '0.5';
-                          rentalSection.style.backgroundColor = '#f5f5f5';
-                          rentalBadge.innerHTML = '<span class="badge bg-secondary ms-2">Aucune location active</span>';
-                        } else {
-                          rentalSection.style.opacity = '';
-                          rentalSection.style.backgroundColor = '';
-                          rentalBadge.innerHTML = '<span class="badge bg-success ms-2">Active</span>';
+                        const calendarEl = document.getElementById('calendar-holder');
+
+                        let calendarHeader = document.getElementById('calendar-header');
+
+                        if (!calendarHeader && calendarEl) {
+
+                            calendarHeader = document.createElement('div');
+
+                            calendarHeader.id = 'calendar-header';
+
+                            calendarHeader.className =
+                                'mb-2 fw-semibold text-center';
+
+                            calendarEl.parentNode.insertBefore(
+                                calendarHeader,
+                                calendarEl
+                            );
+
+                        }
+
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+
+                        if (!activeDate || !startDate || !expirationDate) {
+
+                          rentalBadge.innerHTML =
+                            '<span class="badge bg-secondary ms-2">Non loué</span>';
+
+                          calendarHeader.innerHTML =
+                            '<span class="text-muted">Jamais loué</span>';
+
+                          // 🔥 IMPORTANT FIX: destroy any previous calendar instance
+                          if (window.bookCalendar) {
+                            window.bookCalendar.destroy();
+                            window.bookCalendar = null;
+                          }
+
+                          calendarEl.innerHTML = '';
+
+                        }
+                        else {
+
+                            const exp = new Date(expirationDate);
+                            exp.setHours(0,0,0,0);
+
+                            if (exp < today) {
+
+                                // EXPIRED
+                                rentalBadge.innerHTML =
+                                    '<span class="badge bg-secondary ms-2">Non loué</span>';
+
+                                const fmt =
+                                    new Intl.DateTimeFormat(
+                                        'fr-FR',
+                                        { day:'2-digit', month:'short', year:'numeric' }
+                                    );
+
+                                calendarHeader.innerHTML =
+                                    `<span class="text-danger">Location expirée : ${fmt.format(startDate)} → ${fmt.format(expirationDate)}</span>`;
+
+                            }
+                            else {
+
+                                // ACTIVE
+                                rentalBadge.innerHTML =
+                                    '<span class="badge bg-success ms-2">Loué</span>';
+
+                                calendarHeader.innerHTML =
+                                    '<span class="text-success">Location active</span>';
+
+                            }
+
                         }
 
                         const modal = new bootstrap.Modal(modalEl);
@@ -503,6 +703,116 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
+<script>
+document.getElementById('generateAiBtn').addEventListener('click', async function () {
+
+    const button = document.getElementById('generateAiBtn');
+    const alertContainer = document.getElementById('aiAlertContainer');
+    const pdfInput = document.querySelector('#addLivreFormFront input[name="fichier_pdf"]');
+
+    // Reset alerts
+    alertContainer.innerHTML = '';
+
+    // 🔵 Disable button + show spinner
+    button.disabled = true;
+    button.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        Génération en cours...
+    `;
+
+    // ❌ If no PDF
+    if (!pdfInput || !pdfInput.files.length) {
+        alertContainer.innerHTML = `
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                Veuillez ajouter le fichier PDF du livre avant de générer.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        resetButton();
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('fichier_pdf', pdfInput.files[0]);
+
+    try {
+        const response = await fetch("{{ path('ai_generate_book') }}", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error('Server error: ' + response.status + ' - ' + errText);
+        }
+
+        const contentType = (response.headers.get('content-type') || '').toLowerCase();
+        let data;
+        if (contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const txt = await response.text();
+            throw new Error('Invalid response (not JSON): ' + txt);
+        }
+
+        if (data.error) {
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    ${data.error}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            resetButton();
+            return;
+        }
+
+        // ✅ Autofill fields
+        document.querySelector('#addLivreFormFront input[name="titre"]').value = data.titre || '';
+        document.querySelector('#addLivreFormFront textarea[name="description"]').value = data.description || '';
+        document.querySelector('#addLivreFormFront input[name="categorie"]').value = data.categorie || '';
+        document.querySelector('#addLivreFormFront input[name="prix_location"]').value = data.prix || '';
+
+        alertContainer.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                Contenu généré automatiquement avec succès.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        // 🔄 Optional: scroll to form or alert
+        alertContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    } catch (error) {
+        const msg = (error && error.message) ? error.message : 'Erreur lors de la génération automatique.';
+        alertContainer.innerHTML = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                ${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        console.error(error);
+    }
+
+    // 🔵 Restore button
+    resetButton();
+
+    function resetButton() {
+        button.disabled = false;
+        button.innerHTML = '✨ Générer automatiquement';
+    }
+
+});
+</script>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<style>
+#calendar-header {
+  font-size: 14px;
+  padding: 6px;
+}
+</style>
 
 
 {% endblock %}

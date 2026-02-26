@@ -14,6 +14,8 @@ use App\Enum\EtatLocation;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Enum\TypeOeuvre;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Service\BookAiService;
 
 
 final class BibliothequeartisteController extends AbstractController
@@ -55,6 +57,7 @@ final class BibliothequeartisteController extends AbstractController
                     'total' => $total,
                     'activeId' => $active ? $active->getId() : null,
                     'activeDate' => $active && $active->getDateDebut() ? $active->getDateDebut()->format('Y-m-d H:i:s') : null,
+                    'activeDays' => $active && method_exists($active, 'getNombreDeJours') ? $active->getNombreDeJours() : null,
                 ];
             }
         }
@@ -68,7 +71,7 @@ final class BibliothequeartisteController extends AbstractController
     }
 
     #[Route('/artiste-bibliotheque/new', name: 'artiste_livre_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em, CollectionsRepository $collectionsRepository, UserRepository $userRepository): Response
+    public function create(Request $request, EntityManagerInterface $em, CollectionsRepository $collectionsRepository, UserRepository $userRepository,): Response
     {
         // TODO: Replace test artist with $this->getUser() when authentication module is merged
         $artist = $this->getUser();
@@ -355,6 +358,40 @@ public function delete(
     $this->addFlash('success', 'Livre supprimé avec succès.');
 
     return $this->redirectToRoute('app_bibliothequeartiste');
+}
+
+
+#[Route('/ai/generate-book', name: 'ai_generate_book', methods: ['POST'])]
+public function generateBook(
+    Request $request,
+    BookAiService $bookAiService
+): JsonResponse {
+
+    $file = $request->files->get('fichier_pdf');
+
+    if (!$file) {
+        return $this->json([
+            'error' => 'Veuillez ajouter un fichier PDF.'
+        ], 400);
+    }
+
+    // Security: check mime type
+    if ($file->getMimeType() !== 'application/pdf') {
+        return $this->json([
+            'error' => 'Le fichier doit être un PDF valide.'
+        ], 400);
+    }
+
+    try {
+        $data = $bookAiService->generateFromPdf($file->getPathname());
+
+        return $this->json($data);
+
+    } catch (\Exception $e) {
+        return $this->json([
+            'error' => 'Erreur lors de la génération automatique: ' . $e->getMessage()
+        ], 500);
+    }
 }
 
 }

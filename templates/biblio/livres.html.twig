@@ -238,16 +238,15 @@
                           <tbody>
                             {% for livre in livres %}
                             <tr>
-                              {# determine if this livre is currently rented #}
-                              {% set isRented = false %}
-                              {% for loc in livre.locationLivres %}
-                                {% if loc.etat.value == 'Active' %}
-                                  {% set isRented = true %}
-                                {% endif %}
-                              {% endfor %}
+                              {# determine if this livre is currently rented (only count non-expired Active locations) #}
+                              {% set status = livreStatus[livre.id] ?? null %}
                               <td>
                                 <div class="form-check">
-                                  <input type="checkbox" class="form-check-input row-checkbox" id="post{{ loop.index }}" value="{{ livre.id }}" data-rented="{{ isRented ? '1' : '0' }}" />
+                                  <input type="checkbox"
+                                         class="form-check-input row-checkbox"
+                                         id="post{{ loop.index }}"
+                                         value="{{ livre.id }}"
+                                         data-rented="{{ status and status.isActive ? '1' : '0' }}" />
                                   <label class="form-check-label" for="post{{ loop.index }}"></label>
                                 </div>
                               </td>
@@ -275,16 +274,12 @@
                                 {% endif %}
                               </td>
                               <td>
-                                {% set isActive = false %}
-                                {% for loc in livre.locationLivres %}
-                                  {% if loc.etat.value == 'Active' %}
-                                    {% set isActive = true %}
-                                  {% endif %}
-                                {% endfor %}
-                                {% if isActive %}
-                                  <span class="badge bg-success">Loué</span>
+                                {% set status = livreStatus[livre.id] ?? null %}
+
+                                {% if status and status.isActive %}
+                                    <span class="badge bg-success">Loué</span>
                                 {% else %}
-                                  <span class="badge bg-secondary">Non loué</span>
+                                    <span class="badge bg-secondary">Non loué</span>
                                 {% endif %}
                               </td>
                               <td>
@@ -294,17 +289,14 @@
                                   </a>
                                   <span class="dropdown-menu" aria-labelledby="courseDropdown{{ loop.index }}">
                                     <span class="dropdown-header">Paramètres</span>
-                                      {# compute active location id/date and stats for data attributes #}
-                                      {% set activeId = '' %}
-                                      {% set activeDate = '' %}
-                                      {% for loc in livre.locationLivres %}
-                                        {% if loc.etat.value == 'Active' and activeId == '' %}
-                                          {% set activeId = loc.id %}
-                                          {% set activeDate = loc.dateDebut ? loc.dateDebut|date('Y-m-d') : '' %}
-                                        {% endif %}
-                                      {% endfor %}
+                                      {# compute active (non-expired) location id/date and stats for data attributes #}
+                                      {% set _now = "now"|date %}
+                                      {% set status = livreStatus[livre.id] ?? null %}
+                                      {% set activeId = status and status.isActive ? status.locationId : '' %}
+                                      {% set activeDate = status and status.isActive ? status.startDate : '' %}
+                                      {% set activeExpiration = status and status.isActive ? status.expirationDate : '' %}
                                       {% set locationCount = livre.locationLivres|length %}
-                                      {% set totalRevenue = (locationCount * 7 * (livre.prixLocation ?: 0)) %}
+                                      {% set totalRevenue = 0 %}
                                         <a class="dropdown-item js-show-details" href="#"
                                          data-id="{{ livre.id }}"
                                          data-titre="{{ livre.titre|e('html_attr') }}"
@@ -312,8 +304,9 @@
                                          data-description="{{ (livre.description is not empty) ? livre.description|e('html_attr') : '' }}"
                                          data-pdf-url="{{ livre.fichierPdf ? path('livre_pdf', {'id': livre.id})|e('html_attr') : '' }}"
                                          data-image="{{ (livre.image is defined and livre.image) ? (path('livre_image', {'id': livre.id})|e('html_attr')) : '' }}"
-                                         data-active-id="{{ activeId }}"
+                                        data-active-id="{{ activeId }}"
                                          data-active-date="{{ activeDate }}"
+                                         data-active-expiration="{{ activeExpiration }}"
                                          data-location-count="{{ locationCount }}"
                                          data-total-revenue="{{ '%.2f'|format(totalRevenue) }}"
                                       >
@@ -329,7 +322,7 @@
                                            data-image="{{ (livre.image is defined and livre.image) ? (path('livre_image', {'id': livre.id})|e('html_attr')) : '' }}"
                                            data-pdf-url="{{ livre.fichierPdf ? path('livre_pdf', {'id': livre.id})|e('html_attr') : '' }}"
                                            data-collection="{{ livre.collection ? livre.collection.id : '' }}"
-                                           data-rented="{{ isActive ? '1' : '0' }}"
+                                           data-rented="{{ status and status.isActive ? '1' : '0' }}"
                                            data-edit-url-template="{{ path('livre_edit', {'id': 0}) }}"
                                            data-bs-toggle="offcanvas"
                                            data-bs-target="#offcanvasEditLivre"
@@ -338,10 +331,10 @@
                                           <i class="fe fe-edit dropdown-item-icon"></i>
                                           Modifier
                                         </a>
-                                    <a class="dropdown-item js-delete-livre" href="#"
+                                      <a class="dropdown-item js-delete-livre" href="#"
                                       data-id="{{ livre.id }}"
                                       data-delete-url-template="{{ path('livre_delete', {'id': 0}) }}"
-                                      data-rented="{{ isActive ? '1' : '0' }}"
+                                      data-rented="{{ status and status.isActive ? '1' : '0' }}"
                                     >
                                       <i class="fe fe-trash dropdown-item-icon"></i>
                                       Supprimer
@@ -1789,15 +1782,9 @@
                 document.getElementById('detail-location-id').textContent = activeId || '-';
                 document.getElementById('detail-location-date').textContent = activeDate || '-';
 
-                // expiration: add 7 days to activeDate if present
+                // expiration: use activeExpiration from dataset (do not add 7 days in JS)
                 const expEl = document.getElementById('detail-location-expiration');
-                if (activeDate) {
-                  const d = new Date(activeDate);
-                  d.setDate(d.getDate() + 7);
-                  expEl.textContent = d.toISOString().slice(0,19).replace('T',' ');
-                } else {
-                  expEl.textContent = '-';
-                }
+                expEl.textContent = dataset.activeExpiration || '-';
 
                 // Stats
                 const count = parseInt(dataset.locationCount || '0', 10);

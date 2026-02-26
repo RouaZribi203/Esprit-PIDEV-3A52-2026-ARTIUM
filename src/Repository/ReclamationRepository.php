@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Reclamation;
 use App\Entity\User;
 use App\Enum\StatutReclamation;
+use App\Enum\TypeReclamation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -21,7 +22,7 @@ class ReclamationRepository extends ServiceEntityRepository
     /**
      * @return Reclamation[]
      */
-    public function findByUserFilters(User $user, ?string $search, ?StatutReclamation $statut): array
+    public function findByUserFilters(User $user, ?string $search, ?StatutReclamation $statut, ?TypeReclamation $type): array
     {
         $qb = $this->createQueryBuilder('r')
             ->andWhere('r.user = :user')
@@ -36,6 +37,11 @@ class ReclamationRepository extends ServiceEntityRepository
         if ($statut !== null) {
             $qb->andWhere('r.statut = :statut')
                 ->setParameter('statut', $statut);
+        }
+
+        if ($type !== null) {
+            $qb->andWhere('r.type = :type')
+                ->setParameter('type', $type);
         }
 
         return $qb->getQuery()->getResult();

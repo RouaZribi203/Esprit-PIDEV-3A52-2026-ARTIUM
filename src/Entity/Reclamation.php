@@ -10,8 +10,11 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Symfony\Component\HttpFoundation\File\File;
 
 #[ORM\Entity(repositoryClass: ReclamationRepository::class)]
+#[Vich\Uploadable]
 class Reclamation
 {
     #[ORM\Id]
@@ -50,9 +53,21 @@ class Reclamation
     #[ORM\OneToMany(targetEntity: Reponse::class, mappedBy: 'reclamation', orphanRemoval: true)]
     private Collection $reponses;
 
+    // Champ pour stocker le nom du fichier en base
+    #[ORM\Column(name: 'file_name', type: Types::STRING, length: 255, nullable: true)]
+    private ?string $fileName = null;
+
+    // Champ pour manipuler le fichier (non persistant)
+    #[Vich\UploadableField(mapping: 'reclamation_file', fileNameProperty: 'fileName')]
+    private ?File $file = null;
+
+    #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $updatedAt = null;
+
     public function __construct()
     {
         $this->reponses = new ArrayCollection();
+        $this->updatedAt = new \DateTime();
     }
 
     public function getId(): ?int
@@ -147,6 +162,42 @@ class Reclamation
             }
         }
 
+        return $this;
+    }
+
+    public function setFile(?File $file = null): void
+    {
+        $this->file = $file;
+
+        if ($file) {
+            $this->updatedAt = new \DateTime();
+        }
+    }
+
+    public function getFile(): ?File
+    {
+        return $this->file;
+    }
+
+    public function getFileName(): ?string
+    {
+        return $this->fileName;
+    }
+
+    public function setFileName(?string $fileName): self
+    {
+        $this->fileName = $fileName;
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
         return $this;
     }
 }

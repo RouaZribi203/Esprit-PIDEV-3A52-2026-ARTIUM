@@ -14,15 +14,15 @@
         <div class="card-body">
             <!-- Tab nav line -->
             <ul class="nav nav-tabs nav-bottom-line justify-content-center justify-content-md-start">
-                <li class="nav-item"> <a class="nav-link {% if search_query is empty and selected_statut is empty %}active{% endif %}" data-bs-toggle="tab" href="#tab-1"> <i class="bi bi-pencil-square pe-1"></i>Envoyer Réclamation </a> </li>
-                <li class="nav-item"> <a class="nav-link {% if search_query is not empty or selected_statut is not empty %}active{% endif %}" data-bs-toggle="tab" href="#tab-2"> <i class="bi bi-list-check pe-1"></i>Mes Réclamations </a> </li>
+                <li class="nav-item"> <a class="nav-link {% if (search_query|default('')) is empty and (selected_statut|default('')) is empty and (selected_type|default('')) is empty %}active{% endif %}" data-bs-toggle="tab" href="#tab-1"> <i class="bi bi-pencil-square pe-1"></i>Envoyer Réclamation </a> </li>
+                <li class="nav-item"> <a class="nav-link {% if (search_query|default('')) is not empty or (selected_statut|default('')) is not empty or (selected_type|default('')) is not empty %}active{% endif %}" data-bs-toggle="tab" href="#tab-2"> <i class="bi bi-list-check pe-1"></i>Mes Réclamations </a> </li>
             </ul>
 
             <!-- Tab content START -->
             <div class="tab-content mb-0 pb-0">
                 
                 <!-- Submit Reclamation Tab START -->
-                <div class="tab-pane fade {% if search_query is empty and selected_statut is empty %}show active{% endif %}" id="tab-1">
+                <div class="tab-pane fade {% if (search_query|default('')) is empty and (selected_statut|default('')) is empty and (selected_type|default('')) is empty %}show active{% endif %}" id="tab-1">
                     <div class="card mt-4">
                         <!-- Title START -->
                         <div class="card-header border-0 pb-0">
@@ -31,7 +31,7 @@
                         <!-- Title END -->
                         <!-- Form START -->
                         <div class="card-body">
-                            {{ form_start(form, {'attr': {'class': 'row g-3', 'novalidate': 'novalidate'}}) }}
+                            {{ form_start(form, {'attr': {'class': 'row g-3', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
                                 <div class="col-12">
                                     {{ form_errors(form) }}
                                 </div>
@@ -60,6 +60,20 @@
                                     {% endfor %}
                                 </div>
 
+                                <div class="col-12">
+                                    {{ form_label(form.file, 'Fichier joint (optionnel)') }}
+                                    {% set file_has_errors = form.file.vars.errors|length > 0 %}
+                                    {{ form_widget(form.file, {
+                                        'attr': {
+                                            'class': 'form-control' ~ (file_has_errors ? ' is-invalid' : '')
+                                        }
+                                    }) }}
+                                    <div class="form-text">Formats acceptés: PDF, JPG, JPEG, PNG (Max: 5MB)</div>
+                                    {% for error in form.file.vars.errors %}
+                                        <div class="invalid-feedback d-block">{{ error.message }}</div>
+                                    {% endfor %}
+                                </div>
+
 
                                 <div class="col-12 text-end">
                                     <button type="reset" class="btn btn-outline-secondary me-2">Reinitialiser</button>
@@ -73,19 +87,32 @@
                 <!-- Submit Reclamation Tab END -->
 
                 <!-- My Reclamations Tab START -->
-                <div class="tab-pane fade {% if search_query is not empty or selected_statut is not empty %}show active{% endif %}" id="tab-2">
+                <div class="tab-pane fade {% if (search_query|default('')) is not empty or (selected_statut|default('')) is not empty or (selected_type|default('')) is not empty %}show active{% endif %}" id="tab-2">
                     <div class="mt-4">
                         <!-- Search and Filter -->
-                        <form class="row g-3 mb-4" method="get" id="filterForm">
-                            <div class="col-md-6">
-                                <input type="search" name="q" id="searchInput" class="form-control" placeholder="Rechercher une reclamation..." value="{{ search_query|default('') }}">
+                        <form class="row g-1 mb-4" method="get" id="filterForm" data-turbo="false">
+                            <div class="col-md-3">
+                                <input type="search" name="q" id="searchInput" class="form-control" placeholder="Rechercher" value="{{ search_query|default('') }}">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <select name="statut" id="statutSelect" class="form-select">
-                                    <option value="" {% if selected_statut is empty %}selected{% endif %}>Filtrer par statut</option>
-                                    <option value="Traitée" {% if selected_statut == 'Traitée' %}selected{% endif %}>Traite</option>
-                                    <option value="Non traitée" {% if selected_statut == 'Non traitée' %}selected{% endif %}>Non traitee</option>
+                                    <option value="" {% if (selected_statut|default('')) is empty %}selected{% endif %}>Filtrer par statut</option>
+                                    <option value="Traitée" {% if (selected_statut|default('')) == 'Traitée' %}selected{% endif %}>Traité</option>
+                                    <option value="Non traitée" {% if (selected_statut|default('')) == 'Non traitée' %}selected{% endif %}>Non traité</option>
+                                    <option value="Archivée" {% if (selected_statut|default('')) == 'Archivée' %}selected{% endif %}>Archivé</option>
                                 </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="type" id="typeSelect" class="form-select">
+                                    <option value="" {% if (selected_type|default('')) is empty %}selected{% endif %}>Filtrer par catégorie</option>
+                                    <option value="Paiement" {% if (selected_type|default('')) == 'Paiement' %}selected{% endif %}>Paiement</option>
+                                    <option value="Oeuvre" {% if (selected_type|default('')) == 'Oeuvre' %}selected{% endif %}>Oeuvre</option>
+                                    <option value="Evènement" {% if (selected_type|default('')) == 'Evènement' %}selected{% endif %}>Evènement</option>
+                                    <option value="Compte" {% if (selected_type|default('')) == 'Compte' %}selected{% endif %}>Compte</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" name="date_from" id="dateInput" class="form-control" value="{{ date_from|default('') }}">
                             </div>
                         </form>
 
@@ -93,26 +120,89 @@
                             document.addEventListener('DOMContentLoaded', function() {
                                 const searchInput = document.getElementById('searchInput');
                                 const statutSelect = document.getElementById('statutSelect');
+                                const typeSelect = document.getElementById('typeSelect');
+                                const dateInput = document.getElementById('dateInput');
                                 const filterForm = document.getElementById('filterForm');
 
-                                // Auto-submit on select change
-                                statutSelect.addEventListener('change', function() {
-                                    filterForm.submit();
+                                if (!filterForm) {
+                                    return;
+                                }
+
+                                function debounce(fn, delay) {
+                                    let timer = null;
+                                    return function(...args) {
+                                        if (timer) {
+                                            clearTimeout(timer);
+                                        }
+                                        timer = setTimeout(() => fn.apply(this, args), delay);
+                                    };
+                                }
+
+                                async function loadReclamations(url) {
+                                    const response = await fetch(url, {
+                                        headers: {
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        }
+                                    });
+
+                                    if (!response.ok) {
+                                        return;
+                                    }
+
+                                    const html = await response.text();
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+                                    const incoming = doc.querySelector('#reclamationsContent');
+                                    const current = document.querySelector('#reclamationsContent');
+
+                                    if (incoming && current) {
+                                        current.innerHTML = incoming.innerHTML;
+                                    }
+                                }
+
+                                const submitForm = () => {
+                                    const params = new URLSearchParams(new FormData(filterForm));
+                                    const url = `${window.location.pathname}?${params.toString()}`;
+                                    history.replaceState(null, '', url);
+                                    loadReclamations(url);
+                                };
+
+                                filterForm.addEventListener('submit', function(event) {
+                                    event.preventDefault();
+                                    submitForm();
                                 });
 
-                                // Auto-submit on input with debounce
-                                let searchTimeout;
-                                searchInput.addEventListener('input', function() {
-                                    clearTimeout(searchTimeout);
-                                    searchTimeout = setTimeout(function() {
-                                        filterForm.submit();
-                                    }, 500);
+                                filterForm.addEventListener('keydown', function(event) {
+                                    if (event.key === 'Enter') {
+                                        event.preventDefault();
+                                        submitForm();
+                                    }
                                 });
+
+                                filterForm.submit = () => submitForm();
+                                filterForm.requestSubmit = () => submitForm();
+
+                                if (searchInput) {
+                                    searchInput.addEventListener('input', debounce(submitForm, 400));
+                                }
+
+                                if (statutSelect) {
+                                    statutSelect.addEventListener('change', submitForm);
+                                }
+
+                                if (typeSelect) {
+                                    typeSelect.addEventListener('change', submitForm);
+                                }
+
+                                if (dateInput) {
+                                    dateInput.addEventListener('change', submitForm);
+                                }
                             });
                         </script>
                         
                         <!-- Reclamations List -->
-                        <div class="row g-3">
+                        <div id="reclamationsContent">
+                            <div class="row g-3">
                             {% if reclamations is empty %}
                                 <div class="col-12">
                                     <div class="text-center py-5">
@@ -142,6 +232,15 @@
                                                                 <h6 class="mb-1">{{ reclamation.texte|slice(0, 60) }}{% if reclamation.texte|length > 60 %}...{% endif %}</h6>
                                                                 <p class="mb-2 small text-muted">Type: <strong>{{ reclamation.type ? reclamation.type.value : '-' }}</strong></p>
                                                                 <p class="mb-0 small">{{ reclamation.texte }}</p>
+                                                                {% if reclamation.fileName %}
+                                                                    <div class="mt-2">
+                                                                        <a href="{{ asset('uploads/reclamations/' ~ reclamation.fileName) }}" 
+                                                                           target="_blank" 
+                                                                           class="btn btn-sm btn-outline-primary">
+                                                                            <i class="bi bi-file-earmark"></i> Fichier joint
+                                                                        </a>
+                                                                    </div>
+                                                                {% endif %}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -243,6 +342,7 @@
                                     </div>
                                 {% endfor %}
                             {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>

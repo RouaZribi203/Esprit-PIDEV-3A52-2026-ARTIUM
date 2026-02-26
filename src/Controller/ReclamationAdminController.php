@@ -4,10 +4,14 @@ namespace App\Controller;
 
 use App\Entity\Reclamation;
 use App\Entity\Reponse;
+use App\Enum\StatutReclamation;
 use App\Form\ReclamationType;
 use App\Form\ReponseType;
 use App\Repository\ReclamationRepository;
+use App\Service\AIResponseService;
+use App\Service\ReclamationArchiveService;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,27 +20,67 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/reclamation/admin')]
 final class ReclamationAdminController extends AbstractController
 {
-    #[Route(name: 'reclamations', methods: ['GET'])]
-    public function index(Request $request, ReclamationRepository $reclamationRepository): Response
+    #[Route(name: 'app_reclamation_admin_index', methods: ['GET'])]
+    public function index(Request $request, ReclamationRepository $reclamationRepository, AIResponseService $aiService, ReclamationArchiveService $archiveService, PaginatorInterface $paginator): Response
     {
+        // Archiver les réclamations éligibles au chargement de la page
+        $archiveService->archiveEligibleReclamations();
+        
         $responseCreateForms = [];
         $responseEditForms = [];
+        $aiSuggestions = [];
         
-        // Récupérer les paramètres de recherche
+        // Récupérer les paramètres de recherche et filtres
         $search = trim((string) $request->query->get('q', ''));
+        $statut = $request->query->get('statut', '');
+        $dateFrom = $request->query->get('date_from', '');
         
-        // Filtrer les réclamations selon la recherche
+        // Construire la requête selon les filtres
+        $queryBuilder = $reclamationRepository->createQueryBuilder('r')
+            ->leftJoin('r.user', 'u');
+        
+        // Filtre recherche
         if ($search !== '') {
-            $reclamations = $reclamationRepository->createQueryBuilder('r')
-                ->where('r.texte LIKE :search')
-                ->orWhere('r.id LIKE :search')
-                ->setParameter('search', '%' . $search . '%')
-                ->orderBy('r.date_creation', 'DESC')
-                ->getQuery()
-                ->getResult();
-        } else {
-            $reclamations = $reclamationRepository->findBy([], ['date_creation' => 'DESC']);
+            $queryBuilder
+                ->andWhere('(r.texte LIKE :search OR r.id LIKE :search OR u.prenom LIKE :search OR u.nom LIKE :search OR u.email LIKE :search)')
+                ->setParameter('search', '%' . $search . '%');
         }
+        
+        // Filtre statut
+        if ($statut !== '' && $statut !== null) {
+            $queryBuilder
+                ->andWhere('r.statut = :statut')
+                ->setParameter('statut', $statut);
+        }
+        
+        // Filtre date de création
+        if ($dateFrom !== '') {
+            $dateFromObj = \DateTime::createFromFormat('Y-m-d', $dateFrom);
+            if ($dateFromObj) {
+                // Début du jour
+                $startOfDay = clone $dateFromObj;
+                $startOfDay->setTime(0, 0, 0);
+                
+                // Fin du jour
+                $endOfDay = clone $dateFromObj;
+                $endOfDay->setTime(23, 59, 59);
+                
+                $queryBuilder
+                    ->andWhere('r.date_creation >= :startOfDay AND r.date_creation <= :endOfDay')
+                    ->setParameter('startOfDay', $startOfDay)
+                    ->setParameter('endOfDay', $endOfDay);
+            }
+        }
+        
+        $queryBuilder->orderBy('r.date_creation', 'DESC');
+        $query = $queryBuilder->getQuery();
+        
+        // Paginer les résultats (10 par page)
+        $reclamations = $paginator->paginate(
+            $query,
+            $request->query->getInt('page', 1),
+            10
+        );
 
         foreach ($reclamations as $reclamation) {
             $reponse = new Reponse();
@@ -46,6 +90,9 @@ final class ReclamationAdminController extends AbstractController
             $createForm->remove('user_admin');
             $createForm->remove('date_reponse');
             $responseCreateForms[$reclamation->getId()] = $createForm->createView();
+
+            // Générer une suggestion IA pour chaque réclamation
+            $aiSuggestions[$reclamation->getId()] = $aiService->generateSuggestion($reclamation);
 
             foreach ($reclamation->getReponses() as $existingReponse) {
                 $editForm = $this->createForm(ReponseType::class, $existingReponse);
@@ -60,7 +107,12 @@ final class ReclamationAdminController extends AbstractController
             'reclamations' => $reclamations,
             'responseCreateForms' => $responseCreateForms,
             'responseEditForms' => $responseEditForms,
+            'aiSuggestions' => $aiSuggestions,
             'search_query' => $search,
+            'selected_statut' => $statut,
+            'date_from' => $dateFrom,
+            'current_page' => $reclamations->getCurrentPageNumber(),
+            'total_pages' => ceil($reclamations->getTotalItemCount() / 10),
         ]);
     }
 
@@ -75,7 +127,7 @@ final class ReclamationAdminController extends AbstractController
             $entityManager->persist($reclamation);
             $entityManager->flush();
 
-            return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('reclamation_admin/new.html.twig', [
@@ -101,7 +153,7 @@ final class ReclamationAdminController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('reclamation_admin/edit.html.twig', [
@@ -118,6 +170,28 @@ final class ReclamationAdminController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('reclamations', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/archive', name: 'app_reclamation_admin_archive', methods: ['POST'])]
+    public function archive(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('archive'.$reclamation->getId(), $request->getPayload()->getString('_token'))) {
+            $reclamation->setStatut(StatutReclamation::ARCHIVE);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/unarchive', name: 'app_reclamation_admin_unarchive', methods: ['POST'])]
+    public function unarchive(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('unarchive'.$reclamation->getId(), $request->getPayload()->getString('_token'))) {
+            $reclamation->setStatut(StatutReclamation::TRAITEE);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
     }
 }

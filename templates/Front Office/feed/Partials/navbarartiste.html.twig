@@ -139,10 +139,16 @@
 				</li>
 				<!-- Notification dropdown END -->
 
-				<li class="nav-item ms-2 dropdown">
-					<a class="nav-link btn icon-md p-0" href="#" id="profileDropdown" role="button" data-bs-auto-close="outside" data-bs-display="static" data-bs-toggle="dropdown" aria-expanded="false">
-						<img class="avatar-img rounded-2" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt="">
-					</a>
+				   <li class="nav-item ms-2 dropdown d-flex align-items-center">
+					   <a class="nav-link btn p-0 d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-auto-close="outside" data-bs-display="static" data-bs-toggle="dropdown" aria-expanded="false" style="height:40px;width:40px;">
+						{% if app.user and app.user.photoProfil %}
+							<img class="avatar-img rounded-circle border border-2" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="Profil" style="object-fit:cover;width:38px;height:38px;">
+						{% else %}
+							<span class="avatar-img rounded-circle border border-2 d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:38px;height:38px;">
+								<i class="bi bi-person fs-4 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+							</span>
+						{% endif %}
+					   </a>
 					<ul
 						class="dropdown-menu dropdown-animation dropdown-menu-end pt-3 small me-md-n3" aria-labelledby="profileDropdown">
 						<!-- Profile info -->
@@ -151,12 +157,18 @@
 								class="d-flex align-items-center position-relative">
 								<!-- Avatar -->
 								<div class="avatar me-3">
-									<img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt="avatar">
+									{% if app.user and app.user.photoProfil %}
+										<img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="avatar">
+									{% else %}
+										<span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:38px;height:38px;">
+											<i class="bi bi-person fs-4 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+										</span>
+									{% endif %}
 								</div>
 								<div>
-									<a class="h6 stretched-link" href="#">{{ app.user.nom ~ ' ' ~ app.user.prenom }}</a>
+									<a class="h6 stretched-link" href="#">{{ app.user ? (app.user.nom ~ ' ' ~ app.user.prenom) : 'Utilisateur' }}</a>
 									<p class="small m-0">
-										{% if app.user.specialite is defined and app.user.specialite is not null %}
+										{% if app.user and app.user.specialite is defined and app.user.specialite is not null %}
 											{{ app.user.specialite.value }}
 										{% else %}
 											Artiste

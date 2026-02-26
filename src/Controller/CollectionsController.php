@@ -18,7 +18,14 @@ use Symfony\Component\Routing\Attribute\Route;
 final class CollectionsController extends AbstractController
 {
     #[Route(name: 'app_collections_front')]
-    public function index(CollectionsRepository $collectionsRepository): Response
+    public function index(
+        Request $request,
+        CollectionsRepository $collectionsRepository,
+        \App\Repository\ReclamationRepository $reclamationRepository,
+        \App\Repository\EvenementRepository $evenementRepository,
+        \App\Repository\CommentaireRepository $commentaireRepository,
+        \App\Repository\LikeRepository $likeRepository
+    ): Response
     {   
         $collections = $this->getUser()->getCollections();
 
@@ -29,11 +36,33 @@ final class CollectionsController extends AbstractController
         $formEdit[$collection->getId()] = $this->createForm(CollectionsType::class, $collection)->createView();
         }
 
+        // Statistiques dynamiques pour sidebar
+        $user = $this->getUser();
+        $oeuvres = [];
+        if ($user && method_exists($user, 'getCollections')) {
+            foreach ($user->getCollections() as $collectionItem) {
+                if (method_exists($collectionItem, 'getOeuvres')) {
+                    foreach ($collectionItem->getOeuvres() as $oeuvreItem) {
+                        $oeuvres[] = $oeuvreItem;
+                    }
+                }
+            }
+        }
+        $nbOeuvres = count($oeuvres);
+        $nbReclamations = $user ? count($reclamationRepository->findByUserFilters($user, null, null)) : 0;
+        $nbEvenements = $user ? $evenementRepository->count(['artiste' => $user]) : 0;
+        $nbCommentaires = $user ? $commentaireRepository->countByArtist($user) : 0;
+        $nbLikes = $user ? $likeRepository->countByArtist($user) : 0;
         return $this->render('Front Office/collections_front/collectionsfront.html.twig', [
             'controller_name' => 'CollectionsController',
             'collections' => $this->getUser()->getCollections(),
             'form' => $form,
-            'formEdit' => $formEdit, 
+            'formEdit' => $formEdit,
+            'nbOeuvres' => $nbOeuvres,
+            'nbReclamations' => $nbReclamations,
+            'nbEvenements' => $nbEvenements,
+            'nbCommentaires' => $nbCommentaires,
+            'nbLikes' => $nbLikes,
         ]);
     }
 

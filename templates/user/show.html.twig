@@ -35,28 +35,29 @@
     <div class="col-lg-4">
         <div class="card mb-4">
             <div class="card-body text-center">
-                <img src="{{ asset('assetsback/images/photodeprofil.png') }}" 
-                     class="rounded-circle avatar-xxl mb-3" alt="{{ user.nom }}" style="width: 150px; height: 150px;" />
-                <h3 class="mb-1">{{ user.nom }} {{ user.prenom }}</h3>
-                <p class="text-muted mb-3">{{ user.email }}</p>
-                
-                {% if user.role %}
-                    {% if user.role.value == 'ROLE_ARTISTE' %}
-                        <span class="badge bg-primary fs-6">Artiste</span>
-                    {% elseif user.role.value == 'ROLE_AMATEUR' %}
-                        <span class="badge bg-info fs-6">Amateur</span>
-                    {% else %}
-                        <span class="badge bg-secondary fs-6">{{ user.role.value }}</span>
-                    {% endif %}
+                {% if user.photoProfil %}
+                    <img src="{{ asset('uploads/' ~ user.photoProfil) }}" alt="Photo de profil" class="rounded-circle mb-3" style="width:120px;height:120px;object-fit:cover;" />
+                {% else %}
+                    <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis mx-auto mb-3" style="width:120px;height:120px;">
+                        <i class="bi bi-person fs-1" style="opacity:0.5;"></i>
+                    </span>
                 {% endif %}
-                
-                {% if user.statut %}
+                <h4 class="mb-1">{{ user.nom }} {{ user.prenom }}</h4>
+                <div class="mb-2 text-muted">{{ user.email }}</div>
+                <div>
+                    {% if user.role.name == 'ADMIN' %}
+                        <span class="badge bg-secondary">Admin</span>
+                    {% elseif user.role.name == 'ARTISTE' %}
+                        <span class="badge bg-primary">Artiste</span>
+                    {% elseif user.role.name == 'AMATEUR' %}
+                        <span class="badge bg-info">Amateur</span>
+                    {% endif %}
                     {% if user.statut.name == 'ACTIVE' %}
-                        <span class="badge bg-success fs-6 ms-2">{{ user.statut.value }}</span>
+                        <span class="badge bg-success">Actif</span>
                     {% else %}
-                        <span class="badge bg-warning fs-6 ms-2">{{ user.statut.value }}</span>
+                        <span class="badge bg-warning">{{ user.statut.value }}</span>
                     {% endif %}
-                {% endif %}
+                </div>
             </div>
         </div>
 

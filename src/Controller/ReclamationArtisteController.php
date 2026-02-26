@@ -18,7 +18,14 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ReclamationArtisteController extends AbstractController
 {
     #[Route('/artiste-reclamation', name: 'app_reclamationsartiste', methods: ['GET'])]
-    public function index(Request $request, ReclamationRepository $reclamationRepository, UserRepository $userRepository): Response
+    public function index(
+        Request $request,
+        ReclamationRepository $reclamationRepository,
+        UserRepository $userRepository,
+        \App\Repository\EvenementRepository $evenementRepository,
+        \App\Repository\CommentaireRepository $commentaireRepository,
+        \App\Repository\LikeRepository $likeRepository
+    ): Response
     {
         $user = $this->getUser();
 
@@ -93,12 +100,33 @@ final class ReclamationArtisteController extends AbstractController
             ])->createView();
         }
 
+        // Statistiques dynamiques pour sidebar
+        $oeuvres = [];
+        if ($user && method_exists($user, 'getCollections')) {
+            foreach ($user->getCollections() as $collectionItem) {
+                if (method_exists($collectionItem, 'getOeuvres')) {
+                    foreach ($collectionItem->getOeuvres() as $oeuvreItem) {
+                        $oeuvres[] = $oeuvreItem;
+                    }
+                }
+            }
+        }
+        $nbOeuvres = count($oeuvres);
+        $nbReclamations = $user ? count($reclamationRepository->findByUserFilters($user, null, null)) : 0;
+        $nbEvenements = $user ? $evenementRepository->count(['artiste' => $user]) : 0;
+        $nbCommentaires = $user ? $commentaireRepository->countByArtist($user) : 0;
+        $nbLikes = $user ? $likeRepository->countByArtist($user) : 0;
         return $this->render('Front Office/reclamationsartiste/reclamationsartiste.html.twig', [
             'reclamations' => $reclamations,
             'form' => $form->createView(),
             'edit_forms' => $editForms,
             'search_query' => $search ?? '',
             'selected_statut' => $statut?->value ?? '',
+            'nbOeuvres' => $nbOeuvres,
+            'nbReclamations' => $nbReclamations,
+            'nbEvenements' => $nbEvenements,
+            'nbCommentaires' => $nbCommentaires,
+            'nbLikes' => $nbLikes,
             'selected_type' => $type?->value ?? '',
             'date_from' => $dateFrom,
         ]);

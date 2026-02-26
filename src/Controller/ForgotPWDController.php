@@ -12,11 +12,13 @@ use App\Repository\UserRepository;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class ForgotPWDController extends AbstractController
 {
     #[Route('/forgotpwd', name: 'app_forgot_pwd')]
-    public function index(Request $request, UserRepository $userRepository, EntityManagerInterface $em, MailerInterface $mailer): Response
+    public function index(Request $request, UserRepository $userRepository, EntityManagerInterface $em, MailerInterface $mailer, UserPasswordHasherInterface $passwordHasher): Response
     {
         $error = null;
         $success = null;
@@ -38,9 +40,9 @@ final class ForgotPWDController extends AbstractController
                     if (strlen($newPassword) < 6) {
                         $error = "Le mot de passe doit contenir au moins 6 caractères.";
                     } else {
-                        // Encodage du mot de passe (à adapter selon ton UserPasswordHasherInterface)
-                        // $user->setMdp($passwordHasher->hashPassword($user, $newPassword));
-                        $user->setMdp($newPassword); // Remplace par hashage réel !
+                        // Hashage du mot de passe
+                        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+                        $user->setMdp($hashedPassword);
                         $user->setResetToken(null);
                         $user->setResetTokenExpires(null);
                         $em->persist($user);
@@ -63,12 +65,34 @@ final class ForgotPWDController extends AbstractController
                     $em->persist($user);
                     $em->flush();
 
-                    $resetUrl = $this->generateUrl('app_forgot_pwd', ['token' => $token], 0);
-                    $emailMessage = (new Email())
+                    // Générer une URL absolue
+                    $resetUrl = $this->generateUrl('app_forgot_pwd', ['token' => $token], 1);
+                    if (strpos($resetUrl, 'http') !== 0) {
+                        $resetUrl = $request->getSchemeAndHttpHost() . $resetUrl;
+                    }
+
+                    // Préparer le logo en pièce jointe inline (cid)
+                    $logoPath = $this->getParameter('kernel.project_dir') . '/public/Assets/logo2.png';
+                    $logoContent = null;
+                    $logoCid = null;
+                    if (file_exists($logoPath)) {
+                        $logoContent = file_get_contents($logoPath);
+                        $logoCid = 'logo2';
+                    }
+
+                    $emailMessage = (new TemplatedEmail())
                         ->from('no-reply@votreapp.com')
                         ->to($user->getEmail())
                         ->subject('Réinitialisation de votre mot de passe')
-                        ->html("Cliquez sur ce lien pour réinitialiser votre mot de passe : <a href='" . $resetUrl . "'>Réinitialiser</a>");
+                        ->htmlTemplate('forgot_pwd/reset_email.html.twig')
+                        ->context([
+                            'user' => $user,
+                            'resetUrl' => $resetUrl,
+                            'logoCid' => $logoCid
+                        ]);
+                    if ($logoContent && $logoCid) {
+                        $emailMessage->embed($logoContent, $logoCid, 'image/png');
+                    }
                     $mailer->send($emailMessage);
 
                     $success = "Un email de réinitialisation a été envoyé si l'adresse existe.";

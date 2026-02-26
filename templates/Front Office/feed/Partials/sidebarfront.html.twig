@@ -28,8 +28,15 @@
 						<div class="text-center">
 							<!-- Avatar -->
 							<div class="avatar avatar-lg mt-n5 mb-3">
-								<a href="#!"><img class="avatar-img rounded border border-white border-3"
-										src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt=""></a>
+								<a href="#!">
+									{% if app.user and app.user.photoProfil %}
+										<img class="avatar-img rounded border border-white border-3" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="">
+									{% else %}
+										<span class="avatar-img rounded border border-white border-3 bg-light d-inline-block d-flex align-items-center justify-content-center" style="width:64px;height:64px;">
+											<i class="bi bi-person" style="font-size:2rem;color:#b0b7c3;"></i>
+										</span>
+									{% endif %}
+								</a>
 							</div>
 							<!-- Info -->
 							<h5 class="mb-0">

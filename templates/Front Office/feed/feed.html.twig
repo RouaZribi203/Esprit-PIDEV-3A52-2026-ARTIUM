@@ -114,7 +114,11 @@
                 <!-- Avatar -->
                 <div class="avatar avatar-xs me-2">
                     <a href="#!">
-                        <img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt="">
+                        {% if app.user and app.user.photoProfil %}
+                            <img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="">
+                        {% else %}
+                            <span class="avatar-img rounded-circle bg-light d-inline-block" style="width:32px;height:32px;"></span>
+                        {% endif %}
                     </a>
                 </div>
 
@@ -913,3 +917,5 @@
     </script>
 
 {% endblock %}
+
+

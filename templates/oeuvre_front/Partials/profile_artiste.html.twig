@@ -7,9 +7,16 @@
 		<div class="d-sm-flex align-items-start text-center text-sm-start">
 			<div>
 				<!-- Avatar -->
-				<div class="avatar avatar-xxl mt-n5 mb-3">
-					<img class="avatar-img rounded-circle border border-white border-3" src="{{ app.user.avatarPath is defined and app.user.avatarPath ? asset(app.user.avatarPath) : asset('assetsfront/images/avatar/07.jpg') }}" alt="Avatar">
-				</div>
+				   <div class="avatar avatar-xxl mt-n5 mb-3">
+					   {% if app.user and app.user.photoProfil %}
+						   <img class="avatar-img rounded-circle border border-white border-3" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="Avatar">
+					   {% else %}
+						   <span class="avatar-img rounded-circle border border-white border-3 d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:120px;height:120px;">
+							   <i class="bi bi-person fs-1 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+							   <span class="position-absolute bottom-0 start-50 translate-middle-x mb-2" style="font-size:0.95rem;opacity:0.7;"></span>
+						   </span>
+					   {% endif %}
+				   </div>
 			</div>
 			<div
 				class="ms-sm-4 mt-sm-3">
@@ -21,10 +28,23 @@
 			</div>
 			<!-- Button -->
 			<div class="d-flex mt-3 justify-content-center ms-sm-auto">
-				<button class="btn btn-danger-soft me-2" type="button">
-					<i class="bi bi-pencil-fill pe-1"></i>
-					Edit profile
-				</button>
+				   <button class="btn btn-danger-soft me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasProfile">
+					   <i class="bi bi-pencil-fill pe-1"></i>
+					   Edit profile
+				   </button>
+		   {# Inclusion discrète de l'offcanvas d'édition de profil juste après le bouton #}
+		   {% if profile_form is defined and profile_form is not null %}
+			   {% include 'Front Office/Partials/offcanvas_profile.html.twig' with {
+				   user: app.user,
+				   form: profile_form,
+				   offcanvas_id: 'offcanvasProfile',
+				   title: 'Modifier profil',
+				   subtitle: 'Mettez à jour vos informations personnelles',
+				   profile_form_action: '#',
+				   password_form_action: '#',
+				   show_password_form: true
+			   } %}
+		   {% endif %}
 
 			</div>
 		</div>
@@ -40,7 +60,7 @@
 			</li>
 			<li class="list-inline-item">
 				<i class="bi bi-calendar2-plus me-1"></i>
-				Joined on
+				Inscrit le
 				{{ app.user.dateInscription is defined and app.user.dateInscription ? app.user.dateInscription|date('M d, Y') : '' }}
 			</li>
 		</ul>

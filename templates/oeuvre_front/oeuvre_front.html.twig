@@ -9,7 +9,15 @@
             <div class="d-flex mb-3">
               <!-- Avatar -->
               <div class="avatar avatar-xs me-2">
-                <a href="#"> <img class="avatar-img rounded-circle" src="{{ asset('assetsfront/images/avatar/07.jpg') }}" alt=""> </a>
+                <a href="#">
+                  {% if app.user.photoProfil %}
+                    <img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="">
+                  {% else %}
+                    <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:32px;height:32px;">
+                      <i class="bi bi-person fs-5 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+                    </span>
+                  {% endif %}
+                </a>
               </div>
               <!-- Post input -->
               <form class="w-100">
@@ -50,7 +58,7 @@
         <div class="avatar avatar-story me-2">
           <a href="#">
             <img class="avatar-img rounded-circle"
-                 src="{{ asset('assetsfront/images/avatar/default.jpg') }}"
+                 src="{{ oeuvre.collection.artiste.photoProfil ? asset('uploads/' ~ oeuvre.collection.artiste.photoProfil) : asset('assetsfront/images/avatar/07.jpg') }}"
                  alt="">
           </a>
         </div>

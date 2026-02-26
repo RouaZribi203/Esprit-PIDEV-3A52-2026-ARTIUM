@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 
+
 use App\Entity\User;
 use App\Entity\Commentaire;
 use App\Service\RecommendationService;
@@ -69,19 +70,30 @@ final class FeedController extends AbstractController
     public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
     {
         $currentUser = $this->getUser();
-        
+
+        // Création du formulaire de profil
+        $form = null;
+        if ($currentUser) {
+            $form = $this->createForm(UserType::class, $currentUser, ['is_edit' => true]);
+            $form->handleRequest($request);
+
+            if ($form->isSubmitted() && $form->isValid()) {
+                $photoFile = $form->get('photoProfil')->getData();
+                if ($photoFile) {
+                    $newFilename = uniqid('user_') . '.' . $photoFile->guessExtension();
+                    $photoFile->move($this->getParameter('kernel.project_dir') . '/public/uploads', $newFilename);
+                    $currentUser->setPhotoProfil($newFilename);
+                }
+                $em->flush();
+                $this->addFlash('success', 'Profil mis à jour !');
+                return $this->redirectToRoute('app_feed');
+            }
+        }
+
         $oeuvres = $oeuvreRepository->findAll();
-        $peintures = $oeuvreRepository->findBy([
-            'type' => TypeOeuvre::PEINTURE
-       ]);
-
-        $sculptures = $oeuvreRepository->findBy([
-           'type' => TypeOeuvre::SCULPTURE
-       ]);
-
-        $photos = $oeuvreRepository->findBy([
-           'type' => TypeOeuvre::PHOTOGRAPHIE
-        ]);
+        $peintures = $oeuvreRepository->findBy(['type' => TypeOeuvre::PEINTURE]);
+        $sculptures = $oeuvreRepository->findBy(['type' => TypeOeuvre::SCULPTURE]);
+        $photos = $oeuvreRepository->findBy(['type' => TypeOeuvre::PHOTOGRAPHIE]);
         $all = array_merge($peintures, $sculptures, $photos);
         $initialDisplayCount = $this->getInitialDisplayCount($all, $request);
 

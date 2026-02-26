@@ -8,6 +8,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="author" content="Webestica.com">
 	<meta name="description" content="Bootstrap 5 based Social Media Network and Community Theme">
+	{% set current_route = app.request.attributes.get('_route') %}
+	{% if current_route not in ['app_feed', 'app_feed_peintures', 'app_feed_sculptures', 'app_feed_photos', 'app_feed_recommandations', 'app_favoris'] %}
+		<meta name="turbo-visit-control" content="reload">
+	{% endif %}
 
 	<!-- Favicon icon front-->
 	<link rel="shortcut icon" href="{{asset('assetsback/images/iconn.ico')}}">
@@ -173,6 +177,8 @@
 	</script>
 
 	{% endblock %}
+
+	{{ importmap('app') }}
 
 </head>
 

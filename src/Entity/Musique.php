@@ -7,6 +7,7 @@ use App\Repository\MusiqueRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
@@ -20,6 +21,7 @@ class Musique extends Oeuvre
     private ?GenreMusique $genre = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Ignore]
     private ?string $audio = null;
 
     #[Vich\UploadableField(mapping: 'music_audio', fileNameProperty: 'audio')]
@@ -32,6 +34,7 @@ class Musique extends Oeuvre
      * @var Collection<int, Playlist>
      */
     #[ORM\ManyToMany(targetEntity: Playlist::class, mappedBy: 'musique')]
+    #[Ignore]
     private Collection $playlists;
 
     public function __construct()

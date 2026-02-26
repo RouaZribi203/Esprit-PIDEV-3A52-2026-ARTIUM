@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Collections;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -28,6 +29,47 @@ class CollectionsRepository extends ServiceEntityRepository
             $qb->orderBy('c.titre', 'ASC');
         }
         return $qb->getQuery()->getResult();
+    }
+
+    public function findByArtisteWithSearchFirst(User $artiste, ?string $search = null): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->andWhere('c.artiste = :artiste')
+            ->setParameter('artiste', $artiste);
+
+        if ($search) {
+            $qb->addSelect("(CASE WHEN LOWER(c.titre) = LOWER(:exact) THEN 2 WHEN c.titre LIKE :search THEN 1 ELSE 0 END) AS HIDDEN searchMatch")
+               ->setParameter('exact', $search)
+               ->setParameter('search', '%' . $search . '%')
+               ->orderBy('searchMatch', 'DESC')
+               ->addOrderBy('c.titre', 'ASC');
+        } else {
+            $qb->orderBy('c.titre', 'ASC');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function findInteractionStatsByArtiste(User $artiste): array
+    {
+        return $this->createQueryBuilder('c')
+            ->select('c.id AS collectionId')
+            ->addSelect('c.titre AS collectionTitle')
+            ->addSelect('COUNT(DISTINCT o.id) AS oeuvresCount')
+            ->addSelect('COUNT(DISTINCT l.id) AS likesCount')
+            ->addSelect('COUNT(DISTINCT uf.id) AS favorisCount')
+            ->addSelect('COUNT(DISTINCT com.id) AS commentairesCount')
+            ->addSelect('(COUNT(DISTINCT l.id) + COUNT(DISTINCT uf.id) + COUNT(DISTINCT com.id)) AS interactionsCount')
+            ->leftJoin('c.oeuvres', 'o')
+            ->leftJoin('o.likes', 'l', 'WITH', 'l.liked = true')
+            ->leftJoin('o.user_fav', 'uf')
+            ->leftJoin('o.commentaires', 'com')
+            ->andWhere('c.artiste = :artiste')
+            ->setParameter('artiste', $artiste)
+            ->groupBy('c.id, c.titre')
+            ->orderBy('interactionsCount', 'DESC')
+            ->getQuery()
+            ->getArrayResult();
     }
 
 

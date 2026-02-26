@@ -2,7 +2,7 @@
 		<div
 			class="container">
 			<!-- Logo START -->
-			<a class="navbar-brand" href="index.html">
+			<a class="navbar-brand" href="index.html" data-turbo="false">
 				<img class="light-mode-item navbar-brand-item" src="{{ asset('assetsback/images/logo2.png') }}" alt="logo">
 				<img class="dark-mode-item navbar-brand-item" src="{{ asset('assetsback/images/Colored PNG White Logo.png') }}" alt="logo">
 			</a>
@@ -40,22 +40,23 @@
 					<!-- Nav item 4 Mega menu -->
 					<li class="nav-item dropdown">
 						<div class="d-flex align-items-center oeuvres-group">
-							<a class="nav-link {{ current_route == 'app_feed' ? 'active' : '' }} oeuvre" href="{{ path('app_feed') }}">Oeuvres</a>
+							<a class="nav-link {{ current_route == 'app_feed' ? 'active' : '' }} oeuvre" href="{{ path('app_feed') }}" data-turbo="false">Oeuvres</a>
 							<a class="nav-link dropdown-toggle dropdown-toggle-split oeuvres-toggle" href="#" id="homeMenu" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								<span class="visually-hidden">Toggle dropdown</span>
 							</a>
 						</div>
 						<ul class="dropdown-menu" aria-labelledby="homeMenu">
-							<li> <a class="dropdown-item {{ current_route == 'app_feed_peintures' ? 'active' : '' }}" href="{{ path('app_feed_peintures') }}">Peintures</a></li>
-							<li> <a class="dropdown-item {{ current_route == 'app_feed_sculptures' ? 'active' : '' }}" href="{{ path('app_feed_sculptures') }}">Sculptures</a></li>
-							<li> <a class="dropdown-item {{ current_route == 'app_feed_photos' ? 'active' : '' }}" href="{{ path('app_feed_photos') }}">Photographies</a></li>
+							<li> <a class="dropdown-item {{ current_route == 'app_feed_peintures' ? 'active' : '' }}" href="{{ path('app_feed_peintures') }}" data-turbo="false">Peintures</a></li>
+							<li> <a class="dropdown-item {{ current_route == 'app_feed_sculptures' ? 'active' : '' }}" href="{{ path('app_feed_sculptures') }}" data-turbo="false">Sculptures</a></li>
+							<li> <a class="dropdown-item {{ current_route == 'app_feed_photos' ? 'active' : '' }}" href="{{ path('app_feed_photos') }}" data-turbo="false">Photographies</a></li>
+							<li> <a class="dropdown-item {{ current_route == 'app_feed_recommandations' ? 'active' : '' }}" href="{{ path('app_feed_recommandations') }}" data-turbo="false">Recommandations</a></li>
 						</ul>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link {{ current_route == 'app_bibliofront' ? 'active' : '' }}" href="{{ path('app_bibliofront') }}">Bibliothèque</a>
+						<a class="nav-link {{ current_route == 'app_bibliofront' ? 'active' : '' }}" href="{{ path('app_bibliofront') }}" data-turbo="false">Bibliothèque</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link {{ current_route == 'app_musicfront' ? 'active' : '' }}" href="{{ path('app_musicfront') }}">Musique</a>
+						<a class="nav-link {{ current_route == 'app_musicfront' ? 'active' : '' }}" href="{{ path('app_musicfront') }}" data-turbo="false">Musique</a>
 					</li>
 					
 					
@@ -92,7 +93,7 @@
 									{% else %}
 										{% for item in canceled_notifications %}
 											<li>
-												<a href="{{ path('app_eventdetails', { id: item.evenement.id }) }}" class="list-group-item list-group-item-action rounded d-flex border-0 mb-1 p-3">
+													<a href="{{ path('app_eventdetails', { id: item.evenement.id }) }}" class="list-group-item list-group-item-action rounded d-flex border-0 mb-1 p-3" data-turbo="false">
 													<div class="avatar text-center d-none d-sm-inline-block">
 														<div class="avatar-img rounded-circle bg-danger">
 															<i class="bi bi-calendar-x text-white position-absolute top-50 start-50 translate-middle"></i>
@@ -140,7 +141,7 @@
 							</div>
 						</li>
 						<li class="px-3 text-center">
-							<a class="btn btn-outline-primary mb-0 rounded" href="{{ path('app_logout') }}" style="margin-top: 15px;">
+							<a class="btn btn-outline-primary mb-0 rounded" href="{{ path('app_logout') }}" style="margin-top: 15px;" data-turbo="false">
 								<i class="bi bi-power me-2"></i>Se déconnecter
 							</a>
 						</li>						<!-- Links -->						

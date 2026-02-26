@@ -7,6 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CollectionsRepository::class)]
 class Collections
@@ -22,12 +24,6 @@ class Collections
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: "La description ne peut pas être vide.")]
-    #[Assert\Length(
-        min: 10,
-        max: 5000,
-        minMessage: "La description doit comporter au moins {{ limit }} caractères.",
-        maxMessage: "La description ne peut pas dépasser {{ limit }} caractères."
-    )]
     private ?string $description = null;
 
     #[ORM\ManyToOne(inversedBy: 'collections')]
@@ -38,6 +34,7 @@ class Collections
      * @var Collection<int, Oeuvre>
      */
     #[ORM\OneToMany(targetEntity: Oeuvre::class, mappedBy: 'collection', orphanRemoval: true)]
+    #[Ignore]
     private Collection $oeuvres;
 
     public function __construct()
@@ -55,7 +52,7 @@ class Collections
         return $this->titre;
     }
 
-    public function setTitre(string $titre): static
+    public function setTitre(?string $titre): static
     {
         $this->titre = $titre;
 
@@ -67,7 +64,7 @@ class Collections
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 
@@ -89,6 +86,7 @@ class Collections
     /**
      * @return Collection<int, Oeuvre>
      */
+    #[Ignore]
     public function getOeuvres(): Collection
     {
         return $this->oeuvres;

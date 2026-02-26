@@ -3,15 +3,20 @@
 namespace App\Controller;
 
 use App\Entity\Musique;
+use App\Entity\User;
 use App\Enum\TypeOeuvre;
 use App\Form\MusiqueType;
 use App\Repository\CollectionsRepository;
 use App\Repository\MusiqueRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class MusiqueartisteController extends AbstractController
 {
@@ -23,12 +28,25 @@ final class MusiqueartisteController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof User) {
+            throw $this->createAccessDeniedException('You must be logged in as an artist.');
+        }
+
+        $artistCollections = $collectionsRepository->findBy(['artiste' => $currentUser], ['titre' => 'ASC']);
+
         // Create new Musique entity
         $musique = new Musique();
         
         // Create the form
-        $form = $this->createForm(MusiqueType::class, $musique);
+        $form = $this->createForm(MusiqueType::class, $musique, [
+            'collection_choices' => $artistCollections,
+        ]);
         $form->handleRequest($request);
+
+        if (empty($artistCollections)) {
+            $this->addFlash('error', 'Aucune collection disponible. Créez d\'abord une collection.');
+        }
         
         // Handle form submission
         if ($form->isSubmitted()) {
@@ -61,9 +79,9 @@ final class MusiqueartisteController extends AbstractController
                 }
                 
                 if ($searchTerm) {
-                    $musiques = $musiqueRepository->searchAndFilter($searchTerm, $sortBy, $sortOrder);
+                    $musiques = $musiqueRepository->searchAndFilter($searchTerm, $sortBy, $sortOrder, $currentUser->getId());
                 } else {
-                    $musiques = $musiqueRepository->searchAndFilter(null, $sortBy, $sortOrder);
+                    $musiques = $musiqueRepository->searchAndFilter(null, $sortBy, $sortOrder, $currentUser->getId());
                 }
                 
                 return $this->render('Front Office/musiqueartiste/musiqueartiste.html.twig', [
@@ -100,12 +118,8 @@ final class MusiqueartisteController extends AbstractController
                     if ($audioFile->getSize() > 20971520) { // 20MB
                         throw new \Exception('Audio file exceeds maximum size of 20MB');
                     }
-                    
-                    $audioContent = file_get_contents($audioFile->getPathname());
-                    if ($audioContent === false) {
-                        throw new \Exception('Failed to read audio file');
-                    }
-                    $musique->setAudio($audioContent);
+
+                    $musique->setAudioFile($audioFile);
                 }
                 
                 // Validate required fields are not empty after file processing
@@ -118,7 +132,7 @@ final class MusiqueartisteController extends AbstractController
                 if (!$musique->getGenre()) {
                     throw new \Exception('Genre must be selected');
                 }
-                if (!$musique->getAudio()) {
+                if (!$audioFile) {
                     throw new \Exception('Audio file is required');
                 }
                 
@@ -128,12 +142,18 @@ final class MusiqueartisteController extends AbstractController
                 // Set type to MUSIQUE
                 $musique->setType(TypeOeuvre::MUSIQUE);
                 
-                // Get or create a default collection for this user
-                $collection = $collectionsRepository->findOneBy([]) ?? null;
-                if ($collection) {
-                    $musique->setCollection($collection);
-                } else {
-                    throw new \Exception('No collection available. Please contact support.');
+                // Validate selected collection belongs to current artist
+                $selectedCollection = $musique->getCollection();
+                if (!$selectedCollection) {
+                    throw new \Exception('Please select a collection.');
+                }
+
+                if (!$selectedCollection->getId()) {
+                    throw new \Exception('Invalid collection selected.');
+                }
+
+                if ($selectedCollection->getArtiste()?->getId() !== $currentUser->getId()) {
+                    throw new \Exception('You can only add music to your own collections.');
                 }
                 
                 // Save to database
@@ -178,9 +198,9 @@ final class MusiqueartisteController extends AbstractController
         
         // Use search/filter method or fallback to all
         if ($searchTerm) {
-            $musiques = $musiqueRepository->searchAndFilter($searchTerm, $sortBy, $sortOrder);
+            $musiques = $musiqueRepository->searchAndFilter($searchTerm, $sortBy, $sortOrder, $currentUser->getId());
         } else {
-            $musiques = $musiqueRepository->searchAndFilter(null, $sortBy, $sortOrder);
+            $musiques = $musiqueRepository->searchAndFilter(null, $sortBy, $sortOrder, $currentUser->getId());
         }
         
         return $this->render('Front Office/musiqueartiste/musiqueartiste.html.twig', [
@@ -202,23 +222,16 @@ final class MusiqueartisteController extends AbstractController
             throw $this->createNotFoundException('Audio not found');
         }
 
-        // Get audio binary data from BLOB
-        $audioData = $musique->getAudio();
-        if (is_resource($audioData)) {
-            $audioData = stream_get_contents($audioData);
+        $audioPath = $this->getParameter('kernel.project_dir') . '/public/uploads/music/' . $musique->getAudio();
+        if (!is_file($audioPath)) {
+            throw $this->createNotFoundException('Audio file not found on disk');
         }
-        
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->buffer($audioData) ?: 'audio/mpeg';
 
-        return new Response(
-            $audioData,
-            200,
-            [
-                'Content-Type' => $mimeType,
-                'Content-Disposition' => 'inline; filename="' . $musique->getTitre() . '.mp3"'
-            ]
-        );
+        $response = new BinaryFileResponse($audioPath);
+        $response->headers->set('Content-Type', mime_content_type($audioPath) ?: 'audio/mpeg');
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($audioPath));
+
+        return $response;
     }
 
     #[Route('/musiqueartiste/image/{id}', name: 'app_musiqueartiste_image')]
@@ -243,6 +256,120 @@ final class MusiqueartisteController extends AbstractController
         );
     }
 
+    #[Route('/musiqueartiste/lyrics/{id}', name: 'app_musiqueartiste_lyrics', methods: ['GET'])]
+    public function getLyrics(
+        int $id,
+        MusiqueRepository $musiqueRepository,
+        HttpClientInterface $httpClient
+    ): JsonResponse
+    {
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof User) {
+            return $this->json([
+                'success' => false,
+                'message' => 'You must be logged in as an artist.'
+            ], 403);
+        }
+
+        $musique = $musiqueRepository->find($id);
+
+        if (!$musique) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Song not found.'
+            ], 404);
+        }
+
+        if ($musique->getCollection()?->getArtiste()?->getId() !== $currentUser->getId()) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Song not found.'
+            ], 404);
+        }
+
+        $trackName = trim((string) $musique->getTitre());
+        $nom = trim((string) ($musique->getCollection()?->getArtiste()?->getNom() ?? ''));
+        $prenom = trim((string) ($musique->getCollection()?->getArtiste()?->getPrenom() ?? ''));
+        $artistName = trim($prenom . ' ' . $nom);
+
+        if ($trackName === '') {
+            return $this->json([
+                'success' => false,
+                'message' => 'Song title is missing.'
+            ], 400);
+        }
+
+        $lyrics = null;
+        $source = null;
+
+        // Try lyrics.ovh first (simpler, more reliable API)
+        if ($artistName !== '') {
+            try {
+                $lyricsOvhResponse = $httpClient->request('GET', sprintf(
+                    'https://api.lyrics.ovh/v1/%s/%s',
+                    rawurlencode($artistName),
+                    rawurlencode($trackName)
+                ), [
+                    'timeout' => 10,
+                    'max_duration' => 15,
+                ]);
+
+                if ($lyricsOvhResponse->getStatusCode() === 200) {
+                    $lyricsOvhPayload = json_decode($lyricsOvhResponse->getContent(false), true);
+                    if (is_array($lyricsOvhPayload) && !empty($lyricsOvhPayload['lyrics'])) {
+                        $lyrics = trim($lyricsOvhPayload['lyrics']);
+                        $source = 'lyrics.ovh';
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log('lyrics.ovh failed: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback to lrclib if lyrics.ovh didn't work
+        if (!$lyrics) {
+            try {
+                $getParams = ['track_name' => $trackName];
+                if ($artistName !== '') {
+                    $getParams['artist_name'] = $artistName;
+                }
+
+                $getResponse = $httpClient->request('GET', 'https://lrclib.net/api/get', [
+                    'query' => $getParams,
+                    'timeout' => 10,
+                    'max_duration' => 15,
+                ]);
+
+                if ($getResponse->getStatusCode() === 200) {
+                    $payload = json_decode($getResponse->getContent(false), true);
+                    if (is_array($payload)) {
+                        $lyrics = $payload['plainLyrics'] ?? $payload['syncedLyrics'] ?? null;
+                        if ($lyrics) {
+                            $source = 'lrclib';
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log('lrclib.net /get failed: ' . $e->getMessage());
+            }
+        }
+
+        if (!$lyrics) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Pas de paroles trouvées pour cette chanson.'
+            ], 404);
+        }
+
+        return $this->json([
+            'success' => true,
+            'track' => $trackName,
+            'artist' => $artistName,
+            'lyrics' => $lyrics,
+            'source' => $source
+        ]);
+    }
+
     #[Route('/musiqueartiste/edit/{id}', name: 'app_musiqueartiste_edit', methods: ['POST'])]
     public function edit(
         int $id,
@@ -251,10 +378,20 @@ final class MusiqueartisteController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof User) {
+            throw $this->createAccessDeniedException('You must be logged in as an artist.');
+        }
+
         $musique = $musiqueRepository->find($id);
         
         if (!$musique) {
             $this->addFlash('error', 'Music not found.');
+            return $this->redirectToRoute('app_musiqueartiste');
+        }
+
+        if ($musique->getCollection()?->getArtiste()?->getId() !== $currentUser->getId()) {
+            $this->addFlash('error', 'You can only edit your own songs.');
             return $this->redirectToRoute('app_musiqueartiste');
         }
 
@@ -383,6 +520,14 @@ final class MusiqueartisteController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof User) {
+            if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
+                return $this->json(['success' => false, 'message' => 'Access denied.'], 403);
+            }
+            throw $this->createAccessDeniedException('You must be logged in as an artist.');
+        }
+
         // Check if this is an AJAX request
         $isAjax = $request->headers->get('X-Requested-With') === 'XMLHttpRequest';
         
@@ -404,6 +549,14 @@ final class MusiqueartisteController extends AbstractController
                 return $this->json(['success' => false, 'message' => 'Music not found.'], 404);
             }
             $this->addFlash('error', 'Music not found.');
+            return $this->redirectToRoute('app_musiqueartiste');
+        }
+
+        if ($musique->getCollection()?->getArtiste()?->getId() !== $currentUser->getId()) {
+            if ($isAjax) {
+                return $this->json(['success' => false, 'message' => 'You can only delete your own songs.'], 403);
+            }
+            $this->addFlash('error', 'You can only delete your own songs.');
             return $this->redirectToRoute('app_musiqueartiste');
         }
         

@@ -46,7 +46,7 @@ class MusiqueRepository extends ServiceEntityRepository
      * Returns lightweight data for listing pages
      * Use find($id) to get full entity with blobs when needed
      * 
-     * @return array Array of objects with id, titre, description, date_creation, genre
+     * @return array Array of objects with id, titre, description, date_creation, genre, artiste_nom, artiste_prenom
      */
     public function findAllLightweight(): array
     {
@@ -58,9 +58,13 @@ class MusiqueRepository extends ServiceEntityRepository
                 o.titre, 
                 o.description, 
                 o.date_creation,
-                m.genre
+                m.genre,
+                u.nom AS artiste_nom,
+                u.prenom AS artiste_prenom
             FROM musique m
             INNER JOIN oeuvre o ON m.id = o.id
+            LEFT JOIN collections c ON o.collection_id = c.id
+            LEFT JOIN `user` u ON c.artiste_id = u.id
             ORDER BY o.date_creation DESC
         ';
         
@@ -70,12 +74,12 @@ class MusiqueRepository extends ServiceEntityRepository
 
     /**
      * Search and filter music with optional sorting
-     * @param string|null $searchTerm Search in titre and description
+        * @param string|null $searchTerm Search in titre, description and artist name
      * @param string|null $sortBy Sort field: 'titre', 'date', 'genre'
      * @param string $sortOrder ASC or DESC
      * @return array
      */
-    public function searchAndFilter(?string $searchTerm = null, ?string $sortBy = 'date', string $sortOrder = 'DESC'): array
+    public function searchAndFilter(?string $searchTerm = null, ?string $sortBy = 'date', string $sortOrder = 'DESC', ?int $artistId = null): array
     {
         $conn = $this->getEntityManager()->getConnection();
         
@@ -85,17 +89,33 @@ class MusiqueRepository extends ServiceEntityRepository
                 o.titre, 
                 o.description, 
                 o.date_creation,
-                m.genre
+                m.genre,
+                u.nom AS artiste_nom,
+                u.prenom AS artiste_prenom
             FROM musique m
             INNER JOIN oeuvre o ON m.id = o.id
+            LEFT JOIN collections c ON o.collection_id = c.id
+            LEFT JOIN `user` u ON c.artiste_id = u.id
             WHERE 1=1
         ';
         
         $params = [];
+
+        if ($artistId !== null) {
+            $sql .= ' AND u.id = :artistId';
+            $params['artistId'] = $artistId;
+        }
         
         // Add search filter if provided
         if ($searchTerm) {
-            $sql .= ' AND (o.titre LIKE :search OR o.description LIKE :search)';
+            $sql .= ' AND (
+                o.titre LIKE :search
+                OR o.description LIKE :search
+                OR u.nom LIKE :search
+                OR u.prenom LIKE :search
+                OR CONCAT(COALESCE(u.prenom, \'\'), \' \', COALESCE(u.nom, \'\')) LIKE :search
+                OR CONCAT(COALESCE(u.nom, \'\'), \' \', COALESCE(u.prenom, \'\')) LIKE :search
+            )';
             $params['search'] = '%' . $searchTerm . '%';
         }
         

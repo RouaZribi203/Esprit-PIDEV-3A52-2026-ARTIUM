@@ -52,7 +52,7 @@
 		{% set current_route = app.request.attributes.get('_route') %}
 		<ul class="nav nav-bottom-line align-items-center justify-content-center justify-content-md-start mb-0 border-0 profile-nav">
 			{% set specialite = app.user.specialite is defined and app.user.specialite ? app.user.specialite.value|lower : '' %}
-		{% if specialite == 'musicien' %}
+		{% if specialite == 'musicien' or current_route in ['app_musiqueartiste', 'app_collections_front'] %}
 			<li class="nav-item">
 				<a class="nav-link {{ current_route == 'app_collections_front' ? 'active' : '' }}" href="{{ path('app_collections_front') }}">
 					Collections

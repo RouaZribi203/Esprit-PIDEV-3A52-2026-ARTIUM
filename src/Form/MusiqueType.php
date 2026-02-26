@@ -2,15 +2,19 @@
 
 namespace App\Form;
 
+use App\Entity\Collections;
 use App\Entity\Musique;
-use App\Enum\GenreMusique;use App\Validator\ImageDimensions;use Symfony\Component\Form\AbstractType;
+use App\Enum\GenreMusique;
+use App\Validator\ImageDimensions;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
-use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\UX\Dropzone\Form\DropzoneType;
 
 class MusiqueType extends AbstractType
 {
@@ -71,15 +75,29 @@ class MusiqueType extends AbstractType
                     new Assert\NotBlank(['message' => 'Le genre est requis'])
                 ]
             ])
-            ->add('imageFile', FileType::class, [
+            ->add('collection', EntityType::class, [
+                'class' => Collections::class,
+                'choices' => $options['collection_choices'],
+                'choice_label' => 'titre',
+                'placeholder' => 'Sélectionnez une collection',
+                'label' => 'Collection',
+                'attr' => [
+                    'class' => 'form-select',
+                    'required' => 'required',
+                ],
+                'constraints' => [
+                    new Assert\NotNull(['message' => 'La collection est requise'])
+                ]
+            ])
+            ->add('imageFile', DropzoneType::class, [
                 'label' => 'Image de Couverture',
                 'mapped' => false,
                 'required' => false,
                 'attr' => [
-                    'class' => 'form-control',
-                    'accept' => 'image/jpeg,image/png,image/jpg'
+                    'placeholder' => 'Glissez-déposez votre image ici ou cliquez pour parcourir',
+                    'data-controller' => 'dropzone',
                 ],
-                'help' => 'Max 5MB (JPEG, PNG) • Recommender: min 300x300px',
+                'help' => 'Max 5MB (JPEG, PNG) • Recommandé: min 300x300px',
                 'constraints' => [
                     new Assert\File([
                         'maxSize' => '5242880', // 5MB in bytes
@@ -99,18 +117,17 @@ class MusiqueType extends AbstractType
                     ])
                 ]
             ])
-            ->add('audioFile', FileType::class, [
+            ->add('audioFile', DropzoneType::class, [
                 'label' => 'Fichier Audio',
                 'mapped' => false,
                 'required' => !$isEdit,
                 'attr' => [
-                    'class' => 'form-control',
-                    'accept' => 'audio/*',
-                    'data-max-size' => '20971520' // 20MB for JS validation
+                    'placeholder' => 'Glissez-déposez votre fichier audio ici ou cliquez pour parcourir',
+                    'data-controller' => 'dropzone',
                 ],
-                'help' => !$isEdit ? 'Required. Max 20MB (MP3, WAV, AAC, etc.)' : 'Optional. Leave blank to keep current. Max 20MB',
+                'help' => !$isEdit ? 'Requis. Max 20MB (MP3, WAV, AAC, etc.)' : 'Optionnel. Laissez vide pour conserver l\'actuel. Max 20MB',
                 'constraints' => array_filter([
-                    !$isEdit ? new Assert\NotBlank(['message' => 'Audio file is required']) : null,
+                    !$isEdit ? new Assert\NotBlank(['message' => 'Le fichier audio est requis']) : null,
                     new Assert\File([
                         'maxSize' => '20971520', // 20MB in bytes
                         'mimeTypes' => [
@@ -127,8 +144,8 @@ class MusiqueType extends AbstractType
                             'audio/x-m4a',
                             'audio/mp4',
                         ],
-                        'mimeTypesMessage' => 'Please upload a valid audio file format',
-                        'maxSizeMessage' => 'Audio file is too large (max 20MB)',
+                        'mimeTypesMessage' => 'Veuillez télécharger un fichier audio valide',
+                        'maxSizeMessage' => 'Le fichier audio est trop volumineux (max 20MB)',
                     ])
                 ])
             ]);
@@ -138,10 +155,13 @@ class MusiqueType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Musique::class,
+            'collection_choices' => [],
             'attr' => [
                 'class' => 'needs-validation',
                 'novalidate' => true
             ]
         ]);
+
+        $resolver->setAllowedTypes('collection_choices', 'array');
     }
 }

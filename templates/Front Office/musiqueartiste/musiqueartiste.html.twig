@@ -33,7 +33,7 @@
       <div class="col-md-6">
         <div class="d-flex gap-2">
           <div class="flex-grow-1">
-            <label for="searchInput" class="form-label small mb-2">Rechercher par nom ou description</label>
+            <label for="searchInput" class="form-label small mb-2">Rechercher par titre, description ou artiste</label>
             <input type="text" class="form-control" id="searchInput" placeholder="Rechercher des chansons..." value="{{ searchTerm }}">
           </div>
           <button type="button" class="btn btn-outline-primary align-self-end" id="searchBtn">
@@ -118,6 +118,10 @@
                 <h6 class="mt-3"> 
                   <a href="#!"> {{ musique.titre }} </a> 
                 </h6>
+                {% set artistFullName = ((musique.artiste_prenom|default('')) ~ ' ' ~ (musique.artiste_nom|default('')))|trim %}
+                <p class="mb-2 small text-muted">
+                  <i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}
+                </p>
                 
                 <!-- Description -->
                 <p class="mb-2 small text-muted">
@@ -153,6 +157,13 @@
                            data-bs-toggle="offcanvas" 
                            data-bs-target="#offcanvasEditMusic">
                           <i class="bi bi-pencil pe-2"></i>Modifier
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item view-lyrics-btn" href="#"
+                           data-music-id="{{ musique.id }}"
+                           data-music-title="{{ musique.titre }}">
+                          <i class="bi bi-mic pe-2"></i>Voir paroles
                         </a>
                       </li>
                       <li>
@@ -272,18 +283,25 @@
           {% endif %}
         </div>
 
+        <!-- Collection -->
+        <div class="mb-3 col-12">
+          {{ form_label(form.collection, null, {'label_attr': {'class': 'form-label'}}) }}
+          <span class="text-danger">*</span>
+          {{ form_widget(form.collection) }}
+          {% if form.collection.vars.errors|length > 0 %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.collection.vars.errors %}
+                {{ error.message }}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
         <!-- Cover Image -->
         <div class="mb-3 col-12">
-          <h5 class="mb-3">{{ form_label(form.imageFile, null, {'label_attr': {'class': 'form-label'}}) }}</h5>
-          <div class="icon-shape icon-xxl border rounded position-relative">
-            <span class="position-absolute"><i class="bi bi-image fs-3"></i></span>
-            {{ form_widget(form.imageFile, {'attr': {'class': 'form-control border-0 opacity-0', 'id': 'imageFileInput', 'accept': 'image/jpeg,image/png,image/jpg'}}) }}
-          </div>
-          <div id="imageFileName" class="text-muted small mt-2"></div>
-          <div id="imagePreview" class="mt-3" style="display: none;">
-            <img id="imagePreviewImg" src="" alt="Preview" class="img-thumbnail" style="max-width: 200px;">
-          </div>
-          <div id="imageValidation" class="small mt-2"></div>
+          {{ form_label(form.imageFile, null, {'label_attr': {'class': 'form-label'}}) }}
+          {{ form_widget(form.imageFile) }}
+          {{ form_help(form.imageFile) }}
           {% if form.imageFile.vars.errors|length > 0 %}
             <div class="invalid-feedback d-block">
               {% for error in form.imageFile.vars.errors %}
@@ -291,18 +309,14 @@
               {% endfor %}
             </div>
           {% endif %}
-          <small class="text-muted d-block mt-2">Optionnel • Max 5MB • Formats: JPEG, PNG • Recommender: min 300x300px</small>
         </div>
 
         <!-- Audio File -->
         <div class="mb-3 col-12">
-          <h5 class="mb-3">{{ form_label(form.audioFile, null, {'label_attr': {'class': 'form-label'}}) }}</h5>
+          {{ form_label(form.audioFile, null, {'label_attr': {'class': 'form-label'}}) }}
           <span class="text-danger">*</span>
-          <div class="icon-shape icon-xxl border rounded position-relative">
-            <span class="position-absolute"><i class="bi bi-music-note-beamed fs-3"></i></span>
-            {{ form_widget(form.audioFile, {'attr': {'class': 'form-control border-0 opacity-0', 'id': 'audioFileInput'}}) }}
-          </div>
-          <div id="audioFileName" class="text-muted small mt-2"></div>
+          {{ form_widget(form.audioFile) }}
+          {{ form_help(form.audioFile) }}
           {% if form.audioFile.vars.errors|length > 0 %}
             <div class="invalid-feedback d-block">
               {% for error in form.audioFile.vars.errors %}
@@ -310,7 +324,6 @@
               {% endfor %}
             </div>
           {% endif %}
-          <small class="text-muted d-block mt-2">Requis • Max 20MB • Formats audio supportés</small>
         </div>
 
         <!-- Buttons -->
@@ -375,17 +388,16 @@
 
         <!-- Cover Image -->
         <div class="mb-3 col-12">
-          <h5 class="mb-3">Modifier l'image de couverture (optionnel)</h5>
-          <div class="icon-shape icon-xxl border rounded position-relative">
-            <span class="position-absolute"><i class="bi bi-image fs-3"></i></span>
-            <input type="file" class="form-control border-0 opacity-0" id="editImageFileInput" name="imageFile" accept="image/jpeg,image/png,image/jpg">
+          <label for="editImageFileInput" class="form-label">Modifier l'image de couverture</label>
+          <div data-controller="dropzone" class="dropzone-container">
+            <input type="file" 
+                   class="form-control" 
+                   id="editImageFileInput" 
+                   name="imageFile" 
+                   accept="image/jpeg,image/png,image/jpg"
+                   data-dropzone-target="input">
           </div>
-          <div id="editImageFileName" class="text-muted small mt-2"></div>
-          <div id="editImagePreview" class="mt-3" style="display: none;">
-            <img id="editImagePreviewImg" src="" alt="Preview" class="img-thumbnail" style="max-width: 200px;">
-          </div>
-          <div id="editImageValidation" class="small mt-2"></div>
-          <small class="text-muted d-block mt-2">optionnel • Laisser vide pour conserver le contenu actuel • Taille maximale : 5 Mo • Format : JPEG, PNG • Format recommandé: min 300x300px</small>
+          <small class="text-muted d-block mt-2">Optionnel • Laissez vide pour conserver l'image actuelle • Max 5MB • Formats: JPEG, PNG • Recommandé: min 300x300px</small>
         </div>
 
         <!-- Buttons -->
@@ -400,6 +412,29 @@
   </div>
 </div>
 <!-- Offcanvas Edit Music Form END -->
+
+<!-- Lyrics Modal START -->
+<div class="modal fade" id="lyricsModal" tabindex="-1" aria-labelledby="lyricsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="lyricsModalLabel">Paroles</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="lyricsLoading" class="text-center py-4" style="display:none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+          <p class="mt-2 mb-0 text-muted">Chargement des paroles...</p>
+        </div>
+        <div id="lyricsMessage" class="alert alert-warning" style="display:none;"></div>
+        <pre id="lyricsContent" class="mb-0" style="white-space: pre-wrap; font-family: inherit;"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Lyrics Modal END -->
 
 <!-- Audio element for playback -->
 <audio id="audioPlayer" style="display: none;"></audio>
@@ -645,12 +680,77 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// Lyrics Modal Handler
+document.addEventListener('click', async function(e) {
+  const lyricsBtn = e.target.closest('.view-lyrics-btn');
+  if (!lyricsBtn) {
+    return;
+  }
+
+  e.preventDefault();
+
+  const musicId = lyricsBtn.dataset.musicId;
+  const musicTitle = lyricsBtn.dataset.musicTitle || 'Paroles';
+
+  const modalElement = document.getElementById('lyricsModal');
+  const modalTitle = document.getElementById('lyricsModalLabel');
+  const loading = document.getElementById('lyricsLoading');
+  const message = document.getElementById('lyricsMessage');
+  const content = document.getElementById('lyricsContent');
+
+  if (!modalElement || !loading || !message || !content || !modalTitle) {
+    return;
+  }
+
+  modalTitle.textContent = `Paroles - ${musicTitle}`;
+  message.style.display = 'none';
+  content.textContent = '';
+  loading.style.display = 'block';
+
+  const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+  modal.show();
+
+  try {
+    const url = '{{ path('app_musiqueartiste_lyrics', {'id': '__ID__'}) }}'.replace('__ID__', musicId);
+    const response = await fetch(url, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+
+    const data = await response.json();
+    loading.style.display = 'none';
+
+    if (!response.ok || !data.success || !data.lyrics) {
+      message.textContent = data.message || 'Impossible de récupérer les paroles pour cette musique.';
+      message.style.display = 'block';
+      return;
+    }
+
+    content.textContent = data.lyrics;
+  } catch (error) {
+    loading.style.display = 'none';
+    message.textContent = 'Erreur réseau lors de la récupération des paroles.';
+    message.style.display = 'block';
+  }
+});
+
 // AJAX Search and Sort System
 let currentSortOrder = '{{ sortOrder }}';
 
 function loadMusicResults() {
-  const search = document.getElementById('searchInput').value;
-  const sort = document.getElementById('sortBy').value;
+  const searchInput = document.getElementById('searchInput');
+  const sortBySelect = document.getElementById('sortBy');
+  const grid = document.getElementById('musicGrid');
+  const emptyMsg = document.getElementById('emptyMessage');
+  
+  if (!searchInput || !sortBySelect) {
+    console.error('Search or sort elements not found');
+    return;
+  }
+  
+  const search = searchInput.value;
+  const sort = sortBySelect.value;
   
   const params = new URLSearchParams();
   if (search) params.append('search', search);
@@ -658,8 +758,6 @@ function loadMusicResults() {
   params.append('order', currentSortOrder);
   
   // Show loading spinner
-  const grid = document.getElementById('musicGrid');
-  const emptyMsg = document.getElementById('emptyMessage');
   if (grid) grid.innerHTML = '<div class="col-12 text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
   if (emptyMsg) emptyMsg.style.display = 'none';
   
@@ -695,6 +793,12 @@ function loadMusicResults() {
       document.getElementById('resultsInfo').innerHTML = newResults.innerHTML;
     }
     
+    // Reinitialize Bootstrap dropdowns after AJAX update
+    const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    dropdownElementList.forEach(function(dropdownToggle) {
+      new bootstrap.Dropdown(dropdownToggle);
+    });
+    
     // Update sort order button icon
     updateSortButton();
   })
@@ -703,55 +807,28 @@ function loadMusicResults() {
 
 function updateSortButton() {
   const btn = document.getElementById('toggleSortBtn');
+  if (!btn) return;
+  
   const icon = btn.querySelector('i');
   const text = document.getElementById('sortOrderText');
   
-  if (currentSortOrder === 'DESC') {
+  if (icon && currentSortOrder === 'DESC') {
     icon.className = 'bi bi-sort-down';
-    text.textContent = 'Descendant';
-  } else {
+    if (text) text.textContent = 'Descendant';
+  } else if (icon) {
     icon.className = 'bi bi-sort-up';
-    text.textContent = 'Ascendant';
+    if (text) text.textContent = 'Ascendant';
   }
 }
 
 function clearSearch() {
-  document.getElementById('searchInput').value = '';
+  const searchInput = document.getElementById('searchInput');
+  const sortBySelect = document.getElementById('sortBy');
+  
+  if (searchInput) searchInput.value = '';
   currentSortOrder = 'DESC';
-  document.getElementById('sortBy').value = 'date';
+  if (sortBySelect) sortBySelect.value = 'date';
   loadMusicResults();
-}
-
-// Event listeners
-document.getElementById('searchBtn').addEventListener('click', () => {
-  currentSortOrder = 'DESC';
-  document.getElementById('sortBy').value = 'date';
-  loadMusicResults();
-});
-
-document.getElementById('searchInput').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    currentSortOrder = 'DESC';
-    document.getElementById('sortBy').value = 'date';
-    loadMusicResults();
-  }
-});
-
-document.getElementById('sortBy').addEventListener('change', () => {
-  currentSortOrder = 'DESC';
-  loadMusicResults();
-});
-
-document.getElementById('toggleSortBtn').addEventListener('click', () => {
-  currentSortOrder = currentSortOrder === 'DESC' ? 'ASC' : 'DESC';
-  updateSortButton();  // Update button UI immediately
-  loadMusicResults();
-});
-
-// Handle clear button if it exists
-const clearBtn = document.getElementById('clearSearchBtn');
-if (clearBtn) {
-  clearBtn.addEventListener('click', clearSearch);
 }
 
 // Toggle sort order
@@ -762,8 +839,76 @@ function toggleSortOrder(form) {
   form.submit();
 }
 
-// ===== FORM VALIDATION (Contrôle de Saisie) =====
+// ===== INITIALIZE EVERYTHING ON DOM READY =====
 document.addEventListener('DOMContentLoaded', function() {
+  // Search/Sort Event listeners
+  const searchBtn = document.getElementById('searchBtn');
+  const searchInput = document.getElementById('searchInput');
+  const sortBySelect = document.getElementById('sortBy');
+  const toggleSortBtn = document.getElementById('toggleSortBtn');
+  const clearBtn = document.getElementById('clearSearchBtn');
+  
+  if (searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      currentSortOrder = 'DESC';
+      if (sortBySelect) sortBySelect.value = 'date';
+      loadMusicResults();
+    });
+  }
+  
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        currentSortOrder = 'DESC';
+        if (sortBySelect) sortBySelect.value = 'date';
+        loadMusicResults();
+      }
+    });
+  }
+  
+  if (sortBySelect) {
+    sortBySelect.addEventListener('change', () => {
+      currentSortOrder = 'DESC';
+      loadMusicResults();
+    });
+  }
+  
+  if (toggleSortBtn) {
+    toggleSortBtn.addEventListener('click', () => {
+      currentSortOrder = currentSortOrder === 'DESC' ? 'ASC' : 'DESC';
+      updateSortButton();
+      loadMusicResults();
+    });
+  }
+  
+  if (clearBtn) {
+    clearBtn.addEventListener('click', clearSearch);
+  }
+  
+  // ===== STIMULUS CONTROLLER INITIALIZATION FOR OFFCANVAS =====
+  // Reinitialize Stimulus controllers when offcanvas opens
+  const offcanvasAddMusic = document.getElementById('offcanvasAddMusic');
+  const offcanvasEditMusic = document.getElementById('offcanvasEditMusic');
+  
+  if (offcanvasAddMusic) {
+    offcanvasAddMusic.addEventListener('shown.bs.offcanvas', function() {
+      // Force Stimulus to connect controllers in the offcanvas
+      if (window.Stimulus && window.Stimulus.application) {
+        window.Stimulus.application.load();
+      }
+    });
+  }
+  
+  if (offcanvasEditMusic) {
+    offcanvasEditMusic.addEventListener('shown.bs.offcanvas', function() {
+      // Force Stimulus to connect controllers in the offcanvas
+      if (window.Stimulus && window.Stimulus.application) {
+        window.Stimulus.application.load();
+      }
+    });
+  }
+  
+  // ===== FORM VALIDATION (Contrôle de Saisie) =====
   const form = document.getElementById('addMusicForm');
   if (!form) return;
   
@@ -1052,87 +1197,7 @@ document.addEventListener('DOMContentLoaded', function() {
       editDescriptionInput.addEventListener('change', updateEditCounter);
     }
     
-    // Edit image file validation
-    if (editImageFileInput) {
-      editImageFileInput.addEventListener('change', function(e) {
-        const fileName = document.getElementById('editImageFileName');
-        const preview = document.getElementById('editImagePreview');
-        const previewImg = document.getElementById('editImagePreviewImg');
-        const validation = document.getElementById('editImageValidation');
-        const file = this.files[0];
-        
-        if (file) {
-          // File size validation (5MB)
-          if (file.size > 5242880) {
-            fileName.textContent = `❌ File too large (${(file.size / 1024 / 1024).toFixed(2)}MB > 5MB)`;
-            fileName.classList.remove('text-success');
-            fileName.classList.add('text-danger');
-            validation.innerHTML = '';
-            preview.style.display = 'none';
-            this.value = '';
-            return;
-          }
-          
-          // MIME type validation
-          const validMimes = ['image/jpeg', 'image/png', 'image/jpg'];
-          if (!validMimes.includes(file.type)) {
-            fileName.textContent = `❌ Invalid format (${file.type}). Use JPEG or PNG.`;
-            fileName.classList.remove('text-success');
-            fileName.classList.add('text-danger');
-            validation.innerHTML = '';
-            preview.style.display = 'none';
-            this.value = '';
-            return;
-          }
-          
-          // Read file and check dimensions
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-              const width = img.width;
-              const height = img.height;
-              let validationMsg = '';
-              let validationClass = 'text-success';
-              
-              fileName.textContent = `✓ ${file.name} (${(file.size / 1024).toFixed(2)}KB) • ${width}x${height}px`;
-              
-              // Check minimum dimensions (recommended 300x300px)
-              if (width < 300 || height < 300) {
-                validationMsg = `⚠️ Image dimensions (${width}x${height}px) are smaller than recommended (300x300px minimum)`;
-                validationClass = 'text-warning';
-              } else {
-                validationMsg = `✓ Image dimensions: ${width}x${height}px`;
-              }
-              
-              validation.textContent = validationMsg;
-              validation.className = `small mt-2 ${validationClass}`;
-              
-              fileName.classList.remove('text-danger');
-              fileName.classList.add('text-success');
-              
-              // Show preview
-              previewImg.src = event.target.result;
-              preview.style.display = 'block';
-            };
-            img.onerror = function() {
-              fileName.textContent = `❌ Invalid image file or corrupted.`;
-              fileName.classList.remove('text-success');
-              fileName.classList.add('text-danger');
-              validation.innerHTML = '';
-              preview.style.display = 'none';
-              editImageFileInput.value = '';
-            };
-            img.src = event.target.result;
-          };
-          reader.readAsDataURL(file);
-        } else {
-          fileName.textContent = '';
-          validation.innerHTML = '';
-          preview.style.display = 'none';
-        }
-      });
-    }
+    // Note: Image file validation is now handled by Dropzone component
     
     // Edit form submission validation
     editForm.addEventListener('submit', function(e) {
@@ -1196,17 +1261,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
       
-      // Image file validation (optional but if provided, must be valid)
-      if (editImageFileInput && editImageFileInput.files.length > 0) {
-        const file = editImageFileInput.files[0];
-        if (file.size > 5242880) {
-          errors.push(`Image file is too large (${(file.size / 1024 / 1024).toFixed(2)}MB > 5MB)`);
-          editImageFileInput.classList.add('is-invalid');
-          isValid = false;
-        } else {
-          editImageFileInput.classList.remove('is-invalid');
-        }
-      }
+      // Note: Image file validation is handled by Dropzone component
       
       // If validation failed, prevent submission and show errors
       if (!isValid) {
@@ -1233,6 +1288,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
       }
     });
+  }
+  
+  // ===== BOOTSTRAP DROPDOWN INITIALIZATION =====
+  // Ensure all dropdowns are initialized
+  function initializeDropdowns() {
+    const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    dropdownElementList.forEach(function(dropdownToggle) {
+      if (!bootstrap.Dropdown.getInstance(dropdownToggle)) {
+        new bootstrap.Dropdown(dropdownToggle);
+      }
+    });
+  }
+  
+  // Initialize on page load
+  initializeDropdowns();
+  
+  // Re-initialize after AJAX updates (for dynamically loaded content)
+  const musicGrid = document.getElementById('musicGrid');
+  if (musicGrid) {
+    const observer = new MutationObserver(function(mutations) {
+      initializeDropdowns();
+    });
+    observer.observe(musicGrid, { childList: true, subtree: true });
   }
   
   // ===== DELETE CONFIRMATION =====

@@ -6,6 +6,7 @@ use App\Entity\Playlist;
 use App\Repository\MusiqueRepository;
 use App\Repository\PlaylistRepository;
 use App\Repository\UserRepository;
+use App\Service\GroqPlaylistService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -270,6 +271,102 @@ final class MusicfrontController extends AbstractController
 
         $this->addFlash('success', $addedCount . ' musique(s) ajoutee(s) a la playlist.');
         return $this->redirectToRoute('app_musicfront');
+    }
+
+    #[Route('/user-playlists/ai-generate', name: 'app_playlist_ai_generate', methods: ['POST'])]
+    public function generateAiPlaylist(
+        Request $request,
+        MusiqueRepository $musiqueRepository,
+        EntityManagerInterface $entityManager,
+        UserRepository $userRepository,
+        \Symfony\Component\Validator\Validator\ValidatorInterface $validator,
+        GroqPlaylistService $groqPlaylistService
+    ): Response {
+        $user = $this->getUser();
+        if (!$user) {
+            $user = $userRepository->find(2);
+        }
+
+        if (!$user) {
+            return new JsonResponse(['success' => false, 'error' => 'Utilisateur par defaut introuvable.'], 400);
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('ai_generate_playlist', $token)) {
+            return new JsonResponse(['success' => false, 'error' => 'Jeton CSRF invalide.'], 400);
+        }
+
+        $prompt = trim((string) $request->request->get('ai_prompt', ''));
+        $count = (int) $request->request->get('ai_count', 10);
+        $count = max(3, min(20, $count));
+
+        if ($prompt === '') {
+            return new JsonResponse(['success' => false, 'error' => 'Le prompt est requis.'], 400);
+        }
+
+        $allSongs = $musiqueRepository->findAll();
+        if (empty($allSongs)) {
+            return new JsonResponse(['success' => false, 'error' => 'Aucune musique disponible pour la génération.'], 400);
+        }
+
+        $catalog = [];
+        foreach ($allSongs as $song) {
+            $catalog[] = [
+                'id' => (int) $song->getId(),
+                'title' => (string) ($song->getTitre() ?? 'Titre inconnu'),
+                'genre' => (string) ($song->getGenre()?->value ?? ''),
+                'artist' => trim((string) (($song->getCollection()?->getArtiste()?->getPrenom() ?? '') . ' ' . ($song->getCollection()?->getArtiste()?->getNom() ?? ''))),
+                'description' => mb_substr((string) ($song->getDescription() ?? ''), 0, 220),
+            ];
+        }
+
+        try {
+            $aiResult = $groqPlaylistService->generatePlaylist($prompt, $catalog, $count);
+        } catch (\Throwable $e) {
+            return new JsonResponse(['success' => false, 'error' => 'Erreur AI: ' . $e->getMessage()], 500);
+        }
+
+        $validSongMap = [];
+        foreach ($allSongs as $song) {
+            $validSongMap[(int) $song->getId()] = $song;
+        }
+
+        $selectedSongs = [];
+        foreach ($aiResult['songIds'] as $id) {
+            $songId = (int) $id;
+            if ($songId > 0 && isset($validSongMap[$songId])) {
+                $selectedSongs[$songId] = $validSongMap[$songId];
+            }
+        }
+
+        if (empty($selectedSongs)) {
+            return new JsonResponse(['success' => false, 'error' => 'AI n\'a sélectionné aucune musique valide.'], 400);
+        }
+
+        $playlist = new Playlist();
+        $playlist->setNom(mb_substr((string) $aiResult['playlistName'], 0, 100));
+        $playlist->setDescription(mb_substr((string) $aiResult['rationale'], 0, 500));
+        $playlist->setDateCreation(new \DateTime());
+        $playlist->setUser($user);
+
+        foreach ($selectedSongs as $song) {
+            $playlist->addMusique($song);
+        }
+
+        $errors = $validator->validate($playlist);
+        if (count($errors) > 0) {
+            return new JsonResponse(['success' => false, 'error' => $errors[0]->getMessage()], 400);
+        }
+
+        $entityManager->persist($playlist);
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'playlistId' => $playlist->getId(),
+            'playlistName' => $playlist->getNom(),
+            'addedCount' => count($selectedSongs),
+        ]);
     }
 
     #[Route('/playlist/{id}/songs', name: 'app_playlist_songs', methods: ['GET'])]

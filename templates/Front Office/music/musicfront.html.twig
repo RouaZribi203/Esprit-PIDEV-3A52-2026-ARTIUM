@@ -478,6 +478,9 @@
                                     <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#createPlaylistCollapse" aria-expanded="false" aria-controls="createPlaylistCollapse">
                                         <i class="bi bi-plus-lg"></i> Ajouter
                                     </button>
+                                    <button class="btn btn-sm btn-outline-info ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#aiPlaylistCollapse" aria-expanded="false" aria-controls="aiPlaylistCollapse">
+                                        <i class="bi bi-stars"></i> AI Playlist
+                                    </button>
                                     <div class="collapse mt-3" id="createPlaylistCollapse">
                                         <form method="post" action="{{ path('app_playlist_create') }}" enctype="multipart/form-data" id="createPlaylistForm">
                                             <input type="hidden" name="_token" value="{{ csrf_token('create_playlist') }}">
@@ -495,6 +498,22 @@
                                                 <small class="form-text text-muted">Max 5MB</small>
                                             </div>
                                             <button type="submit" class="btn btn-sm btn-primary">Creer</button>
+                                        </form>
+                                    </div>
+                                    <div class="collapse mt-3" id="aiPlaylistCollapse">
+                                        <form id="aiPlaylistForm" class="border border-secondary rounded p-2">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('ai_generate_playlist') }}">
+                                            <div class="mb-2">
+                                                <label class="form-label small" for="ai-prompt">Prompt</label>
+                                                <textarea id="ai-prompt" name="ai_prompt" class="form-control form-control-sm" rows="3" placeholder="Ex: Chill night drive, mostly pop with a little jazz"></textarea>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small" for="ai-count">Nombre de chansons</label>
+                                                <input id="ai-count" name="ai_count" type="number" min="3" max="20" value="10" class="form-control form-control-sm">
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-info text-dark" id="aiGenerateBtn">
+                                                <i class="bi bi-stars"></i> Générer
+                                            </button>
                                         </form>
                                     </div>
                                 </div>
@@ -985,6 +1004,24 @@
             .catch(error => console.error('Error loading results:', error));
         }
 
+        function refreshPlaylistsTab() {
+            return fetch('{{ path("app_musicfront") }}', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newPlaylistsTab = doc.querySelector('#tab-playlists');
+                const currentPlaylistsTab = document.querySelector('#tab-playlists');
+                if (newPlaylistsTab && currentPlaylistsTab) {
+                    currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             bindPlayButtons();
             updateSortButton();
@@ -1052,23 +1089,8 @@
                             if (collapseElement) {
                                 collapseElement.classList.remove('show');
                             }
-                            
-                            // Refresh playlists tab
-                            fetch('{{ path("app_musicfront") }}', {
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                }
-                            })
-                            .then(response => response.text())
-                            .then(html => {
-                                const parser = new DOMParser();
-                                const doc = parser.parseFromString(html, 'text/html');
-                                const newPlaylistsTab = doc.querySelector('#tab-playlists');
-                                const currentPlaylistsTab = document.querySelector('#tab-playlists');
-                                if (newPlaylistsTab && currentPlaylistsTab) {
-                                    currentPlaylistsTab.innerHTML = newPlaylistsTab.innerHTML;
-                                }
-                            });
+
+                            refreshPlaylistsTab();
                         } else {
                             alert(data.error || 'Erreur lors de la création de la playlist');
                         }
@@ -1079,6 +1101,55 @@
                     });
                 });
             }
+        });
+
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (!(form instanceof HTMLFormElement) || form.id !== 'aiPlaylistForm') {
+                return;
+            }
+
+            if (document.body?.dataset?.route !== 'app_musicfront') {
+                return;
+            }
+
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const generateBtn = form.querySelector('#aiGenerateBtn') || document.getElementById('aiGenerateBtn');
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Génération...';
+            }
+
+            fetch('{{ path("app_playlist_ai_generate") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(async response => {
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || `Erreur HTTP ${response.status}`);
+                }
+                return data;
+            })
+            .then(() => {
+                form.reset();
+                return refreshPlaylistsTab();
+            })
+            .catch(error => {
+                console.error('AI generation error:', error);
+                alert(error.message || 'Erreur réseau pendant la génération AI');
+            })
+            .finally(() => {
+                if (generateBtn) {
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="bi bi-stars"></i> Générer';
+                }
+            });
         });
 
         document.addEventListener('turbo:load', function () {

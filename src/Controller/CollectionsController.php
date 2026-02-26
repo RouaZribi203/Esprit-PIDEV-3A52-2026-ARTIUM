@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Collections;
+use App\Entity\Oeuvre;
 use App\Entity\User;
 use App\Form\CollectionsType;
 use App\Repository\CollectionsRepository;
@@ -20,36 +21,6 @@ final class CollectionsController extends AbstractController
     public function index(CollectionsRepository $collectionsRepository): Response
     {   
         $collections = $this->getUser()->getCollections();
-        $processedOeuvres = [];
-        
-        // Detect MIME types for all oeuvre images
-        foreach ($collections as $collection) {
-            foreach ($collection->getOeuvres() as $oeuvre) {
-                $image = $oeuvre->getImage();
-                
-                if ($image) {
-                    // Handle resource streams
-                    if (is_resource($image)) {
-                        rewind($image);
-                        $imageData = stream_get_contents($image);
-                    } else {
-                        $imageData = $image;
-                    }
-                    
-                    // Only process if we have actual image data
-                    if ($imageData && strlen($imageData) > 0) {
-                        $imageBase64 = base64_encode($imageData);
-                        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                        $mimeType = $finfo->buffer($imageData);
-                        
-                        $processedOeuvres[$oeuvre->getId()] = [
-                            'imageBase64' => $imageBase64,
-                            'mimeType' => $mimeType ?: 'image/jpeg',
-                        ];
-                    }
-                }
-            }
-        }
 
         // Create empty form for modal display
         $form = $this->createForm(CollectionsType::class, new Collections());
@@ -61,7 +32,6 @@ final class CollectionsController extends AbstractController
         return $this->render('Front Office/collections_front/collectionsfront.html.twig', [
             'controller_name' => 'CollectionsController',
             'collections' => $this->getUser()->getCollections(),
-            'processedOeuvres' => $processedOeuvres,
             'form' => $form,
             'formEdit' => $formEdit, 
         ]);
@@ -105,36 +75,6 @@ final class CollectionsController extends AbstractController
         $search = $request->query->get('q');
         $collections = $collectionsRepository->findByArtisteWithSearchFirst($user, $search);
 
-        // Process oeuvre images
-        /*$processedOeuvres = [];
-        foreach ($collections as $collection) {
-            foreach ($collection->getOeuvres() as $oeuvre) {
-                $image = $oeuvre->getImage();
-                
-                if ($image) {
-                    // Handle resource streams
-                    if (is_resource($image)) {
-                        rewind($image);
-                        $imageData = stream_get_contents($image);
-                    } else {
-                        $imageData = $image;
-                    }
-                    
-                    // Only process if we have actual image data
-                    if ($imageData && strlen($imageData) > 0) {
-                        $imageBase64 = base64_encode($imageData);
-                        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                        $mimeType = $finfo->buffer($imageData);
-                        
-                        $processedOeuvres[$oeuvre->getId()] = [
-                            'imageBase64' => $imageBase64,
-                            'mimeType' => $mimeType ?: 'image/jpeg',
-                        ];
-                    }
-                }
-            }
-        }*/
-
         // Create empty form for modal display
         $form = $this->createForm(CollectionsType::class, new Collections());
         $formEdit = [];
@@ -176,6 +116,40 @@ final class CollectionsController extends AbstractController
             'collection' => $collection,
             'form' => $form,
         ]);
+    }
+
+    #[Route('/oeuvre/{id}/image', name: 'app_collection_oeuvre_image', methods: ['GET'])]
+    public function oeuvreImage(Oeuvre $oeuvre): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('You must be logged in.');
+        }
+
+        $oeuvreCollection = $oeuvre->getCollection();
+        $oeuvreOwnerId = $oeuvreCollection?->getArtiste()?->getId();
+        if ($oeuvreOwnerId !== $user->getId()) {
+            throw $this->createAccessDeniedException('You are not allowed to access this image.');
+        }
+
+        $imageData = $oeuvre->getImage();
+        if (!$imageData) {
+            throw $this->createNotFoundException('Image not found');
+        }
+
+        if (is_resource($imageData)) {
+            rewind($imageData);
+            $imageData = stream_get_contents($imageData);
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->buffer($imageData) ?: 'image/jpeg';
+
+        return new Response(
+            $imageData,
+            Response::HTTP_OK,
+            ['Content-Type' => $mimeType]
+        );
     }
 
     #[Route('/{id}', name: 'app_collections_show', methods: ['GET'])]
@@ -226,35 +200,6 @@ final class CollectionsController extends AbstractController
         $em->flush();
         return $this->redirectToRoute('app_collections_front', [], Response::HTTP_SEE_OTHER);
     }
-    $processedOeuvres = [];
-        foreach ($collections as $artistCollection) {
-            foreach ($artistCollection->getOeuvres() as $oeuvre) {
-                $image = $oeuvre->getImage();
-                
-                if ($image) {
-                    // Handle resource streams
-                    if (is_resource($image)) {
-                        rewind($image);
-                        $imageData = stream_get_contents($image);
-                    } else {
-                        $imageData = $image;
-                    }
-                    
-                    // Only process if we have actual image data
-                    if ($imageData && strlen($imageData) > 0) {
-                        $imageBase64 = base64_encode($imageData);
-                        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                        $mimeType = $finfo->buffer($imageData);
-                        
-                        $processedOeuvres[$oeuvre->getId()] = [
-                            'imageBase64' => $imageBase64,
-                            'mimeType' => $mimeType ?: 'image/jpeg',
-                        ];
-                    }
-                }
-            }
-        }
-
     $form = $this->createForm(CollectionsType::class, new Collections());
     $formEdit = [];
     foreach ($collections as $artistCollection) {
@@ -270,7 +215,6 @@ final class CollectionsController extends AbstractController
         'form' => $form->createView(),
         'formEdit' => $formEdit,
         'collections' => $collections,
-        'processedOeuvres' => $processedOeuvres,
         'editErrorCollectionId' => $editForm->isSubmitted() && !$editForm->isValid() ? $collection->getId() : null,
 
     ]);

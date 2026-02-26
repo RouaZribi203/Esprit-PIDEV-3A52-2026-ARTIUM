@@ -64,19 +64,9 @@
                               <div class="col-sm-6 col-md-4 col-lg-3">
                                 <!-- Photo -->
                                 {% if oeuvre.image %}
-                                  {% set processed = processedOeuvres[oeuvre.id]|default(null) %}
-                                  {% if processed and processed.imageBase64 %}
-                                    {% set mimeType = processed.mimeType %}
-                                    {% set imageBase64 = processed.imageBase64 %}
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#collectionPostModal{{ oeuvre.id }}">
-                                      <img class="rounded img-fluid" src="data:{{ mimeType }};base64,{{ imageBase64 }}" alt="{{ oeuvre.titre }}" >
-                                    </a>
-                                    </a>
-                                  {% else %}
-                                    <div class="bg-light rounded" style="height: 200px; display: flex; align-items: center; justify-content: center;">
-                                      <span class="text-muted">Error loading image</span>
-                                    </div>
-                                  {% endif %}
+                                  <a href="#" data-bs-toggle="modal" data-bs-target="#collectionPostModal{{ oeuvre.id }}">
+                                    <img class="rounded img-fluid" src="{{ path('app_collection_oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
+                                  </a>
                                 {% else %}
                                   <div class="bg-light rounded" style="height: 200px; display: flex; align-items: center; justify-content: center;">
                                     <span class="text-muted">No image</span>
@@ -107,15 +97,12 @@
                   {% if collection.oeuvres|length > 0 %}
                     {% for oeuvre in collection.oeuvres %}
                       {% if oeuvre.image %}
-                        {% set processed = processedOeuvres[oeuvre.id]|default(null) %}
-                        {% if processed and processed.imageBase64 %}
-                          {% set imageUrl = 'data:' ~ processed.mimeType ~ ';base64,' ~ processed.imageBase64 %}
-                          {% include 'Front Office/favoris/_favoris_post_modal.html.twig' with { 
-                            oeuvre: oeuvre, 
-                            imageUrl: imageUrl,
-                            modalId: 'collectionPostModal' ~ oeuvre.id
-                          } %}
-                        {% endif %}
+                        {% set imageUrl = path('app_collection_oeuvre_image', {'id': oeuvre.id}) %}
+                        {% include 'Front Office/favoris/_favoris_post_modal.html.twig' with {
+                          oeuvre: oeuvre,
+                          imageUrl: imageUrl,
+                          modalId: 'collectionPostModal' ~ oeuvre.id
+                        } %}
                       {% endif %}
                     {% endfor %}
                   {% endif %}

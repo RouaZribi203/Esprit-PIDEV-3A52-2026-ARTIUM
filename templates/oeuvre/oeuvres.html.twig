@@ -155,19 +155,23 @@
                       tab.show();
                     }
 
+                    // Update tabInput with the active tab from URL
+                    document.getElementById('tabInput').value = activeTabId;
+
                     // Attach sort change listener
                     const sortSelect = document.getElementById('sortSelect');
                     if (sortSelect) {
                       sortSelect.addEventListener('change', function() {
                         if (this.value) {
-                          // Redirect directly with sort=value and order=ASC
-                          const currentTab = new URLSearchParams(window.location.search).get('tab') || 'all-post';
+                          // Get the currently active tab
+                          const activeTab = document.querySelector('.nav-lb-tab .nav-link.active');
+                          const currentTab = activeTab ? activeTab.getAttribute('href').substring(1) : 'all-post';
                           const currentQuery = new URLSearchParams(window.location.search).get('q') || '';
                           let url = '{{ path("oeuvres") }}?sort=' + encodeURIComponent(this.value) + '&order=ASC&tab=' + encodeURIComponent(currentTab);
                           if (currentQuery) {
                             url += '&q=' + encodeURIComponent(currentQuery);
                           }
-                          console.log('Sorting by:', this.value, ' Order: ASC, URL:', url);
+                          console.log('Sorting by:', this.value, ' Order: ASC, Tab:', currentTab, 'URL:', url);
                           window.location.href = url;
                         }
                       });
@@ -175,6 +179,13 @@
                   });
 
                   function toggleOrder() {
+                    // Update tabInput to reflect the currently active tab before submitting
+                    const activeTab = document.querySelector('.nav-lb-tab .nav-link.active');
+                    if (activeTab) {
+                      const currentTab = activeTab.getAttribute('href').substring(1);
+                      document.getElementById('tabInput').value = currentTab;
+                    }
+                    
                     const currentOrder = document.getElementById('orderInput').value;
                     document.getElementById('orderInput').value = currentOrder === 'ASC' ? 'DESC' : 'ASC';
                     document.getElementById('searchForm').submit();
@@ -212,7 +223,7 @@
                           </thead>
                           <tbody>
                             {# Render search results or all oeuvres #}
-                            {% set displayOeuvres = isSearchActive ? searchResults : oeuvres %}
+                            {% set displayOeuvres = isSearchActive ? searchResultsPaginated : oeuvres %}
                             {% for oeuvre in displayOeuvres %}
                             <tr>
                               <td>
@@ -738,12 +749,13 @@
                 <!-- Card Footer with Pagination -->
                 <div class="card-footer">
                   <div id="pagination-all-post" class="tab-pagination">
-                    {% if oeuvres.getPageCount > 1 %}
+                    {% set paginationOeuvres = isSearchActive ? searchResultsPaginated : oeuvres %}
+                    {% if paginationOeuvres and paginationOeuvres.getPageCount > 1 %}
                     <nav>
                       <ul class="pagination justify-content-center mb-0">
-                        {% if oeuvres.getCurrentPageNumber > 1 %}
+                        {% if paginationOeuvres.getCurrentPageNumber > 1 %}
                         <li class="page-item">
-                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page: oeuvres.getCurrentPageNumber - 1, sort: sortBy, order: sortOrder, tab: 'all-post', q: currentQuery}) }}">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page: paginationOeuvres.getCurrentPageNumber - 1, sort: sortBy, order: sortOrder, tab: 'all-post', q: currentQuery}) }}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
                               <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
                             </svg>
@@ -759,8 +771,8 @@
                         </li>
                         {% endif %}
                         
-                        {% for pageNum in 1..oeuvres.getPageCount %}
-                          {% if pageNum == oeuvres.getCurrentPageNumber %}
+                        {% for pageNum in 1..paginationOeuvres.getPageCount %}
+                          {% if pageNum == paginationOeuvres.getCurrentPageNumber %}
                           <li class="page-item active">
                             <a class="page-link mx-1 rounded" href="#">{{ pageNum }}</a>
                           </li>
@@ -771,9 +783,9 @@
                           {% endif %}
                         {% endfor %}
                         
-                        {% if oeuvres.getCurrentPageNumber < oeuvres.getPageCount %}
+                        {% if paginationOeuvres.getCurrentPageNumber < paginationOeuvres.getPageCount %}
                         <li class="page-item">
-                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page: oeuvres.getCurrentPageNumber + 1, sort: sortBy, order: sortOrder, tab: 'all-post', q: currentQuery}) }}">
+                          <a class="page-link mx-1 rounded" href="{{ path('oeuvres', {page: paginationOeuvres.getCurrentPageNumber + 1, sort: sortBy, order: sortOrder, tab: 'all-post', q: currentQuery}) }}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
                               <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
                             </svg>

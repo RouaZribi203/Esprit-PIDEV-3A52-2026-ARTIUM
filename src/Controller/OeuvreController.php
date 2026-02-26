@@ -33,13 +33,22 @@ final class OeuvreController extends AbstractController
         $activeTab = $request->query->get('tab', 'all-post');
         $searchResults = [];
         $noResultsMessage = '';
+        $session = $request->hasSession() ? $request->getSession() : null;
+        $searchNoticeSessionKey = 'oeuvre_search_last_notified_query';
+
+        if ($session && $query === '') {
+            $session->remove($searchNoticeSessionKey);
+        }
 
         // If search query exists, find matching oeuvres with sorting
         if ($query) {
             $hits = $searchManager->search(Oeuvre::class, $query, ['limit' => 100])->getHits();
+            $shouldNotifySearch = !$session || $session->get($searchNoticeSessionKey) !== $query;
             
             if (count($hits) === 0) {
-                $this->addFlash('info', 'Aucune œuvre trouvée avec ce titre.');
+                if ($shouldNotifySearch) {
+                    $this->addFlash('info', 'Aucune œuvre trouvée avec ce titre.');
+                }
                 $searchResults = [];
             } else {
                 // Extract IDs in Meilisearch relevance order
@@ -54,13 +63,30 @@ final class OeuvreController extends AbstractController
                 }
                 
                 // Show flash message with count
-                $this->addFlash('info', count($searchResults) . ' résultat(s) trouvé(s)');
+                if ($shouldNotifySearch) {
+                    $this->addFlash('info', count($searchResults) . ' résultat(s) trouvé(s)');
+                }
+            }
+
+            if ($session && $shouldNotifySearch) {
+                $session->set($searchNoticeSessionKey, $query);
             }
         }
 
         // Apply PHP sorting to search results if sortBy is specified
         if ($query && $searchResults && $sortBy) {
             $searchResults = $this->sortOeuvreArray($searchResults, $sortBy, $sortOrder);
+        }
+
+        // Paginate search results if search is active
+        $searchResultsPaginated = null;
+        if ($query && $searchResults) {
+            $paginatorOptionsSearch = [
+                'pageParameterName' => 'page',
+                'sortFieldParameterName' => 'disable_sort',
+                'sortDirectionParameterName' => 'disable_dir'
+            ];
+            $searchResultsPaginated = $paginator->paginate($searchResults, $request->query->getInt('page', 1), 6, $paginatorOptionsSearch);
         }
 
         // Get oeuvres by type - fetch without sorting first
@@ -122,6 +148,7 @@ final class OeuvreController extends AbstractController
             'typeOeuvres' => TypeOeuvre::cases(),
             'collections' => $collectionsRepository->findAll(),
             'searchResults' => $searchResults,
+            'searchResultsPaginated' => $searchResultsPaginated,
             'noResultsMessage' => $noResultsMessage,
             'isSearchActive' => (bool) $query,
             'sortBy' => $sortBy,

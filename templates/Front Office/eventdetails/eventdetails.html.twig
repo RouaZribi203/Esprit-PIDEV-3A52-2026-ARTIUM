@@ -3,6 +3,16 @@
 {% block title %}{{ evenement.titre }} - {{ 'Détails'|trans }}{% endblock %}
 
 {% block amateur_content %}
+    {# Messages flash #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
     <div class="card card-body">
         <!-- Image de couverture -->
         <div class="mb-4">
@@ -27,7 +37,7 @@
                         <span class="badge bg-primary">{{ evenement.type ? evenement.type.value : '' }}</span>
                     </div>
                 </div>
-                <form method="post" action="{{ path('app_eventdetails', { id: evenement.id }) }}">
+                <form method="post" action="{{ path('app_payment_checkout', { id: evenement.id }) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('buy_ticket_' ~ evenement.id) }}">
                     <button class="btn btn-primary" type="submit">
                         <i class="bi bi-ticket-perforated me-2"></i>Acheter ticket
@@ -91,6 +101,26 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Weather -->
+            <div class="col-sm-6 col-lg-3">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-cloud-sun fs-3 text-info me-3"></i>
+                    <div>
+                        <h6 class="mb-2">Météo prévue</h6>
+                        {% if weather %}
+                            <p class="small mb-1"><strong>{{ weather.description }}</strong></p>
+                            <p class="small mb-1">🌡️ {{ weather.temperature }}°C</p>
+                            <p class="small mb-1">💧 {{ weather.humidity }}%</p>
+                            {% if weather.wind_speed %}
+                                <p class="small mb-0">💨 {{ weather.wind_speed }} km/h</p>
+                            {% endif %}
+                        {% else %}
+                            <p class="small text-muted mb-0">Non disponible</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -100,7 +130,9 @@
             <i class="bi bi-ticket-perforated me-2"></i>Vos tickets
         </h5>
         <div class="list-group">
-            {% for ticket in tickets %}
+            {% set maxTickets = 3 %}
+            {# Afficher les 3 premiers tickets #}
+            {% for ticket in tickets|slice(0, maxTickets) %}
                 <div class="list-group-item d-flex flex-wrap align-items-center justify-content-between">
                     <div>
                         <div class="fw-semibold">Ticket #{{ ticket.id }}</div>
@@ -109,15 +141,61 @@
                     <div class="text-muted small">
                         {{ evenement.titre }} · {{ evenement.prixTicket }} DT
                     </div>
-                    <div>
-                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_ticket_qr', { id: ticket.id }) }}" target="_blank" rel="noopener">
-                            <i class="bi bi-qr-code"></i>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_ticket_qr', { id: ticket.id }) }}" target="_blank" rel="noopener" title="Afficher le code QR">
+                            <i class="bi bi-qr-code"></i> QR Code
+                        </a>
+                        <a class="btn btn-sm btn-outline-primary" href="{{ path('app_ticket_download', { id: ticket.id }) }}" title="Télécharger le ticket en PDF">
+                            <i class="bi bi-download"></i> Télécharger
                         </a>
                     </div>
                 </div>
             {% endfor %}
+            {# Les tickets suivants, dans une div masquée #}
+            {% if tickets|length > maxTickets %}
+                <div id="moreTickets" style="display:none;">
+                {% for ticket in tickets|slice(maxTickets) %}
+                    <div class="list-group-item d-flex flex-wrap align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-semibold">Ticket #{{ ticket.id }}</div>
+                            <div class="small text-muted">Acheté le {{ ticket.dateAchat ? ticket.dateAchat|date('d M Y') : '-' }}</div>
+                        </div>
+                        <div class="text-muted small">
+                            {{ evenement.titre }} · {{ evenement.prixTicket }} DT
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_ticket_qr', { id: ticket.id }) }}" target="_blank" rel="noopener" title="Afficher le code QR">
+                                <i class="bi bi-qr-code"></i> QR Code
+                            </a>
+                            <a class="btn btn-sm btn-outline-primary" href="{{ path('app_ticket_download', { id: ticket.id }) }}" title="Télécharger le ticket en PDF">
+                                <i class="bi bi-download"></i> Télécharger
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
         </div>
+        {% if tickets|length > maxTickets %}
+            <div class="text-center mt-3">
+                <button class="btn btn-outline-primary" id="showMoreTicketsBtn" type="button">
+                    Voir plus
+                </button>
+            </div>
+        {% endif %}
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('showMoreTicketsBtn');
+        const more = document.getElementById('moreTickets');
+        if (btn && more) {
+            btn.addEventListener('click', function() {
+                more.style.display = '';
+                btn.style.display = 'none';
+            });
+        }
+    });
+    </script>
     {% endif %}
 
     <!-- Section Localisation (pleine largeur) -->
@@ -133,7 +211,7 @@
                     <dt class="text-muted mb-2"><i class="bi bi-map me-2"></i>Adresse</dt>
                     <dd class="mb-3">{{ evenement.galerie.adresse }}</dd>
                     
-                    <dt class="text-muted mb-2"><i class="bi bi-geo-alt me-2"></i>Ville</dt>
+                    <dt class="text-muted mb-2"><i class="bi bi-geo-alt me-2"></i>Coordonnées</dt>
                     <dd class="mb-3">{{ evenement.galerie.localisation }}</dd>
                     
                     <dt class="text-muted mb-2"><i class="bi bi-people me-2"></i>Capacité de la galerie</dt>
@@ -146,11 +224,33 @@
                 </dl>
             </div>
             <div class="col-md-8">
-                <iframe class="w-100 rounded" height="300" 
-                    src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d2903.1184504179037!2d10.110210075465782!3d36.81223797224373!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMzbCsDQ4JzQ0LjEiTiAxMMKwMDYnNDYuMCJF!5e1!3m2!1sen!2stn!4v1770955086347!5m2!1sen!2stn" 
-                    style="border:0;" 
-                    aria-hidden="false" 
-                    tabindex="0"></iframe>
+                {% if evenement.galerie.latitude and evenement.galerie.longitude %}
+                    <div id="map" style="height: 300px; border-radius: 0.375rem;"></div>
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const lat = {{ evenement.galerie.latitude }};
+                            const lng = {{ evenement.galerie.longitude }};
+                            
+                            const map = L.map('map').setView([lat, lng], 15);
+                            
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                maxZoom: 19,
+                                attribution: '© OpenStreetMap contributors'
+                            }).addTo(map);
+                            
+                            L.marker([lat, lng])
+                                .addTo(map)
+                                .bindPopup('<b>{{ evenement.galerie.nom }}</b><br>{{ evenement.galerie.adresse }}')
+                                .openPopup();
+                        });
+                    </script>
+                {% else %}
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 300px;">
+                        <p class="text-muted"><i class="bi bi-geo-alt me-2"></i>Localisation non disponible</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

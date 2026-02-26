@@ -3,9 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Evenement;
+use App\Enum\StatutEvenement;
+use App\Enum\TypeEvenement;
 use App\Form\EvenementType;
 use App\Repository\EvenementRepository;
 use App\Repository\TicketRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,21 +22,30 @@ final class EvenementController extends AbstractController
     public function index(
         Request $request,
         EvenementRepository $evenementRepository,
-        TicketRepository $ticketRepository
+        TicketRepository $ticketRepository,
+        EntityManagerInterface $entityManager
     ): Response
     {
+        // Mise à jour automatique des statuts expirés
+        $this->updateExpiredEventStatuses($evenementRepository, $entityManager);
         // Pagination setup
         $page = max(1, $request->query->getInt('page', 1));
         $limit = 10;
         $filterValue = trim((string) $request->query->get('filter_value', ''));
         $sort = (string) $request->query->get('sort', 'titre_asc');
         $statusFilter = (string) $request->query->get('status', '');
+        
+        // Nouveaux filtres
+        $capaciteMin = $request->query->get('capacite_min', '');
+        $capaciteMax = $request->query->get('capacite_max', '');
+        $prixMin = $request->query->get('prix_min', '');
+        $prixMax = $request->query->get('prix_max', '');
 
         $allowedSorts = [
             'titre_asc' => ['e.titre', 'ASC'],
             'titre_desc' => ['e.titre', 'DESC'],
-            'date_asc' => ['e.dateDebut', 'ASC'],
-            'date_desc' => ['e.dateDebut', 'DESC'],
+            'date_asc' => ['e.date_debut', 'ASC'],
+            'date_desc' => ['e.date_debut', 'DESC'],
         ];
         if (!array_key_exists($sort, $allowedSorts)) {
             $sort = 'titre_asc';
@@ -43,6 +55,10 @@ final class EvenementController extends AbstractController
             'filter_value' => $filterValue,
             'sort' => $sort,
             'status' => $statusFilter,
+            'capacite_min' => $capaciteMin,
+            'capacite_max' => $capaciteMax,
+            'prix_min' => $prixMin,
+            'prix_max' => $prixMax,
         ], static fn ($value) => $value !== '');
         
         // Build query with filters and pagination
@@ -52,9 +68,34 @@ final class EvenementController extends AbstractController
         $queryBuilder->orderBy($sortField, $sortDirection);
 
         if ($filterValue !== '') {
+            // Recherche par titre OU type
             $queryBuilder
-                ->andWhere('LOWER(e.titre) LIKE :filterTitre')
-                ->setParameter('filterTitre', '%' . mb_strtolower($filterValue) . '%');
+                ->andWhere('LOWER(e.titre) LIKE :filterValue OR LOWER(e.type) LIKE :filterValue')
+                ->setParameter('filterValue', '%' . mb_strtolower($filterValue) . '%');
+        }
+        
+        // Filtre capacité (ignorer les valeurs par défaut)
+        if ($capaciteMin !== '' && is_numeric($capaciteMin) && (int) $capaciteMin > 0) {
+            $queryBuilder
+                ->andWhere('e.capacite_max >= :capaciteMin')
+                ->setParameter('capaciteMin', (int) $capaciteMin);
+        }
+        if ($capaciteMax !== '' && is_numeric($capaciteMax) && (int) $capaciteMax < 1000) {
+            $queryBuilder
+                ->andWhere('e.capacite_max <= :capaciteMax')
+                ->setParameter('capaciteMax', (int) $capaciteMax);
+        }
+        
+        // Filtre prix (ignorer les valeurs par défaut)
+        if ($prixMin !== '' && is_numeric($prixMin) && (float) $prixMin > 0) {
+            $queryBuilder
+                ->andWhere('e.prix_ticket >= :prixMin')
+                ->setParameter('prixMin', (float) $prixMin);
+        }
+        if ($prixMax !== '' && is_numeric($prixMax) && (float) $prixMax < 500) {
+            $queryBuilder
+                ->andWhere('e.prix_ticket <= :prixMax')
+                ->setParameter('prixMax', (float) $prixMax);
         }
 
         if ($statusFilter !== '') {
@@ -95,6 +136,10 @@ final class EvenementController extends AbstractController
             'filter_params' => $filterParams,
             'current_page' => $page,
             'total_pages' => $totalPages,
+            'capacite_min' => $capaciteMin,
+            'capacite_max' => $capaciteMax,
+            'prix_min' => $prixMin,
+            'prix_max' => $prixMax,
         ]);
     }
 
@@ -171,5 +216,35 @@ final class EvenementController extends AbstractController
         }
 
         return $this->redirectToRoute('evenements', [], Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * Met à jour automatiquement le statut des événements dont la date de fin est passée
+     */
+    private function updateExpiredEventStatuses(
+        EvenementRepository $evenementRepository,
+        EntityManagerInterface $entityManager
+    ): void
+    {
+        $now = new \DateTimeImmutable();
+        
+        // Récupérer tous les événements "À venir" dont la date de fin est passée
+        $expiredEvents = $evenementRepository->createQueryBuilder('e')
+            ->where('e.statut = :statut')
+            ->andWhere('e.date_fin < :now')
+            ->setParameter('statut', StatutEvenement::A_VENIR)
+            ->setParameter('now', $now)
+            ->getQuery()
+            ->getResult();
+
+        // Mettre à jour leur statut
+        foreach ($expiredEvents as $event) {
+            $event->setStatut(StatutEvenement::TERMINE);
+        }
+
+        // Sauvegarder les changements si nécessaire
+        if (count($expiredEvents) > 0) {
+            $entityManager->flush();
+        }
     }
 }

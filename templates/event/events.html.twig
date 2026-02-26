@@ -57,27 +57,54 @@
         </ul>
       </div>
       <div class="p-4 row">
-        <form class="row g-2 align-items-center" method="get" action="{{ path('evenements') }}">
+        <form class="row g-3 align-items-end" method="get" action="{{ path('evenements') }}" id="filterForm">
           {% if status_filter is not empty %}
             <input type="hidden" name="status" value="{{ status_filter }}">
           {% endif %}
-          <div class="col-12 col-md-6 col-lg-4">
+          
+          {# Tout sur une seule ligne #}
+          <div class="col-12 col-md-3 col-lg-3">
+            <label class="form-label mb-1 small text-muted">Recherche</label>
             <div class="position-relative">
               <span class="position-absolute ps-3 search-icon" style="top: 50%; transform: translateY(-50%);">
                 <i class="fe fe-search"></i>
               </span>
-              <input type="text" name="filter_value" class="form-control ps-6" placeholder="Rechercher événement par titre" value="{{ filter_value | default('') }}">
+              <input type="text" name="filter_value" class="form-control ps-6" placeholder="Titre ou type" value="{{ filter_value | default('') }}">
             </div>
           </div>
-          <div class="col-12 col-md-6 col-lg-5"></div>
-          <div class="col-12 col-md-6 col-lg-3 d-flex align-items-center justify-content-end gap-2">
-            <label class="mb-0">Ordonner par</label>
-            <select name="sort" class="form-select w-auto" onchange="this.form.submit()">
+          
+          <div class="col-12 col-md-2 col-lg-2">
+            <label class="form-label mb-1 small text-muted">Ordonner par</label>
+            <select name="sort" class="form-select" onchange="this.form.submit()">
               <option value="titre_asc" {% if sort == 'titre_asc' %}selected{% endif %}>Titre (A-Z)</option>
               <option value="titre_desc" {% if sort == 'titre_desc' %}selected{% endif %}>Titre (Z-A)</option>
-              <option value="date_asc" {% if sort == 'date_asc' %}selected{% endif %}>Date (Plus ancien)</option>
-              <option value="date_desc" {% if sort == 'date_desc' %}selected{% endif %}>Date (Plus récent)</option>
+              <option value="date_asc" {% if sort == 'date_asc' %}selected{% endif %}>Date (↑)</option>
+              <option value="date_desc" {% if sort == 'date_desc' %}selected{% endif %}>Date (↓)</option>
             </select>
+          </div>
+          
+          <div class="col-12 col-md-3 col-lg-3">
+            <label class="form-label mb-1 small text-muted">
+              Capacité: <span class="text-dark fw-semibold" id="capacite-range-display">{{ capacite_min | default('0') }} - {{ capacite_max | default('1000') }}</span>
+            </label>
+            <div class="dual-range-wrapper">
+              <input type="range" name="capacite_min" class="form-range dual-range-min auto-submit" min="0" max="1000" step="10" 
+                     value="{{ capacite_min | default('0') }}" data-target="capacite">
+              <input type="range" name="capacite_max" class="form-range dual-range-max auto-submit" min="0" max="1000" step="10" 
+                     value="{{ capacite_max | default('1000') }}" data-target="capacite">
+            </div>
+          </div>
+          
+          <div class="col-12 col-md-4 col-lg-4">
+            <label class="form-label mb-1 small text-muted">
+              Prix: <span class="text-dark fw-semibold" id="prix-range-display">{{ prix_min | default('0') }} - {{ prix_max | default('500') }}</span> DT
+            </label>
+            <div class="dual-range-wrapper">
+              <input type="range" name="prix_min" class="form-range dual-range-min auto-submit" min="0" max="500" step="5" 
+                     value="{{ prix_min | default('0') }}" data-target="prix">
+              <input type="range" name="prix_max" class="form-range dual-range-max auto-submit" min="0" max="500" step="5" 
+                     value="{{ prix_max | default('500') }}" data-target="prix">
+            </div>
           </div>
         </form>
       </div>
@@ -260,6 +287,150 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+// Gestion des sliders doubles
+document.addEventListener('DOMContentLoaded', function() {
+  const dualRangeWrappers = document.querySelectorAll('.dual-range-wrapper');
+  const form = document.getElementById('filterForm');
+  let submitTimeout;
+  
+  dualRangeWrappers.forEach(function(wrapper) {
+    const minSlider = wrapper.querySelector('.dual-range-min');
+    const maxSlider = wrapper.querySelector('.dual-range-max');
+    const target = minSlider.dataset.target;
+    const display = document.getElementById(target + '-range-display');
+    const suffix = target === 'prix' ? ' DT' : '';
+    
+    function updateDisplay() {
+      const minVal = parseInt(minSlider.value);
+      const maxVal = parseInt(maxSlider.value);
+      
+      // Empêcher le chevauchement
+      if (minVal > maxVal - parseInt(minSlider.step)) {
+        minSlider.value = maxVal - parseInt(minSlider.step);
+      }
+      if (maxVal < minVal + parseInt(maxSlider.step)) {
+        maxSlider.value = minVal + parseInt(maxSlider.step);
+      }
+      
+      display.textContent = minSlider.value + ' - ' + maxSlider.value + suffix;
+      
+      // Mettre à jour la progression visuelle
+      const minPercent = (minSlider.value / minSlider.max) * 100;
+      const maxPercent = (maxSlider.value / maxSlider.max) * 100;
+      wrapper.style.setProperty('--min-percent', minPercent + '%');
+      wrapper.style.setProperty('--max-percent', maxPercent + '%');
+    }
+    
+    function autoSubmit() {
+      // Debounce: attendre 800ms après le dernier changement avant de soumettre
+      clearTimeout(submitTimeout);
+      submitTimeout = setTimeout(function() {
+        form.submit();
+      }, 800);
+    }
+    
+    minSlider.addEventListener('input', function() {
+      updateDisplay();
+    });
+    
+    maxSlider.addEventListener('input', function() {
+      updateDisplay();
+    });
+    
+    // Soumettre automatiquement quand l'utilisateur relâche le curseur
+    minSlider.addEventListener('change', autoSubmit);
+    maxSlider.addEventListener('change', autoSubmit);
+    
+    // Initialiser
+    updateDisplay();
+  });
+  
+  // Auto-submit pour le champ de recherche (avec debounce)
+  const searchInput = document.querySelector('input[name="filter_value"]');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      clearTimeout(submitTimeout);
+      submitTimeout = setTimeout(function() {
+        form.submit();
+      }, 600);
+    });
+  }
+});
 </script>
+
+<style>
+.dual-range-wrapper {
+  position: relative;
+  height: 30px;
+  --min-percent: 0%;
+  --max-percent: 100%;
+}
+
+.dual-range-wrapper input[type="range"] {
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+.dual-range-wrapper input[type="range"]::-webkit-slider-thumb {
+  pointer-events: all;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #28a745;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  position: relative;
+  z-index: 3;
+}
+
+.dual-range-wrapper input[type="range"]::-moz-range-thumb {
+  pointer-events: all;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #28a745;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  position: relative;
+  z-index: 3;
+}
+
+.dual-range-wrapper input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  background: #dee2e6;
+  border-radius: 3px;
+}
+
+.dual-range-wrapper input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  background: #dee2e6;
+  border-radius: 3px;
+}
+
+.dual-range-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: var(--min-percent);
+  right: calc(100% - var(--max-percent));
+  height: 6px;
+  background: #28a745;
+  border-radius: 3px;
+  z-index: 1;
+}
+</style>
 
 {% endblock %}

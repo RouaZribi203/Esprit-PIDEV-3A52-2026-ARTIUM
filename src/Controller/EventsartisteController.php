@@ -10,11 +10,13 @@ use App\Repository\EvenementRepository;
 use App\Repository\TicketRepository;
 use App\Repository\UserRepository;
 use App\Enum\StatutEvenement;
+use App\Service\OllamaEstimateService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -110,7 +112,7 @@ final class EventsartisteController extends AbstractController
         ]);
     }
 
-    #[Route('/artiste-evenements/{id}', name: 'app_eventsartiste_delete', methods: ['POST'])]
+    #[Route('/artiste-evenements/{id}', name: 'app_eventsartiste_delete', methods: ['POST'], requirements: ['id' => '\\d+'])]
     public function delete(Request $request, Evenement $evenement, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
     {
         $artiste = $this->getArtisteOrDeny($userRepository);
@@ -126,8 +128,13 @@ final class EventsartisteController extends AbstractController
         return $this->redirectToRoute('app_eventsartiste');
     }
 
-    #[Route('/artiste-evenements/{id}/cancel', name: 'app_eventsartiste_cancel', methods: ['POST'])]
-    public function cancel(Request $request, Evenement $evenement, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
+    #[Route('/artiste-evenements/{id}/cancel', name: 'app_eventsartiste_cancel', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function cancel(
+        Request $request,
+        Evenement $evenement,
+        EntityManagerInterface $entityManager,
+        UserRepository $userRepository
+    ): Response
     {
         $artiste = $this->getArtisteOrDeny($userRepository);
         if ($evenement->getArtiste()?->getId() !== $artiste->getId()) {
@@ -142,6 +149,31 @@ final class EventsartisteController extends AbstractController
         }
 
         return $this->redirectToRoute('app_eventsartiste');
+    }
+
+    #[Route('/artiste-evenements/estimate-tickets', name: 'app_eventsartiste_estimate', methods: ['POST'])]
+    public function estimateTickets(
+        Request $request,
+        OllamaEstimateService $estimateService,
+        UserRepository $userRepository
+    ): JsonResponse {
+        $this->getArtisteOrDeny($userRepository);
+
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            return new JsonResponse(['ok' => false, 'message' => 'Invalid payload'], 400);
+        }
+
+        $estimate = $estimateService->estimateTickets($payload);
+        if ($estimate === null) {
+            return new JsonResponse(['ok' => false, 'message' => 'Ollama unavailable'], 200);
+        }
+
+        return new JsonResponse([
+            'ok' => true,
+            'estimate' => $estimate['estimate'],
+            'confidence' => $estimate['confidence'],
+        ]);
     }
 
     private function getArtisteOrDeny(UserRepository $userRepository): User
@@ -196,7 +228,7 @@ final class EventsartisteController extends AbstractController
         if ($data === false || $data === '') {
             return null;
         }
-
         return 'data:image/jpeg;base64,' . base64_encode($data);
     }
+
 }

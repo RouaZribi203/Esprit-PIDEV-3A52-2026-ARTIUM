@@ -8,12 +8,12 @@ use Smalot\PdfParser\Parser;
 class BookAiService
 {
     private HttpClientInterface $client;
-    private string $apiKey;
+    private string $gapiKey;
 
-    public function __construct(HttpClientInterface $client, string $apiKey)
+    public function __construct(HttpClientInterface $client, string $gapiKey)
     {
         $this->client = $client;
-        $this->apiKey = $apiKey;
+        $this->gapiKey = $gapiKey;
     }
 
     /**
@@ -57,12 +57,17 @@ EOT;
 
         // 3️⃣ Call Gemini API
         try {
+            // Debug: Check if API key is loaded
+            if (empty($this->gapiKey)) {
+                throw new \Exception('GEMINI_API_KEY not configured in environment');
+            }
+
             $response = $this->client->request(
                 'POST',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent',
                 [
                     'headers' => [
-                        'x-goog-api-key' => $this->apiKey,
+                        'x-goog-api-key' => $this->gapiKey,
                         'Content-Type' => 'application/json',
                     ],
                     'json' => [
@@ -77,7 +82,14 @@ EOT;
                 ]
             );
 
+            $statusCode = $response->getStatusCode();
             $content = $response->getContent();
+            
+            // Debug: Show full response for non-200 status
+            if ($statusCode !== 200) {
+                throw new \Exception("Gemini API error: HTTP {$statusCode} returned. Response: {$content}");
+            }
+            
             $result = json_decode($content, true);
 
             if (

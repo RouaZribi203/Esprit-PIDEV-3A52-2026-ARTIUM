@@ -54,6 +54,7 @@ final class BibliofrontController extends AbstractController
 
         $livres = $qb->getQuery()->getResult();
 
+        /** @var \App\Entity\User|null $currentUser */
         $currentUser = $this->getUser();
         $statusMap = [];
         $activeDateMap = [];
@@ -92,12 +93,35 @@ final class BibliofrontController extends AbstractController
                 }
             }
 
-            $statusMap[$livre->getId()] = [
+            $livreId = $livre->getId();
+            
+            // Check if the active rental belongs to the current user
+            $rentedByCurrentUser = false;
+            if ($isActive && $activeLocation && $currentUser) {
+                $rentedByCurrentUser = ($activeLocation->getUser()?->getId() === $currentUser->getId());
+            }
+            
+            $statusMap[$livreId] = [
                 'isActive' => $isActive,
+                'rentedByCurrentUser' => $rentedByCurrentUser,
                 'locationId' => $activeLocation?->getId(),
                 'startDate' => $activeLocation?->getDateDebut()?->format('Y-m-d H:i:s'),
                 'expirationDate' => $expirationDate
             ];
+            
+            // Populate the individual maps that the template expects
+            if ($isActive && $activeLocation) {
+                $activeDateMap[$livreId] = $activeLocation->getDateDebut()->format('Y-m-d H:i:s');
+                $expirationMap[$livreId] = $expirationDate;
+                $rentalDaysMap[$livreId] = $activeLocation->getNombreDeJours() ?? 1;
+                
+                // Calculate remaining days
+                $start = $activeLocation->getDateDebut();
+                $days = $activeLocation->getNombreDeJours() ?? 1;
+                $expiration = (clone $start)->modify("+{$days} days");
+                $remainingDays = $expiration->diff($now)->days;
+                $remainingDaysMap[$livreId] = max(0, $remainingDays);
+            }
         }
 
         // fetch distinct categories for filter select
@@ -107,6 +131,7 @@ final class BibliofrontController extends AbstractController
         $recommendations = [];
         $chart = null;
 
+        /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
 
         if ($user) {
@@ -164,7 +189,7 @@ final class BibliofrontController extends AbstractController
             'livreExpirationDate' => $expirationMap,
             'livreRentalDays' => $rentalDaysMap,
             'livreRemainingDays' => $remainingDaysMap,
-            'stripe_public_key' => $_ENV['STRIPE_PUBLIC_KEY'],
+            'stripe_public_key' => $_ENV['STRIPE_PUBLISHABLE_KEY'],
             'recommendations' => $recommendations,
             'chart' => $chart,
             'userProfile' => $userProfile,
@@ -253,6 +278,7 @@ catch (\Throwable $e)
     ]);
 }
 
+/** @var \App\Entity\User|null $user */
 $user = $this->getUser();
 
 $identifier = $user
@@ -309,6 +335,7 @@ if (!$limit->isAccepted())
         $location->setDateDebut(new \DateTime());
         $location->setEtat(\App\Enum\EtatLocation::ACTIVE);
 
+        /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
         if (!$user) {
             // fallback to test user id 1 if anonymous
@@ -394,8 +421,42 @@ public function createPaymentIntent(
 }
 
 #[Route('/book/{id}/read', name: 'book_read')]
-public function read(Livre $livre): Response
+public function read(Livre $livre, LocationLivreRepository $locationRepo): Response
 {
+    /** @var \App\Entity\User|null $user */
+    $user = $this->getUser();
+
+    if (!$user) {
+        throw $this->createAccessDeniedException('You must be logged in.');
+    }
+
+    $now = new \DateTime();
+    $hasAccess = false;
+
+    foreach ($livre->getLocationLivres() as $loc) {
+
+        if ($loc->getEtat()->value !== 'Active') {
+            continue;
+        }
+
+        if ($loc->getUser()?->getId() !== $user->getId()) {
+            continue;
+        }
+
+        $start = $loc->getDateDebut();
+        $days = $loc->getNombreDeJours() ?? 1;
+        $expiration = (clone $start)->modify("+{$days} days");
+
+        if ($expiration > $now) {
+            $hasAccess = true;
+            break;
+        }
+    }
+
+    if (!$hasAccess) {
+        throw $this->createAccessDeniedException('Rental expired or not yours.');
+    }
+
     return $this->render('book/read.html.twig', [
         'livre' => $livre
     ]);

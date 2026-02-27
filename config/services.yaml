@@ -31,7 +31,11 @@ services:
     
     App\Service\BookAiService:
         arguments:
-            $apiKey: '%gemini_api_key%'
+            $gapiKey: '%gemini_api_key%'
+
+    App\Service\EmbeddingService:
+        arguments:
+            $apiKey: '%env(COHERE_API_KEY)%'
 
 
     App\EventListener\UserConnectionListener:

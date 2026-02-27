@@ -2,8 +2,10 @@
 {% set title = title|default('Modifier profil') %}
 {% set subtitle = subtitle|default('Mettez a jour vos informations personnelles') %}
 {% set profile_form_action = profile_form_action|default('#') %}
-{% set password_form_action = password_form_action|default('#') %}
+{% set password_form_action = password_form_action|default(path('app_changer_mot_de_passe')) %}
 {% set show_password_form = show_password_form|default(true) %}
+{% set user = user|default(app.user) %}
+{% set has_profile_form = form is defined and form is not null and form.vars is defined %}
 
 {% embed 'Front Office/Partials/offcanvas_base.html.twig' with {
 	offcanvas_id: offcanvas_id,
@@ -13,11 +15,12 @@
 	{% block offcanvas_body %}
 		<div class="card shadow-sm border-0">
 			<div class="card-body">
+				{% if has_profile_form %}
 				   {{ form_start(form, {'attr': {'class': 'row g-3', 'enctype': 'multipart/form-data'}, 'action': profile_form_action}) }}
 					   <div class="col-12">
 						   <div class="d-flex align-items-center gap-3">
 							   <div class="avatar avatar-xl">
-								{% if user.photoProfil %}
+								{% if user and user.photoProfil %}
 								    <img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ user.photoProfil) }}" alt="">
 								{% else %}
 								    <span class="avatar-img rounded-circle bg-light d-inline-block border border-secondary" style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;">
@@ -26,41 +29,43 @@
 								{% endif %}
 							   </div>
 							   <div>
-								   {{ form_row(form.photoProfil) }}
+								   {% if form.photoProfil is defined %}
+									   {{ form_row(form.photoProfil) }}
+								   {% endif %}
 							   </div>
 						   </div>
 					   </div>
 					   <div class="col-md-6">
-						   {{ form_row(form.nom) }}
+						   {% if form.nom is defined %}{{ form_row(form.nom) }}{% endif %}
 					   </div>
 					   <div class="col-md-6">
-						   {{ form_row(form.prenom) }}
+						   {% if form.prenom is defined %}{{ form_row(form.prenom) }}{% endif %}
 					   </div>
 					   <div class="col-md-6">
-						   {{ form_row(form.email) }}
+						   {% if form.email is defined %}{{ form_row(form.email) }}{% endif %}
 					   </div>
 					   <div class="col-md-6">
-						   {{ form_row(form.numTel) }}
+						   {% if form.numTel is defined %}{{ form_row(form.numTel) }}{% endif %}
 					   </div>
 					   <div class="col-md-6">
-						   {{ form_row(form.ville) }}
+						   {% if form.ville is defined %}{{ form_row(form.ville) }}{% endif %}
 					   </div>
 					   <div class="col-md-6">
-						   {{ form_row(form.dateNaissance) }}
+						   {% if form.dateNaissance is defined %}{{ form_row(form.dateNaissance) }}{% endif %}
 					   </div>
 					   <div class="col-12">
-						   {{ form_row(form.biographie) }}
+						   {% if form.biographie is defined %}{{ form_row(form.biographie) }}{% endif %}
 					   </div>
 
 
 					   {# Affichage strictement conditionnel selon le rôle #}
 					   <div class="col-12" id="specialite-field" style="display: {% if user and user.role is defined and user.role.value == 'ARTISTE' %}block{% else %}none{% endif %};">
 						   
-						   {{ form_row(form.specialite) }}
+						   {% if form.specialite is defined %}{{ form_row(form.specialite) }}{% endif %}
 					   </div>
 					   <div class="col-12" id="centreInteret-field" style="display: {% if user and user.role is defined and user.role.value == 'AMATEUR' %}block{% else %}none{% endif %};">
 						  
-						   {{ form_row(form.centreInteret) }}
+						   {% if form.centreInteret is defined %}{{ form_row(form.centreInteret) }}{% endif %}
 					   </div>
 
 					   <script>
@@ -92,15 +97,20 @@
 					   
 					   <div class="col-12"></div>
 					   <div class="col-md-6">
-						   {{ form_row(form.role) }}
+						   {% if form.role is defined %}{{ form_row(form.role) }}{% endif %}
 					   </div>
 					   <div class="col-md-6">
-						   {{ form_row(form.statut) }}
+						   {% if form.statut is defined %}{{ form_row(form.statut) }}{% endif %}
 					   </div>
 					   <div class="col-12 d-flex justify-content-end mt-4">
 						   <button class="btn btn-primary px-4 py-2" type="submit">Enregistrer</button>
 					   </div>
 				   {{ form_end(form) }}
+				{% else %}
+					<div class="alert alert-info mb-0" role="alert">
+						Le formulaire de profil n'est pas disponible sur cette page.
+					</div>
+				{% endif %}
 			</div>
 		</div>
 
@@ -112,7 +122,8 @@
 						<i class="fe fe-alert-triangle me-2"></i>
 						En modifiant votre mot de passe, vous serez automatiquement déconnecté(e) de la session en cours. Vous devrez vous reconnecter avec le nouveau mot de passe.
 					</div>
-					<form class="row g-3" action="{{ path('app_changer_mot_de_passe') }}" method="post">
+					<form class="row g-3" action="{{ password_form_action }}" method="post">
+						<input type="hidden" name="_token" value="{{ csrf_token('change_password') }}">
 						<div class="col-12">
 							<label class="form-label" for="currentPassword">Mot de passe actuel</label>
 							<input class="form-control" type="password" id="currentPassword" name="currentPassword" placeholder="********">

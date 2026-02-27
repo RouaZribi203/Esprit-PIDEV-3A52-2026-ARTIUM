@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Enum\Specialite;
 use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
+use App\Form\UserType;
 use App\Service\EmbeddingService;
 use App\Service\ImageEmbeddingService;
 use App\Repository\OeuvreRepository;
@@ -24,6 +25,58 @@ use Symfony\Component\Messenger\MessageBusInterface;
 
 final class OeuvreFrontController extends AbstractController
 {
+    #[Route('/artiste/profil/offcanvas/{offcanvasId}', name: 'app_artiste_profile_offcanvas', methods: ['GET'])]
+    public function profileOffcanvas(string $offcanvasId = 'offcanvasProfile'): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+
+        $profileForm = $this->createForm(UserType::class, $user, ['is_edit' => true]);
+
+        return $this->render('Front Office/Partials/offcanvas_profile.html.twig', [
+            'user' => $user,
+            'form' => $profileForm->createView(),
+            'offcanvas_id' => $offcanvasId,
+            'title' => 'Modifier profil',
+            'subtitle' => 'Mettez à jour vos informations personnelles',
+            'profile_form_action' => $this->generateUrl('app_artiste_profile_update'),
+            'password_form_action' => '#',
+            'show_password_form' => true,
+        ]);
+    }
+
+    #[Route('/artiste/profil/modifier', name: 'app_artiste_profile_update', methods: ['POST'])]
+    public function updateProfile(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('app_signin');
+        }
+
+        $profileForm = $this->createForm(UserType::class, $user, ['is_edit' => true]);
+        $profileForm->handleRequest($request);
+
+        if ($profileForm->isSubmitted() && $profileForm->isValid()) {
+            $photoFile = $profileForm->get('photoProfil')->getData();
+            if ($photoFile instanceof UploadedFile) {
+                $newFilename = uniqid('user_').'.'.$photoFile->guessExtension();
+                $photoFile->move($this->getParameter('kernel.project_dir').'/public/uploads', $newFilename);
+                $user->setPhotoProfil($newFilename);
+            }
+
+            $entityManager->flush();
+            $this->addFlash('success', 'Profil mis à jour !');
+        } else {
+            $this->addFlash('error', 'Veuillez corriger les erreurs du formulaire profil.');
+        }
+
+        $referer = $request->headers->get('referer');
+
+        return $this->redirect($referer ?: $this->generateUrl('app_oeuvre_front'));
+    }
+
     #[Route('/mes_oeuvres', name: 'app_oeuvre_front')]
     public function index(): Response
     {

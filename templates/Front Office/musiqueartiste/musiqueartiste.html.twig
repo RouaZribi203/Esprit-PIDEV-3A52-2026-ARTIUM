@@ -222,7 +222,7 @@
     </div>
     <!-- Form body -->
     <div class="container">
-      {{ form_start(form, {'attr': {'class': 'row needs-validation', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data', 'id': 'addMusicForm'}}) }}
+      {{ form_start(form, {'attr': {'class': 'row needs-validation', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data', 'id': 'addMusicForm', 'data-turbo': 'false'}}) }}
         
         <!-- Display form errors at the top -->
         {% for label, messages in app.flashes %}

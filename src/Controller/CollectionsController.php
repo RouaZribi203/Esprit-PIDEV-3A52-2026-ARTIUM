@@ -49,7 +49,7 @@ final class CollectionsController extends AbstractController
             }
         }
         $nbOeuvres = count($oeuvres);
-        $nbReclamations = $user ? count($reclamationRepository->findByUserFilters($user, null, null)) : 0;
+        $nbReclamations = $user ? count($reclamationRepository->findByUserFilters($user, null, null, null)) : 0;
         $nbEvenements = $user ? $evenementRepository->count(['artiste' => $user]) : 0;
         $nbCommentaires = $user ? $commentaireRepository->countByArtist($user) : 0;
         $nbLikes = $user ? $likeRepository->countByArtist($user) : 0;

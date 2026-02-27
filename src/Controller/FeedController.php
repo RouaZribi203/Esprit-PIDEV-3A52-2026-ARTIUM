@@ -6,19 +6,21 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Entity\Commentaire;
-use App\Service\RecommendationService;
+use App\Service\RecommendationServiceoeuvre;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Collections;
 use App\Entity\Oeuvre;
 use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
+use App\Form\UserType;
 use App\Repository\CommentaireRepository;
 use App\Repository\CollectionsRepository;
 use App\Repository\OeuvreRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class FeedController extends AbstractController
@@ -67,7 +69,7 @@ final class FeedController extends AbstractController
     }
 
     #[Route('/feed', name: 'app_feed')]
-    public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
+    public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request, EntityManagerInterface $em): Response
     {
         $currentUser = $this->getUser();
 
@@ -100,6 +102,8 @@ final class FeedController extends AbstractController
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'currentUser' => $currentUser,
+            'profile_form' => $form?->createView(),
+            'profile_form_action' => $this->generateUrl('app_feed'),
             'oeuvres' => $all,
             'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
@@ -107,8 +111,54 @@ final class FeedController extends AbstractController
         ]);
     }
 
+    #[Route('/profil/changer-mot-de-passe', name: 'app_changer_mot_de_passe', methods: ['POST'])]
+    public function changePassword(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $em): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('app_signin');
+        }
+
+        $submittedToken = (string) $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('change_password', $submittedToken)) {
+            $this->addFlash('error', 'Requête invalide.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $currentPassword = (string) $request->request->get('currentPassword', '');
+        $newPassword = (string) $request->request->get('newPassword', '');
+        $confirmPassword = (string) $request->request->get('confirmPassword', '');
+
+        if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') {
+            $this->addFlash('error', 'Tous les champs mot de passe sont obligatoires.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        if (!$passwordHasher->isPasswordValid($user, $currentPassword)) {
+            $this->addFlash('error', 'Mot de passe actuel incorrect.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            $this->addFlash('error', 'La confirmation du mot de passe ne correspond pas.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        if (mb_strlen($newPassword) < 8) {
+            $this->addFlash('error', 'Le nouveau mot de passe doit contenir au moins 8 caractères.');
+            return $this->redirectToRoute('app_feed');
+        }
+
+        $user->setMdp($passwordHasher->hashPassword($user, $newPassword));
+        $em->flush();
+
+        $this->addFlash('success', 'Mot de passe mis à jour avec succès.');
+
+        return $this->redirectToRoute('app_feed');
+    }
+
     #[Route('/feed_recommandations', name: 'app_feed_recommandations')]
-    public function indexRecommandations(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request, RecommendationService $recommendationService): Response
+    public function indexRecommandations(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request, RecommendationServiceoeuvre $recommendationService): Response
     {
         $user = $this->getUser();
         if (!$user) {

@@ -24,6 +24,7 @@ final class BibliothequeartisteController extends AbstractController
     public function index(CollectionsRepository $collectionsRepository, LivreRepository $livreRepository, UserRepository $userRepository, LocationLivreRepository $locationLivreRepository): Response
     {
         
+        /** @var \App\Entity\User|null $artist */
         $artist = $this->getUser();
 
 
@@ -74,6 +75,7 @@ final class BibliothequeartisteController extends AbstractController
     public function create(Request $request, EntityManagerInterface $em, CollectionsRepository $collectionsRepository, UserRepository $userRepository,): Response
     {
         // TODO: Replace test artist with $this->getUser() when authentication module is merged
+        /** @var \App\Entity\User|null $artist */
         $artist = $this->getUser();
         if (!$artist) {
             $this->addFlash('error', 'Artiste de test introuvable.');
@@ -108,7 +110,7 @@ final class BibliothequeartisteController extends AbstractController
         $collection = null;
         if ($collectionId) {
             $collection = $collectionsRepository->find((int)$collectionId);
-            if (!$collection ||!$collection->getArtiste() ||$collection->getArtiste()->getId() !== $artist->getId()) 
+            if (!$collection || !$collection->getArtiste() || $collection->getArtiste()->getId() !== $artist->getId()) 
                 {
                 $this->addFlash('error', 'Collection invalide.');
                 return $this->redirectToRoute('app_bibliothequeartiste');
@@ -176,6 +178,7 @@ public function edit(
     LocationLivreRepository $locationLivreRepository
 ): Response {
 
+    /** @var \App\Entity\User|null $artist */
     $artist = $this->getUser();
 
     if (!$artist) {

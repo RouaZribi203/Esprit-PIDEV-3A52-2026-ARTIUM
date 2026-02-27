@@ -55,7 +55,7 @@ final class EventsartisteController extends AbstractController
                 }
             }
         }
-        $nbReclamations = $artiste ? count($reclamationRepository->findByUserFilters($artiste, null, null)) : 0;
+        $nbReclamations = $artiste ? count($reclamationRepository->findByUserFilters($artiste, null, null, null)) : 0;
         $nbEvenements = $artiste ? $evenementRepository->count(['artiste' => $artiste]) : 0;
         $nbCommentaires = $artiste ? $commentaireRepository->countByArtist($artiste) : 0;
         $nbLikes = $artiste ? $likeRepository->countByArtist($artiste) : 0;
@@ -80,6 +80,13 @@ final class EventsartisteController extends AbstractController
 
                 return $this->redirectToRoute('app_eventsartiste');
             }
+
+            $errors = [];
+            foreach ($newForm->getErrors(true) as $error) {
+                $errors[] = $error->getMessage();
+            }
+            $errors = array_values(array_unique(array_filter($errors)));
+            $this->addFlash('error', 'Création impossible: '.($errors !== [] ? implode(' ', $errors) : 'vérifiez les champs du formulaire.'));
             
             $showAddForm = true;
         }

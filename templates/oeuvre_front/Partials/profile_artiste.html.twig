@@ -32,19 +32,7 @@
 					   <i class="bi bi-pencil-fill pe-1"></i>
 					   Edit profile
 				   </button>
-		   {# Inclusion discrète de l'offcanvas d'édition de profil juste après le bouton #}
-		   {% if profile_form is defined and profile_form is not null %}
-			   {% include 'Front Office/Partials/offcanvas_profile.html.twig' with {
-				   user: app.user,
-				   form: profile_form,
-				   offcanvas_id: 'offcanvasProfile',
-				   title: 'Modifier profil',
-				   subtitle: 'Mettez à jour vos informations personnelles',
-				   profile_form_action: '#',
-				   password_form_action: '#',
-				   show_password_form: true
-			   } %}
-		   {% endif %}
+		   {{ render(path('app_artiste_profile_offcanvas', { offcanvasId: 'offcanvasProfile' })) }}
 
 			</div>
 		</div>
@@ -72,7 +60,7 @@
 		{% set current_route = app.request.attributes.get('_route') %}
 		<ul class="nav nav-bottom-line align-items-center justify-content-center justify-content-md-start mb-0 border-0 profile-nav">
 			{% set specialite = app.user.specialite is defined and app.user.specialite ? app.user.specialite.value|lower : '' %}
-		{% if specialite == 'musicien' or current_route in ['app_musiqueartiste', 'app_collections_front'] %}
+		{% if specialite == 'musicien' %}
 			<li class="nav-item">
 				<a class="nav-link {{ current_route == 'app_collections_front' ? 'active' : '' }}" href="{{ path('app_collections_front') }}">
 					Collections

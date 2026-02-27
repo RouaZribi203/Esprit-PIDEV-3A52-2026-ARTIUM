@@ -378,6 +378,13 @@ document.addEventListener('click', function (event) {
 			'X-Requested-With': 'XMLHttpRequest'
 		}
 	})
+	fetch(`/oeuvre/${oeuvreId}/favorite-ajax`, {
+		method: 'POST',
+		headers: {
+			'X-Requested-With': 'XMLHttpRequest'
+		},
+		credentials: 'same-origin'
+	})
 	.then(response => response.json())
 	.then(data => {
 		if (!data.success) {

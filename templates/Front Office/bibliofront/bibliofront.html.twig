@@ -120,7 +120,10 @@
                 data-duration-days="{{ livreRentalDays[livre.id]|default(1) }}"
                 data-pdf-url="{{ livre.fichierPdf ? path('livre_pdf', {'id': livre.id})|e('html_attr') : '' }}"
                 {% set _statusStruct = livreStatus[livre.id] ?? null %}
-                {% set _statusString = (_statusStruct and (_statusStruct.isActive is defined and _statusStruct.isActive)) ? 'rented' : 'available' %}
+                {% set _statusString = 'available' %}
+                {% if _statusStruct and (_statusStruct.isActive is defined and _statusStruct.isActive) %}
+                  {% set _statusString = (_statusStruct.rentedByCurrentUser is defined and _statusStruct.rentedByCurrentUser) ? 'rented_by_you' : 'rented' %}
+                {% endif %}
                 data-initial-status="{{ _statusString }}"
                 data-active-date="{{ livreActiveDate[livre.id] is defined ? livreActiveDate[livre.id] : '' }}"
                 data-expiration-date="{{ livreExpirationDate[livre.id] is defined ? livreExpirationDate[livre.id] : '' }}"
@@ -130,21 +133,13 @@
                 
                   <div class="position-relative library-cover">
                   <img class="img-fluid rounded-top" src="{{ livre.id ? path('livre_image', {'id': livre.id}) : asset('assetsfront/images/events/01.jpg') }}" alt="Couverture {{ livre.titre }}">
-                  {# compute expiration and active status (date-only) following artist logic #}
+                  {# Use controller's status directly - don't recalculate #}
                   {% set statusStruct = livreStatus[livre.id] ?? null %}
-                  {% set status = (statusStruct and (statusStruct.isActive is defined and statusStruct.isActive)) ? 'rented' : 'available' %}
-
-                  {% set expiration = null %}
-                  {% if livreActiveDate[livre.id] is defined and livreActiveDate[livre.id] and livreRentalDays[livre.id] is defined and livreRentalDays[livre.id]|trim != '' %}
-                    {% set expiration = (livreActiveDate[livre.id]|date) |date_modify('+' ~ livreRentalDays[livre.id] ~ ' days') %}
-                  {% endif %}
-
-                  {% set today = "now"|date("Y-m-d") %}
-                  {% set expirationDateOnly = expiration ? expiration|date("Y-m-d") : null %}
-                  {% set isActive = expirationDateOnly and expirationDateOnly >= today %}
+                  {% set isActive = statusStruct and (statusStruct.isActive is defined and statusStruct.isActive) %}
+                  {% set rentedByMe = statusStruct and (statusStruct.rentedByCurrentUser is defined and statusStruct.rentedByCurrentUser) %}
 
                   {% if isActive %}
-                    {% if status == 'rented_by_you' %}
+                    {% if rentedByMe %}
                       <span class="badge bg-warning text-dark mt-2 me-2 position-absolute top-0 end-0" data-book-status>Loué (toi)</span>
                     {% else %}
                       <span class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0" data-book-status>Loué</span>
@@ -221,7 +216,7 @@
                       <div class="d-flex gap-2">
                         <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#book-{{ livre.id }}-modal">Voir détails</button>
 
-                            {% if isActive and status == 'rented_by_you' %}
+                            {% if isActive and rentedByMe %}
                               <a class="btn btn-sm btn-success"
                                href="{{ path('book_read', {'id': livre.id}) }}"
                                target="_blank"
@@ -240,6 +235,8 @@
                 </div>
               </div>
             </div>
+
+            {% set expiration = livreExpirationDate[livre.id] ?? null %}
 
             <div class="modal fade" id="book-{{ livre.id }}-modal" tabindex="-1" aria-labelledby="book-{{ livre.id }}-modal-label" aria-hidden="true" data-book-modal data-book-id="book-{{ livre.id }}">
               <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -261,10 +258,10 @@
                           <div><span class="fw-semibold">Catégorie:</span> {{ livre.categorie }}</div>
                           <div><span class="fw-semibold">Prix de location:</span> {{ livre.prixLocation is not null ? (livre.prixLocation|number_format(2, ',', '.') ~ '€') : '' }}</div>
                           <div><span class="fw-semibold">Date de début de location:</span> <span data-book-field="start">{{ isActive ? livreActiveDate[livre.id] : '' }}</span></div>
-                          <div><span class="fw-semibold">Date d'expiration de location:</span> <span data-book-field="expiration">{{ isActive ? expiration|date('Y-m-d') : '' }}</span></div>
+                          <div><span class="fw-semibold">Date d'expiration de location:</span> <span data-book-field="expiration">{{ isActive and expiration ? expiration|date('Y-m-d') : '' }}</span></div>
                           <div><span class="fw-semibold">Statut actuel:</span>
                             {% if isActive %}
-                              {% if status == 'rented_by_you' %}
+                              {% if rentedByMe %}
                                 <span data-book-field="status">Loué par vous</span>
                               {% else %}
                                 <span data-book-field="status">Loué</span>

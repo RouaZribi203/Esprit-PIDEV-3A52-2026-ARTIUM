@@ -37,7 +37,7 @@
                         <span class="badge bg-primary">{{ evenement.type ? evenement.type.value : '' }}</span>
                     </div>
                 </div>
-                <form method="post" action="{{ path('app_payment_checkout', { id: evenement.id }) }}">
+                <form method="post" action="{{ path('app_payment_checkout', { id: evenement.id }) }}" data-turbo="false">
                     <input type="hidden" name="_token" value="{{ csrf_token('buy_ticket_' ~ evenement.id) }}">
                     <button class="btn btn-primary" type="submit">
                         <i class="bi bi-ticket-perforated me-2"></i>Acheter ticket

@@ -4,8 +4,9 @@ meilisearch:
     prefix: '%env(MEILISEARCH_PREFIX)%'
     indices:
         - name: oeuvre
-          class: App\Entity\Oeuvre
+          class: 'App\Entity\Oeuvre'
           primary_key: id
+          index_if: indexableInSearch
           settings:
               searchableAttributes:
                   - titre
@@ -20,4 +21,4 @@ meilisearch:
                   - proximity
                   - sort
                   - exactness
-        
+

@@ -43,13 +43,6 @@ class Oeuvre
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'La description ne peut pas etre vide')]
     private ?string $description = null;
-    #[Assert\NotBlank(message: "La description est obligatoire.")]
-    #[Assert\Length(
-    min: 1,
-    max: 500,
-    minMessage: "La description doit contenir au moins {{ limit }} caractère.",
-    maxMessage: "La description ne peut pas dépasser {{ limit }} caractères."
-    )]
 
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
@@ -269,6 +262,11 @@ class Oeuvre
         }
 
         return $this;
+    }
+
+    public function isIndexableInSearch(): bool
+    {
+        return !$this instanceof Livre;
     }
 
     public function getEmbedding(): ?array

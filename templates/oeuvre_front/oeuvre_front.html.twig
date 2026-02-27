@@ -248,7 +248,13 @@
       </div>
 
       <div class="modal-body">
-        {{ form_start(form, {'action': path('app_oeuvre_new'),'method': 'POST','attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
+        {{ form_start(form, {'action': path('app_oeuvre_new'),'method': 'POST','attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate', 'data-turbo': 'false'}}) }}
+
+        {% if form.vars.submitted and form.vars.errors|length > 0 %}
+          <div class="alert alert-danger">
+            {{ form_errors(form) }}
+          </div>
+        {% endif %}
 
         <div class="row g-3">
 

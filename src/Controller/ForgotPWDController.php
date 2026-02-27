@@ -11,19 +11,20 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\UserRepository;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 final class ForgotPWDController extends AbstractController
 {
-    #[Route('/forgotpwd', name: 'app_forgot_pwd')]
+    #[Route('/forgotpwd', name: 'app_forgot_pwd', methods: ['GET', 'POST'])]
+    #[Route('/forgotpwd/{token}', name: 'app_forgot_pwd_reset', methods: ['GET', 'POST'])]
     public function index(Request $request, UserRepository $userRepository, EntityManagerInterface $em, MailerInterface $mailer, UserPasswordHasherInterface $passwordHasher): Response
     {
         $error = null;
         $success = null;
         $email = $request->request->get('email');
-        $token = $request->query->get('token');
+        $token = $request->attributes->get('token') ?? $request->query->get('token');
         $showResetForm = false;
         $user = null;
 
@@ -66,10 +67,11 @@ final class ForgotPWDController extends AbstractController
                     $em->flush();
 
                     // Générer une URL absolue
-                    $resetUrl = $this->generateUrl('app_forgot_pwd', ['token' => $token], 1);
-                    if (strpos($resetUrl, 'http') !== 0) {
-                        $resetUrl = $request->getSchemeAndHttpHost() . $resetUrl;
-                    }
+                    $resetUrl = $this->generateUrl(
+                        'app_forgot_pwd_reset',
+                        ['token' => $token],
+                        UrlGeneratorInterface::ABSOLUTE_URL
+                    );
 
                     // Préparer le logo en pièce jointe inline (cid)
                     $logoPath = $this->getParameter('kernel.project_dir') . '/public/Assets/logo2.png';

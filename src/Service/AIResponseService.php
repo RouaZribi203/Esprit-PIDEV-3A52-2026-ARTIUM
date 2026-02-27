@@ -36,6 +36,19 @@ class AIResponseService
     }
 
     /**
+     * Génère une suggestion rapide et non bloquante pour affichage en liste.
+     */
+    public function generateSuggestionForList(Reclamation $reclamation): string
+    {
+        $type = $reclamation->getType() ? $reclamation->getType()->value : 'générale';
+        $texte = $reclamation->getTexte();
+        $userName = $reclamation->getUser() ? $reclamation->getUser()->getPrenom() : 'Cher client';
+        $reclamationId = $reclamation->getId() ?? 0;
+
+        return $this->generateLocalResponse($texte, $type, $userName, $reclamationId);
+    }
+
+    /**
      * Génère une réponse locale si l'API ne fonctionne pas
      */
     private function generateLocalResponse(string $texte, string $type, string $userName, int $reclamationId = 0): string

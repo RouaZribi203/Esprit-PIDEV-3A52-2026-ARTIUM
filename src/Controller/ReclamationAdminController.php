@@ -91,8 +91,8 @@ final class ReclamationAdminController extends AbstractController
             $createForm->remove('date_reponse');
             $responseCreateForms[$reclamation->getId()] = $createForm->createView();
 
-            // Générer une suggestion IA pour chaque réclamation
-            $aiSuggestions[$reclamation->getId()] = $aiService->generateSuggestion($reclamation);
+            // Générer une suggestion rapide locale pour éviter de bloquer le rendu de la page
+            $aiSuggestions[$reclamation->getId()] = $aiService->generateSuggestionForList($reclamation);
 
             foreach ($reclamation->getReponses() as $existingReponse) {
                 $editForm = $this->createForm(ReponseType::class, $existingReponse);

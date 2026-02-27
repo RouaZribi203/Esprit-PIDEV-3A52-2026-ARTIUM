@@ -127,16 +127,40 @@ final class EventdetailsController extends AbstractController
         // Générer le QR code
         $payload = $this->extractTicketPayload($ticket);
         $qrCode = QrCode::create($payload)->setSize(300)->setMargin(10);
-        $writer = new PngWriter();
-        $result = $writer->write($qrCode);
+        $qrCodePath = null;
+        $qrCodeFormat = null;
         
         // Sauvegarder le QR code dans un fichier du projet
         $varDir = $this->getParameter('kernel.project_dir') . '/var/tmp';
         if (!is_dir($varDir)) {
             mkdir($varDir, 0777, true);
         }
-        $qrCodePath = $varDir . '/qr_' . $ticket->getId() . '_' . time() . '.png';
-        file_put_contents($qrCodePath, $result->getString());
+
+        if (extension_loaded('gd')) {
+            try {
+                $writer = new PngWriter();
+                $result = $writer->write($qrCode);
+                $qrCodePath = $varDir . '/qr_' . $ticket->getId() . '_' . time() . '.png';
+                file_put_contents($qrCodePath, $result->getString());
+                $qrCodeFormat = 'PNG';
+            } catch (\Throwable) {
+                $qrCodePath = null;
+                $qrCodeFormat = null;
+            }
+        }
+
+        if ($qrCodePath === null) {
+            try {
+                $writer = new SvgWriter();
+                $result = $writer->write($qrCode);
+                $qrCodePath = $varDir . '/qr_' . $ticket->getId() . '_' . time() . '.svg';
+                file_put_contents($qrCodePath, $result->getString());
+                $qrCodeFormat = 'SVG';
+            } catch (\Throwable) {
+                $qrCodePath = null;
+                $qrCodeFormat = null;
+            }
+        }
 
         // Préparer les données pour le template
         $twig = $this->container->get('twig');
@@ -145,7 +169,7 @@ final class EventdetailsController extends AbstractController
             'evenement' => $evenement,
             'user' => $ticket->getUser(),
             'image' => $this->getImageDataUri($evenement->getImageCouverture()),
-            'logo' => $this->getLogoDataUri(),
+            'logo' => $this->supportsPngRenderingInTcpdf() ? $this->getLogoDataUri() : null,
             'qrCodePath' => $qrCodePath,
         ];
 
@@ -161,9 +185,16 @@ final class EventdetailsController extends AbstractController
         $pdf->writeHTML($html, true, false, true, false, '');
         
         // Ajouter le QR code directement
-        if (file_exists($qrCodePath)) {
+        if ($qrCodePath !== null && file_exists($qrCodePath)) {
             try {
-                $pdf->Image($qrCodePath, 75, 220, 60, 60, 'PNG');
+                if ($qrCodeFormat === 'PNG') {
+                    $pdf->Image($qrCodePath, 75, 220, 60, 60, 'PNG');
+                } elseif ($qrCodeFormat === 'SVG' && method_exists($pdf, 'ImageSVG')) {
+                    $svgContent = file_get_contents($qrCodePath);
+                    if ($svgContent !== false) {
+                        $pdf->ImageSVG('@' . $svgContent, 75, 220, 60, 60);
+                    }
+                }
             } catch (\Exception $e) {
                 // Ignorer les erreurs d'image
             }
@@ -173,7 +204,7 @@ final class EventdetailsController extends AbstractController
         $pdfContent = $pdf->Output('', 'S');
         
         // Nettoyer le fichier temporaire
-        if (file_exists($qrCodePath)) {
+        if ($qrCodePath !== null && file_exists($qrCodePath)) {
             @unlink($qrCodePath);
         }
 
@@ -198,6 +229,11 @@ final class EventdetailsController extends AbstractController
         }
 
         return 'data:image/png;base64,' . base64_encode($logoContent);
+    }
+
+    private function supportsPngRenderingInTcpdf(): bool
+    {
+        return extension_loaded('gd') || extension_loaded('imagick');
     }
 
     private function getImageDataUri(mixed $image): ?string

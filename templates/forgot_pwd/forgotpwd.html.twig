@@ -21,7 +21,7 @@
                 </div>
                 <!-- Form -->
                 {% if showResetForm is defined and showResetForm %}
-                  <form method="post" class="needs-validation" novalidate>
+                  <form method="post" action="{{ path('app_forgot_pwd_reset', {token: token}) }}" class="needs-validation" novalidate>
                     <div class="mb-3">
                       <label for="newPassword" class="form-label">Nouveau mot de passe</label>
                       <input type="password" id="newPassword" class="form-control" name="new_password" placeholder="Nouveau mot de passe" required minlength="6" />
@@ -38,7 +38,7 @@
                     </div>
                   </form>
                 {% else %}
-                  <form method="post" class="needs-validation" novalidate>
+                  <form method="post" action="{{ path('app_forgot_pwd') }}" class="needs-validation" novalidate>
                     <!-- Email -->
                     <div class="mb-3">
                       <label for="forgetEmail" class="form-label">Adresse e-mail</label>

@@ -53,6 +53,26 @@ document.addEventListener('turbo:submit-end', (event) => {
 	}
 });
 
+const cleanupBootstrapOverlays = () => {
+	document.querySelectorAll('.modal-backdrop, .offcanvas-backdrop').forEach((el) => el.remove());
+	document.body.classList.remove('modal-open');
+	document.body.style.removeProperty('padding-right');
+	document.body.style.removeProperty('overflow');
+	document.querySelectorAll('.modal.show').forEach((el) => {
+		el.classList.remove('show');
+		el.setAttribute('aria-hidden', 'true');
+		el.removeAttribute('aria-modal');
+		el.style.display = 'none';
+	});
+	document.querySelectorAll('.offcanvas.show').forEach((el) => {
+		el.classList.remove('show');
+		el.setAttribute('aria-hidden', 'true');
+		el.removeAttribute('aria-modal');
+	});
+};
+
+document.addEventListener('turbo:before-cache', cleanupBootstrapOverlays);
+
 const debounce = (fn, delay = 400) => {
 	let timer = null;
 	return (...args) => {

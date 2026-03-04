@@ -18,7 +18,7 @@ class Reponse
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: "Le contenu de la reponse est obligatoire", groups: ['Default'])]
     #[Assert\Length(
-        min: 3,
+        min: 10,
         max: 2000,
         minMessage: "La reponse doit contenir au minimum {{ limit }} caracteres",
         maxMessage: "La reponse ne peut pas depasser {{ limit }} caracteres",

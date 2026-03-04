@@ -123,15 +123,4 @@
       </div>
     {% endif %}
   {% endfor %}
-
-  {% if show_add_form %}
-  <div class="offcanvas-backdrop fade show"></div>
-  {% endif %}
-
-  {% for row in evenement_rows %}
-    {% set evenement = row.evenement %}
-    {% if show_edit_forms[evenement.id] is defined %}
-    <div class="offcanvas-backdrop fade show"></div>
-    {% endif %}
-  {% endfor %}
 {% endblock %}

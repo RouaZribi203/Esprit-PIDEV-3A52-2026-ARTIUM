@@ -194,11 +194,17 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Image (aperçu)</label>
-                  <input type="file" class="form-control" name="image" accept="image/*">
+                  <input type="file" class="form-control" name="image" accept="image/*" required>
+                  <div class="invalid-feedback">
+                    Veuillez ajouter une image du livre.
+                  </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Fichier PDF</label>
-                  <input type="file" class="form-control" name="fichier_pdf" accept="application/pdf">
+                  <input type="file" class="form-control" name="fichier_pdf" accept="application/pdf" required>
+                  <div class="invalid-feedback">
+                    Veuillez ajouter le fichier PDF du livre.
+                  </div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Catégorie</label>
@@ -365,7 +371,12 @@
                   </div>
 
                   <script>
-                    document.addEventListener('DOMContentLoaded', function () {
+                    (function () {
+                      if (window.__artistBiblioDetailsBound) {
+                        return;
+                      }
+                      window.__artistBiblioDetailsBound = true;
+
                       // delegate clicks on Détails anchors (they carry data- attributes)
                       document.body.addEventListener('click', function(e){
                         const el = e.target.closest('.js-show-details');
@@ -617,7 +628,7 @@
                         const modal = new bootstrap.Modal(modalEl);
                         modal.show();
                       });
-                    });
+                    })();
                   </script>
 
           <script>
@@ -684,29 +695,40 @@
 
           
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-
+function initArtistBiblioValidation() {
   const forms = document.querySelectorAll('.needs-validation');
 
   forms.forEach(function (form) {
-    form.addEventListener('submit', function (event) {
+  if (form.dataset.validationBound === '1') {
+    return;
+  }
 
-      if (!form.checkValidity()) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
+  form.dataset.validationBound = '1';
 
-      form.classList.add('was-validated');
+  form.addEventListener('submit', function (event) {
+    if (!form.checkValidity()) {
+    event.preventDefault();
+    event.stopPropagation();
+    }
 
-    }, false);
+    form.classList.add('was-validated');
+  }, false);
   });
+}
 
-});
+document.addEventListener('DOMContentLoaded', initArtistBiblioValidation);
+document.addEventListener('turbo:load', initArtistBiblioValidation);
 </script>
 <script>
-document.getElementById('generateAiBtn').addEventListener('click', async function () {
+function initArtistBiblioAiButton() {
+  const button = document.getElementById('generateAiBtn');
+  if (!button || button.dataset.aiBound === '1') {
+    return;
+  }
 
-    const button = document.getElementById('generateAiBtn');
+  button.dataset.aiBound = '1';
+
+  button.addEventListener('click', async function () {
     const alertContainer = document.getElementById('aiAlertContainer');
     const pdfInput = document.querySelector('#addLivreFormFront input[name="fichier_pdf"]');
 
@@ -716,92 +738,95 @@ document.getElementById('generateAiBtn').addEventListener('click', async functio
     // 🔵 Disable button + show spinner
     button.disabled = true;
     button.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-        Génération en cours...
+      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+      Génération en cours...
     `;
 
     // ❌ If no PDF
     if (!pdfInput || !pdfInput.files.length) {
-        alertContainer.innerHTML = `
-            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                Veuillez ajouter le fichier PDF du livre avant de générer.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        resetButton();
-        return;
+      alertContainer.innerHTML = `
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+          Veuillez ajouter le fichier PDF du livre avant de générer.
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `;
+      resetButton();
+      return;
     }
 
     const formData = new FormData();
     formData.append('fichier_pdf', pdfInput.files[0]);
 
     try {
-        const response = await fetch("{{ path('ai_generate_book') }}", {
-            method: "POST",
-            body: formData
-        });
+      const response = await fetch("{{ path('ai_generate_book') }}", {
+        method: "POST",
+        body: formData
+      });
 
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error('Server error: ' + response.status + ' - ' + errText);
-        }
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error('Server error: ' + response.status + ' - ' + errText);
+      }
 
-        const contentType = (response.headers.get('content-type') || '').toLowerCase();
-        let data;
-        if (contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            const txt = await response.text();
-            throw new Error('Invalid response (not JSON): ' + txt);
-        }
+      const contentType = (response.headers.get('content-type') || '').toLowerCase();
+      let data;
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const txt = await response.text();
+        throw new Error('Invalid response (not JSON): ' + txt);
+      }
 
-        if (data.error) {
-            alertContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    ${data.error}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            resetButton();
-            return;
-        }
-
-        // ✅ Autofill fields
-        document.querySelector('#addLivreFormFront input[name="titre"]').value = data.titre || '';
-        document.querySelector('#addLivreFormFront textarea[name="description"]').value = data.description || '';
-        document.querySelector('#addLivreFormFront input[name="categorie"]').value = data.categorie || '';
-        document.querySelector('#addLivreFormFront input[name="prix_location"]').value = data.prix || '';
-
+      if (data.error) {
         alertContainer.innerHTML = `
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                Contenu généré automatiquement avec succès.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ${data.error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
         `;
+        resetButton();
+        return;
+      }
 
-        // 🔄 Optional: scroll to form or alert
-        alertContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // ✅ Autofill fields
+      document.querySelector('#addLivreFormFront input[name="titre"]').value = data.titre || '';
+      document.querySelector('#addLivreFormFront textarea[name="description"]').value = data.description || '';
+      document.querySelector('#addLivreFormFront input[name="categorie"]').value = data.categorie || '';
+      document.querySelector('#addLivreFormFront input[name="prix_location"]').value = data.prix || '';
+
+      alertContainer.innerHTML = `
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          Contenu généré automatiquement avec succès.
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `;
+
+      // 🔄 Optional: scroll to form or alert
+      alertContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     } catch (error) {
-        const msg = (error && error.message) ? error.message : 'Erreur lors de la génération automatique.';
-        alertContainer.innerHTML = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                ${msg}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        console.error(error);
+      const msg = (error && error.message) ? error.message : 'Erreur lors de la génération automatique.';
+      alertContainer.innerHTML = `
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          ${msg}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `;
+      console.error(error);
     }
 
     // 🔵 Restore button
     resetButton();
 
     function resetButton() {
-        button.disabled = false;
-        button.innerHTML = '✨ Générer automatiquement';
+      button.disabled = false;
+      button.innerHTML = '✨ Générer automatiquement';
     }
+  });
+}
 
-});
+document.addEventListener('DOMContentLoaded', initArtistBiblioAiButton);
+document.addEventListener('turbo:load', initArtistBiblioAiButton);
 </script>
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 

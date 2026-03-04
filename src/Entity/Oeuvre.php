@@ -31,13 +31,6 @@ class Oeuvre
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Le titre ne peut pas etre vide')]
     private ?string $titre = null;
-    #[Assert\NotBlank(message: "Le titre est obligatoire.")]
-    #[Assert\Length(
-    min: 2,
-    max: 255,
-    minMessage: "Le titre doit contenir au moins {{ limit }} caractères.",
-    maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères."
-    )]
 
 
     #[ORM\Column(type: Types::TEXT)]

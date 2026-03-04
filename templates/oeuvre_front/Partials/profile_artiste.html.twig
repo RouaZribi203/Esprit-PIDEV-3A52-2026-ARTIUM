@@ -58,7 +58,7 @@
 		class="card-footer mt-3 pt-2 pb-0">
 		<!-- Nav profile pages -->
 		{% set current_route = app.request.attributes.get('_route') %}
-		<ul class="nav nav-bottom-line align-items-center justify-content-center justify-content-md-start mb-0 border-0 profile-nav">
+		<ul class="nav nav-bottom-line align-items-center justify-content-center justify-content-md-start mb-0 border-0 profile-nav" data-turbo="false">
 			{% set specialite = app.user.specialite is defined and app.user.specialite ? app.user.specialite.value|lower : '' %}
 		{% if specialite == 'musicien' %}
 			<li class="nav-item">

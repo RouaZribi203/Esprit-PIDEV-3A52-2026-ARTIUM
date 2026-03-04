@@ -62,6 +62,11 @@ final class OeuvreController extends AbstractController
                     $searchResults = $oeuvreRepository->findByIdsWithSort($ids, '', 'ASC');
                 }
                 
+                $searchResults = array_values(array_filter(
+                    $searchResults,
+                    static fn (Oeuvre $oeuvre): bool => in_array($oeuvre->getType(), [TypeOeuvre::PEINTURE, TypeOeuvre::SCULPTURE, TypeOeuvre::PHOTOGRAPHIE], true)
+                ));
+
                 // Show flash message with count
                 if ($shouldNotifySearch) {
                     $this->addFlash('info', count($searchResults) . ' résultat(s) trouvé(s)');
@@ -93,7 +98,10 @@ final class OeuvreController extends AbstractController
         $peintures = $oeuvreRepository->findByTypeWithSort(TypeOeuvre::PEINTURE, 'titre', 'ASC');
         $sculptures = $oeuvreRepository->findByTypeWithSort(TypeOeuvre::SCULPTURE, 'titre', 'ASC');
         $photos = $oeuvreRepository->findByTypeWithSort(TypeOeuvre::PHOTOGRAPHIE, 'titre', 'ASC');
-        $all = $oeuvreRepository->findAllWithSort('titre', 'ASC');
+        $all = array_values(array_filter(
+            $oeuvreRepository->findAllWithSort('titre', 'ASC'),
+            static fn (Oeuvre $oeuvre): bool => in_array($oeuvre->getType(), [TypeOeuvre::PEINTURE, TypeOeuvre::SCULPTURE, TypeOeuvre::PHOTOGRAPHIE], true)
+        ));
         
         // Sort in PHP based on sortBy parameter (so pagination works with sorting)
         if ($sortBy) {

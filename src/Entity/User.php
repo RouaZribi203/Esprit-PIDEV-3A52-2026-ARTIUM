@@ -313,7 +313,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->nom;
     }
 
-    public function setNom(string $nom): static
+    public function setNom(?string $nom): static
     {
         $this->nom = $nom;
 
@@ -325,7 +325,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->prenom;
     }
 
-    public function setPrenom(string $prenom): static
+    public function setPrenom(?string $prenom): static
     {
         $this->prenom = $prenom;
 
@@ -337,7 +337,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->date_naissance;
     }
 
-    public function setDateNaissance(\DateTime $date_naissance): static
+    public function setDateNaissance(?\DateTime $date_naissance): static
     {
         $this->date_naissance = $date_naissance;
 
@@ -364,7 +364,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->email;
     }
 
-    public function setEmail(string $email): static
+    public function setEmail(?string $email): static
     {
         $this->email = $email;
 
@@ -400,7 +400,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->role;
     }
 
-    public function setRole(Role $role): static
+    public function setRole(?Role $role): static
     {
         $this->role = $role;
 
@@ -412,7 +412,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->statut;
     }
 
-    public function setStatut(Statut $statut): static
+    public function setStatut(?Statut $statut): static
     {
         $this->statut = $statut;
 
@@ -436,7 +436,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->num_tel;
     }
 
-    public function setNumTel(string $num_tel): static
+    public function setNumTel(?string $num_tel): static
     {
         $this->num_tel = $num_tel;
 
@@ -448,7 +448,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->ville;
     }
 
-    public function setVille(string $ville): static
+    public function setVille(?string $ville): static
     {
         $this->ville = $ville;
 

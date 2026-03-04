@@ -10,7 +10,6 @@ use App\Repository\LivreRepository;
 use App\Repository\UserRepository;
 use App\Repository\LocationLivreRepository;
 use App\Entity\Livre;
-use App\Enum\EtatLocation;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Enum\TypeOeuvre;
@@ -50,8 +49,9 @@ final class BibliothequeartisteController extends AbstractController
                 $prix = $l->getPrixLocation() ?? 0;
                 $total = $count * $prix;
 
-                // find active location if any
-                $active = $locationLivreRepository->findOneBy(['livre' => $l, 'etat' => EtatLocation::ACTIVE]);
+                // find currently active rental (non-expired); fallback to latest active for history display
+                $active = $locationLivreRepository->findCurrentActiveForLivre($l)
+                    ?? $locationLivreRepository->findLatestActiveForLivre($l);
 
                 $livreStats[$l->getId()] = [
                     'count' => $count,
@@ -196,10 +196,7 @@ public function edit(
     }
 
     // 🔎 Check if book is currently rented
-    $activeLocation = $locationLivreRepository->findOneBy([
-        'livre' => $livre,
-        'etat' => EtatLocation::ACTIVE
-    ]);
+    $activeLocation = $locationLivreRepository->findCurrentActiveForLivre($livre);
 
     $isRented = $activeLocation ? true : false;
 
@@ -341,10 +338,7 @@ public function delete(
     }
 
     // Check if there is an ACTIVE rental
-    $activeLocation = $locationLivreRepository->findOneBy([
-        'livre' => $livre,
-        'etat' => EtatLocation::ACTIVE
-    ]);
+    $activeLocation = $locationLivreRepository->findCurrentActiveForLivre($livre);
 
     if ($activeLocation) {
         $this->addFlash(

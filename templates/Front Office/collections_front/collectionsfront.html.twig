@@ -140,7 +140,7 @@
         <h5 class="modal-title" id="modalCreateAlbumLabel">Ajouter une Collection</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form method="POST" action="{{ path('app_collections_store') }}" novalidate>
+      <form method="POST" action="{{ path('app_collections_store') }}" novalidate data-turbo="false">
         <div class="modal-body">
           <div class="mb-3">
             {{ form_label(form.titre) }}
@@ -217,7 +217,7 @@
           <h5 class="modal-title" id="modalEditCollectionLabel{{ collection.id }}">Modifier Collection</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form method="POST" action="{{ path('collection_edit', {'id': collection.id}) }}" novalidate>
+        <form method="POST" action="{{ path('collection_edit', {'id': collection.id}) }}" novalidate data-turbo="false">
           <div class="modal-body">
             <div class="mb-3">
               {{ form_label(formEdit[collection.id].titre) }}
@@ -230,7 +230,18 @@
             </div>
             <div class="mb-3">
               {{ form_label(formEdit[collection.id].description) }}
-              {{ form_widget(formEdit[collection.id].description, {'attr': {'class': 'form-control', 'rows': '4', 'placeholder': 'Entrez la description de la collection'}}) }}
+              {{ form_widget(formEdit[collection.id].description, {
+                'attr': {
+                  'class': 'form-control' ~ (formEdit[collection.id].description.vars.errors|length > 0 ? ' is-invalid' : ''),
+                  'rows': '4',
+                  'placeholder': 'Entrez la description de la collection'
+                }
+              }) }}
+              {% if formEdit[collection.id].description.vars.errors|length > 0 %}
+                <div class="invalid-feedback">
+                  {{ form_errors(formEdit[collection.id].description) }}
+                </div>
+              {% endif %}
             </div>
             {{ form_rest(formEdit[collection.id]) }}
           </div>

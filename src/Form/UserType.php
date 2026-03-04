@@ -20,9 +20,6 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\Length;
-use Symfony\Component\Validator\Constraints\Email;
 
 class UserType extends AbstractType
 {
@@ -42,19 +39,6 @@ class UserType extends AbstractType
             ->add('nom', TextType::class, [
                 'label' => 'Nom',
                 'required' => true,
-                'constraints' => [
-                    new NotBlank(['message' => 'Le nom est obligatoire']),
-                    new Length([
-                        'min' => 2,
-                        'max' => 255,
-                        'minMessage' => 'Le nom doit contenir au moins {{ limit }} caractères',
-                        'maxMessage' => 'Le nom ne peut pas dépasser {{ limit }} caractères'
-                    ]),
-                    new \Symfony\Component\Validator\Constraints\Regex([
-                        'pattern' => '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
-                        'message' => 'Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets'
-                    ])
-                ],
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Entrez le nom'
@@ -63,19 +47,6 @@ class UserType extends AbstractType
             ->add('prenom', TextType::class, [
                 'label' => 'Prénom',
                 'required' => true,
-                'constraints' => [
-                    new NotBlank(['message' => 'Le prénom est obligatoire']),
-                    new Length([
-                        'min' => 2,
-                        'max' => 255,
-                        'minMessage' => 'Le prénom doit contenir au moins {{ limit }} caractères',
-                        'maxMessage' => 'Le prénom ne peut pas dépasser {{ limit }} caractères'
-                    ]),
-                    new \Symfony\Component\Validator\Constraints\Regex([
-                        'pattern' => '/^[a-zA-ZÀ-ÿ\s\'-]+$/u',
-                        'message' => 'Le prénom ne doit contenir que des lettres, espaces, apostrophes et tirets'
-                    ])
-                ],
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Entrez le prénom'
@@ -84,14 +55,6 @@ class UserType extends AbstractType
             ->add('email', EmailType::class, [
                 'label' => 'Email',
                 'required' => true,
-                'constraints' => [
-                    new NotBlank(['message' => 'L\'email est obligatoire']),
-                    new Email(['message' => 'L\'email n\'est pas valide']),
-                    new Length([
-                        'max' => 255,
-                        'maxMessage' => 'L\'email ne peut pas dépasser {{ limit }} caractères'
-                    ])
-                ],
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'exemple@email.com'
@@ -101,17 +64,6 @@ class UserType extends AbstractType
                 'label' => 'Date de naissance',
                 'widget' => 'single_text',
                 'required' => true,
-                'constraints' => [
-                    new NotBlank(['message' => 'La date de naissance ne peut pas être vide']),
-                    new \Symfony\Component\Validator\Constraints\LessThan([
-                        'value' => 'today',
-                        'message' => 'La date de naissance doit être dans le passé'
-                    ]),
-                    new \Symfony\Component\Validator\Constraints\GreaterThan([
-                        'value' => '-120 years',
-                        'message' => 'La date de naissance n\'est pas valide'
-                    ])
-                ],
                 'attr' => [
                     'class' => 'form-control'
                 ]
@@ -119,13 +71,6 @@ class UserType extends AbstractType
             ->add('numTel', TelType::class, [
                 'label' => 'Numéro de téléphone',
                 'required' => true,
-                'constraints' => [
-                    new NotBlank(['message' => 'Le numéro de téléphone ne peut pas être vide']),
-                    new \Symfony\Component\Validator\Constraints\Regex([
-                        'pattern' => '/^[2459]\d{7}$/',
-                        'message' => 'Le numéro de téléphone doit contenir 8 chiffres et commencer par 2, 4, 5 ou 9'
-                    ])
-                ],
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => '+216 XX XXX XXX'
@@ -134,15 +79,6 @@ class UserType extends AbstractType
             ->add('ville', TextType::class, [
                 'label' => 'Ville',
                 'required' => true,
-                'constraints' => [
-                    new NotBlank(['message' => 'La ville ne peut pas être vide']),
-                    new Length([
-                        'min' => 2,
-                        'max' => 255,
-                        'minMessage' => 'La ville doit contenir au moins {{ limit }} caractères',
-                        'maxMessage' => 'La ville ne peut pas dépasser {{ limit }} caractères'
-                    ])
-                ],
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Entrez la ville'

@@ -16,7 +16,7 @@
 		<div class="card shadow-sm border-0">
 			<div class="card-body">
 				{% if has_profile_form %}
-				   {{ form_start(form, {'attr': {'class': 'row g-3', 'enctype': 'multipart/form-data'}, 'action': profile_form_action}) }}
+				   {{ form_start(form, {'attr': {'class': 'row g-3', 'enctype': 'multipart/form-data', 'novalidate': 'novalidate', 'data-turbo': 'false'}, 'action': profile_form_action}) }}
 					   <div class="col-12">
 						   <div class="d-flex align-items-center gap-3">
 							   <div class="avatar avatar-xl">
@@ -145,3 +145,16 @@
 		{% endif %}
 	{% endblock %}
 {% endembed %}
+
+{% if has_profile_form and form.vars.submitted and not form.vars.valid %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	const offcanvasElement = document.getElementById('{{ offcanvas_id }}');
+	if (!offcanvasElement) {
+		return;
+	}
+	const offcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasElement);
+	offcanvas.show();
+});
+</script>
+{% endif %}

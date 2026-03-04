@@ -31,7 +31,7 @@
 						<!-- Title END -->
 						<!-- Form START -->
 						<div class="card-body">
-							{{ form_start(form, {'attr': {'class': 'row g-3', 'novalidate': 'novalidate'}}) }}
+							{{ form_start(form, {'attr': {'class': 'row g-3', 'novalidate': 'novalidate', 'data-turbo': 'false'}}) }}
 								<div class="col-12">
 									{{ form_errors(form) }}
 								</div>
@@ -248,7 +248,7 @@
 												</div>
 												<div class="container">
 												{% if edit_form %}
-													{{ form_start(edit_form, { attr: { class: 'row g-3', 'novalidate': 'novalidate' } }) }}
+													{{ form_start(edit_form, { attr: { class: 'row g-3', 'novalidate': 'novalidate', 'data-turbo': 'false' } }) }}
 														<div class="col-12">
 															{{ form_errors(edit_form) }}
 														</div>

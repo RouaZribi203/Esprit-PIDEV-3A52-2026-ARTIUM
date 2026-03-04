@@ -34,6 +34,14 @@ final class OeuvreFrontController extends AbstractController
         }
 
         $profileForm = $this->createForm(UserType::class, $user, ['is_edit' => true]);
+        $session = $this->container->get('request_stack')->getSession();
+        $openOnLoad = false;
+
+        if ($session->has('artist_profile_form_data')) {
+            $submittedData = (array) $session->get('artist_profile_form_data', []);
+            $profileForm->submit($submittedData);
+            $openOnLoad = true;
+        }
 
         return $this->render('Front Office/Partials/offcanvas_profile.html.twig', [
             'user' => $user,
@@ -44,6 +52,7 @@ final class OeuvreFrontController extends AbstractController
             'profile_form_action' => $this->generateUrl('app_artiste_profile_update'),
             'password_form_action' => '#',
             'show_password_form' => true,
+            'open_on_load' => $openOnLoad,
         ]);
     }
 
@@ -66,10 +75,13 @@ final class OeuvreFrontController extends AbstractController
                 $user->setPhotoProfil($newFilename);
             }
 
+            $request->getSession()->remove('artist_profile_form_data');
+
             $entityManager->flush();
             $this->addFlash('success', 'Profil mis à jour !');
         } else {
-            $this->addFlash('error', 'Veuillez corriger les erreurs du formulaire profil.');
+            $submittedData = (array) $request->request->all($profileForm->getName());
+            $request->getSession()->set('artist_profile_form_data', $submittedData);
         }
 
         $referer = $request->headers->get('referer');

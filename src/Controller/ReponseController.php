@@ -98,9 +98,13 @@ final class ReponseController extends AbstractController
         return $this->redirectToRoute('app_reponse_index', [], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/admin/reclamation/{id}', name: 'app_reponse_admin_create', methods: ['POST'])]
+    #[Route('/admin/reclamation/{id}', name: 'app_reponse_admin_create', methods: ['GET', 'POST'])]
     public function adminCreate(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager, UserRepository $userRepository, ReclamationRepository $reclamationRepository, MailerInterface $mailer, LoggerInterface $logger): Response
     {
+        if ($request->isMethod('GET')) {
+            return $this->redirectToRoute('app_reclamation_admin_index', [], Response::HTTP_SEE_OTHER);
+        }
+
         $reponse = new Reponse();
         $reponse->setReclamation($reclamation);
 

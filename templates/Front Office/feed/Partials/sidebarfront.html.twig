@@ -13,7 +13,7 @@
 	<!-- Advanced filter responsive toggler END -->
 
 	<!-- Navbar START-->
-	<nav class="navbar navbar-expand-lg mx-0">
+	<nav class="navbar navbar-expand-lg mx-0" data-turbo="false">
 		<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSideNavbar">
 			<!-- Offcanvas body -->
 			<div class="offcanvas-body d-block px-2 px-lg-0">
@@ -57,7 +57,7 @@
 							<div class="vr"></div>
 							<!-- User stat item -->
 							<div>
-								<h6 class="mb-0">{{ app.user.dateNaissance ? app.user.dateNaissance|date('d M Y') : '12 Nov 1990' }}</h6>
+								<h6 class="mb-0">{{ app.user and app.user.dateNaissance ? app.user.dateNaissance|date('d M Y') : '12 Nov 1990' }}</h6>
 								<small>Date de naissance</small>
 								<!-- User stat item -->
 							</div>

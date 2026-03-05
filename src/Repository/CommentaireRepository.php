@@ -18,6 +18,39 @@ class CommentaireRepository extends ServiceEntityRepository
         parent::__construct($registry, Commentaire::class);
     }
 
+    /**
+     * @param int[] $oeuvreIds
+     * @return array<int, Commentaire[]>
+     */
+    public function findGroupedByOeuvreIdsWithUser(array $oeuvreIds): array
+    {
+        if ($oeuvreIds === []) {
+            return [];
+        }
+
+        $comments = $this->createQueryBuilder('c')
+            ->leftJoin('c.user', 'u')
+            ->addSelect('u')
+            ->where('IDENTITY(c.oeuvre) IN (:oeuvreIds)')
+            ->setParameter('oeuvreIds', $oeuvreIds)
+            ->orderBy('c.date_commentaire', 'ASC')
+            ->addOrderBy('c.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $grouped = [];
+        foreach ($comments as $comment) {
+            $oeuvre = $comment->getOeuvre();
+            $oeuvreId = $oeuvre?->getId();
+            if ($oeuvreId === null) {
+                continue;
+            }
+            $grouped[$oeuvreId][] = $comment;
+        }
+
+        return $grouped;
+    }
+
     public function findOwnershipDataById(int $id): ?array
     {
         return $this->createQueryBuilder('c')
@@ -58,7 +91,7 @@ class CommentaireRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('com')
             ->select('com.date_commentaire AS commentDate')
-            ->addSelect('COUNT(com.id) AS commentsCount')
+            ->addSelect('COUNT(DISTINCT com.id) AS commentsCount')
             ->innerJoin('com.oeuvre', 'o')
             ->innerJoin('o.collection', 'c')
             ->andWhere('c.artiste = :artiste')
@@ -103,7 +136,7 @@ class CommentaireRepository extends ServiceEntityRepository
     public function countByArtist(\App\Entity\User $user): int
     {
         return $this->createQueryBuilder('c')
-            ->select('COUNT(c.id)')
+            ->select('COUNT(DISTINCT c.id)')
             ->join('c.oeuvre', 'o')
             ->join('o.collection', 'col')
             ->where('col.artiste = :user')

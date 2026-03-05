@@ -25,6 +25,26 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class FeedController extends AbstractController
 {
+    /**
+     * @param Oeuvre[] $oeuvres
+     * @return array<int, Commentaire[]>
+     */
+    private function buildCommentsByOeuvre(array $oeuvres, CommentaireRepository $commentaireRepository): array
+    {
+        $oeuvreIds = [];
+        foreach ($oeuvres as $oeuvre) {
+            if ($oeuvre instanceof Oeuvre && $oeuvre->getId() !== null) {
+                $oeuvreIds[] = $oeuvre->getId();
+            }
+        }
+
+        if ($oeuvreIds === []) {
+            return [];
+        }
+
+        return $commentaireRepository->findGroupedByOeuvreIdsWithUser(array_values(array_unique($oeuvreIds)));
+    }
+
     private function getInitialDisplayCount(array $oeuvres, Request $request): int
     {
         $defaultCount = 3;
@@ -69,7 +89,7 @@ final class FeedController extends AbstractController
     }
 
     #[Route('/feed', name: 'app_feed')]
-    public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request, EntityManagerInterface $em): Response
+    public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, CommentaireRepository $commentaireRepository, Request $request, EntityManagerInterface $em): Response
     {
         $currentUser = $this->getUser();
 
@@ -92,11 +112,11 @@ final class FeedController extends AbstractController
             }
         }
 
-        $oeuvres = $oeuvreRepository->findAll();
         $peintures = $oeuvreRepository->findBy(['type' => TypeOeuvre::PEINTURE]);
         $sculptures = $oeuvreRepository->findBy(['type' => TypeOeuvre::SCULPTURE]);
         $photos = $oeuvreRepository->findBy(['type' => TypeOeuvre::PHOTOGRAPHIE]);
         $all = array_merge($peintures, $sculptures, $photos);
+        $commentsByOeuvre = $this->buildCommentsByOeuvre($all, $commentaireRepository);
         $initialDisplayCount = $this->getInitialDisplayCount($all, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
@@ -105,9 +125,10 @@ final class FeedController extends AbstractController
             'profile_form' => $form?->createView(),
             'profile_form_action' => $this->generateUrl('app_feed'),
             'oeuvres' => $all,
+            'commentsByOeuvre' => $commentsByOeuvre,
             'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
-            'collections' => $collectionsRepository->findAll(),
+            'collections' => $collectionsRepository->findBy([], ['id' => 'DESC'], 50),
         ]);
     }
 
@@ -158,7 +179,7 @@ final class FeedController extends AbstractController
     }
 
     #[Route('/feed_recommandations', name: 'app_feed_recommandations')]
-    public function indexRecommandations(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request, RecommendationServiceoeuvre $recommendationService): Response
+    public function indexRecommandations(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, CommentaireRepository $commentaireRepository, Request $request, RecommendationServiceoeuvre $recommendationService): Response
     {
         $user = $this->getUser();
         if (!$user) {
@@ -167,68 +188,70 @@ final class FeedController extends AbstractController
 
         #$recommendedOeuvres = $recommendationService->getRecommendedOeuvres($user);
         $recommendedOeuvres = $recommendationService->getRecommendedOeuvresHybrid($user);
+        $commentsByOeuvre = $this->buildCommentsByOeuvre($recommendedOeuvres, $commentaireRepository);
 
         $initialDisplayCount = $this->getInitialDisplayCount($recommendedOeuvres, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $recommendedOeuvres,
+            'commentsByOeuvre' => $commentsByOeuvre,
             'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
-            'collections' => $collectionsRepository->findAll(),
+            'collections' => $collectionsRepository->findBy([], ['id' => 'DESC'], 50),
         ]);
     }
 
     
     #[Route('/feed_peintures', name: 'app_feed_peintures')]
-    public function indexPeintures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
+    public function indexPeintures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, CommentaireRepository $commentaireRepository, Request $request): Response
     {
-        $peintures = $oeuvreRepository->findBy([
-            'type' => TypeOeuvre::PEINTURE
-       ]);
+        $peintures = $oeuvreRepository->findBy(['type' => TypeOeuvre::PEINTURE]);
+        $commentsByOeuvre = $this->buildCommentsByOeuvre($peintures, $commentaireRepository);
         $initialDisplayCount = $this->getInitialDisplayCount($peintures, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $peintures,
+            'commentsByOeuvre' => $commentsByOeuvre,
             'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
-            'collections' => $collectionsRepository->findAll(),
+            'collections' => $collectionsRepository->findBy([], ['id' => 'DESC'], 50),
         ]);
     }
 
 
     #[Route('/feed_sculptures', name: 'app_feed_sculptures')]
-    public function indexSculptures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
+    public function indexSculptures(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, CommentaireRepository $commentaireRepository, Request $request): Response
     {     
          
-        $sculptures = $oeuvreRepository->findBy([
-            'type' => TypeOeuvre::SCULPTURE
-       ]);
+        $sculptures = $oeuvreRepository->findBy(['type' => TypeOeuvre::SCULPTURE]);
+        $commentsByOeuvre = $this->buildCommentsByOeuvre($sculptures, $commentaireRepository);
         $initialDisplayCount = $this->getInitialDisplayCount($sculptures, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $sculptures,
+            'commentsByOeuvre' => $commentsByOeuvre,
             'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
-            'collections' => $collectionsRepository->findAll(),
+            'collections' => $collectionsRepository->findBy([], ['id' => 'DESC'], 50),
         ]);
     }
     #[Route('/feed_photos', name: 'app_feed_photos')]
-    public function indexPhotos(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, Request $request): Response
+    public function indexPhotos(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, CommentaireRepository $commentaireRepository, Request $request): Response
     {
-        $photos = $oeuvreRepository->findBy([
-            'type' => TypeOeuvre::PHOTOGRAPHIE
-       ]);
+        $photos = $oeuvreRepository->findBy(['type' => TypeOeuvre::PHOTOGRAPHIE]);
+        $commentsByOeuvre = $this->buildCommentsByOeuvre($photos, $commentaireRepository);
         $initialDisplayCount = $this->getInitialDisplayCount($photos, $request);
 
         return $this->render('Front Office/feed/feed.html.twig', [
             'controller_name' => 'FeedController',
             'oeuvres' => $photos,
+            'commentsByOeuvre' => $commentsByOeuvre,
             'initialDisplayCount' => $initialDisplayCount,
             'typeOeuvres' => TypeOeuvre::cases(),
-            'collections' => $collectionsRepository->findAll(),
+            'collections' => $collectionsRepository->findBy([], ['id' => 'DESC'], 50),
         ]);
     }
 

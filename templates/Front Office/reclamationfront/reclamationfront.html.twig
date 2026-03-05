@@ -213,6 +213,7 @@
                                 </div>
                             {% else %}
                                 {% for reclamation in reclamations %}
+                                    {% set reponsesCount = response_counts[reclamation.id]|default(0) %}
                                     <div class="col-12">
                                         <div class="card">
                                             <div class="card-body">
@@ -248,10 +249,10 @@
                                                         <div class="d-flex justify-content-md-end align-items-start gap-2">
                                                             <div class="me-auto">
                                                                 <small class="text-muted">Creee le: <strong>{{ reclamation.dateCreation ? reclamation.dateCreation|date('d M Y') : '-' }}</strong></small>
-                                                                {% if reclamation.reponses|length > 0 %}
+                                                                {% if reponsesCount > 0 %}
                                                                     <div class="mt-1">
                                                                         <span class="badge bg-success-soft text-success">
-                                                                            <i class="bi bi-chat-dots"></i> {{ reclamation.reponses|length }} reponse{{ reclamation.reponses|length > 1 ? 's' : '' }}
+                                                                            <i class="bi bi-chat-dots"></i> {{ reponsesCount }} reponse{{ reponsesCount > 1 ? 's' : '' }}
                                                                         </span>
                                                                     </div>
                                                                 {% endif %}
@@ -264,8 +265,8 @@
                                                                     <li>
                                                                         <a class="dropdown-item" href="{{ path('app_reclamation_show', {'id': reclamation.id}) }}">
                                                                             <i class="bi bi-chat-dots"></i> Voir reponses
-                                                                            {% if reclamation.reponses|length > 0 %}
-                                                                                <span class="badge bg-success ms-1">{{ reclamation.reponses|length }}</span>
+                                                                            {% if reponsesCount > 0 %}
+                                                                                <span class="badge bg-success ms-1">{{ reponsesCount }}</span>
                                                                             {% endif %}
                                                                         </a>
                                                                     </li>

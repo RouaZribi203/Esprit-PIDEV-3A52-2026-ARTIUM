@@ -16,6 +16,33 @@ class ReponseRepository extends ServiceEntityRepository
         parent::__construct($registry, Reponse::class);
     }
 
+    /**
+     * @param int[] $reclamationIds
+     * @return array<int, int>
+     */
+    public function countByReclamationIds(array $reclamationIds): array
+    {
+        if ($reclamationIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('rep')
+            ->select('IDENTITY(rep.reclamation) AS reclamationId')
+            ->addSelect('COUNT(rep.id) AS reponsesCount')
+            ->where('IDENTITY(rep.reclamation) IN (:reclamationIds)')
+            ->setParameter('reclamationIds', $reclamationIds)
+            ->groupBy('rep.reclamation')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int) $row['reclamationId']] = (int) $row['reponsesCount'];
+        }
+
+        return $counts;
+    }
+
     //    /**
     //     * @return Reponse[] Returns an array of Reponse objects
     //     */

@@ -10,6 +10,7 @@ use App\Enum\TypeReclamation;
 use App\Form\Reclamation1Type;
 use App\Form\ReponseType;
 use App\Repository\ReclamationRepository;
+use App\Repository\ReponseRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +21,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ReclamationController extends AbstractController
 {
     #[Route('/user-reclamation', name: 'app_reclamationfront', methods: ['GET'])]
-    public function index(Request $request, ReclamationRepository $reclamationRepository, UserRepository $userRepository): Response
+    public function index(Request $request, ReclamationRepository $reclamationRepository, ReponseRepository $reponseRepository, UserRepository $userRepository): Response
     {
         $user = $this->getUser();
         $isAdmin = $this->isGranted('ROLE_ADMIN');
@@ -130,6 +131,16 @@ final class ReclamationController extends AbstractController
         $form = null;
         $responseCreateForms = [];
         $responseEditForms = [];
+        $responseCounts = [];
+
+        $reclamationIds = [];
+        foreach ($reclamations as $reclamation) {
+            $reclamationId = $reclamation->getId();
+            if ($reclamationId !== null) {
+                $reclamationIds[] = $reclamationId;
+            }
+        }
+        $responseCounts = $reponseRepository->countByReclamationIds($reclamationIds);
         
         if ($isAdmin) {
             // Admin: formulaires pour répondre aux réclamations
@@ -170,6 +181,7 @@ final class ReclamationController extends AbstractController
         
         return $this->render($template, [
             'reclamations' => $reclamations,
+            'response_counts' => $responseCounts,
             'form' => $form?->createView(),
             'edit_forms' => $editForms,
             'responseCreateForms' => $responseCreateForms,

@@ -24,17 +24,21 @@ class TicketRepository extends ServiceEntityRepository
      */
     public function findCanceledEventNotificationsForUser(User $user): array
     {
-        return $this->getEntityManager()->createQueryBuilder()
-            ->select('e AS evenement', 'COUNT(t.id) AS tickets')
-            ->from(Evenement::class, 'e')
-            ->join('e.tickets', 't')
-            ->where('t.user = :user')
-            ->andWhere('e.statut = :statut')
+        $dql = sprintf(
+            'SELECT e AS evenement, '
+            .'(SELECT COUNT(t2.id) FROM %s t2 WHERE t2.evenement = e AND t2.user = :user) AS tickets '
+            .'FROM %s e '
+            .'WHERE e.statut = :statut '
+            .'AND EXISTS (SELECT t3.id FROM %s t3 WHERE t3.evenement = e AND t3.user = :user) '
+            .'ORDER BY e.date_debut DESC',
+            Ticket::class,
+            Evenement::class,
+            Ticket::class
+        );
+
+        return $this->getEntityManager()->createQuery($dql)
             ->setParameter('user', $user)
             ->setParameter('statut', StatutEvenement::ANNULE)
-            ->groupBy('e.id')
-            ->orderBy('e.date_debut', 'DESC')
-            ->getQuery()
             ->getResult();
     }
 

@@ -51,6 +51,7 @@ class OeuvreRepository extends ServiceEntityRepository
         return $this->applySorting($qb, $sortBy, $sortOrder)->getQuery()->getResult();
     }
 
+
     public function findDistinctCommentedByUser(User $user): array
     {
         return $this->createQueryBuilder('o')
@@ -84,17 +85,17 @@ class OeuvreRepository extends ServiceEntityRepository
             case 'likes':
                 $qb->leftJoin('o.likes', 'l')
                    ->groupBy('o.id')
-                   ->orderBy('COUNT(l)', $sortOrder);
+                   ->orderBy('COUNT(DISTINCT l.id)', $sortOrder);
                 break;
             case 'commentaires':
                 $qb->leftJoin('o.commentaires', 'c')
                    ->groupBy('o.id')
-                   ->orderBy('COUNT(c)', $sortOrder);
+                   ->orderBy('COUNT(DISTINCT c.id)', $sortOrder);
                 break;
             case 'favoris':
                 $qb->leftJoin('o.user_fav', 'uf')
                    ->groupBy('o.id')
-                   ->orderBy('COUNT(uf)', $sortOrder);
+                   ->orderBy('COUNT(DISTINCT uf.id)', $sortOrder);
                 break;
             default:
                 $qb->orderBy('o.titre', $sortOrder);
@@ -205,7 +206,7 @@ class OeuvreRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('o')
             ->select('o.id AS oeuvreId')
             ->addSelect('o.titre AS oeuvreTitle')
-            ->addSelect('COUNT(l.id) AS likesCount')
+            ->addSelect('COUNT(DISTINCT l.id) AS likesCount')
             ->innerJoin('o.collection', 'c')
             ->leftJoin('o.likes', 'l', 'WITH', 'l.liked = true')
             ->andWhere('c.artiste = :artiste')

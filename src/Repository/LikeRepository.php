@@ -47,7 +47,7 @@ class LikeRepository extends ServiceEntityRepository
     public function countByArtist(\App\Entity\User $user): int
     {
         return $this->createQueryBuilder('l')
-            ->select('COUNT(l.id)')
+            ->select('COUNT(DISTINCT l.id)')
             ->join('l.oeuvre', 'o')
             ->join('o.collection', 'col')
             ->where('col.artiste = :user')

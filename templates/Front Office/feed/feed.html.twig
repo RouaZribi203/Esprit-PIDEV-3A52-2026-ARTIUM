@@ -6,6 +6,7 @@
     {% set initialDisplayCount = initialDisplayCount|default(3) %}
     <div id="feed-container">
     {% for oeuvre in oeuvres|slice(0, initialDisplayCount) %}
+    {% set oeuvreComments = commentsByOeuvre[oeuvre.id]|default([]) %}
     <!-- Card feed item START -->
     <div class="card mb-4" id="oeuvre-{{ oeuvre.id }}">
         <!-- Card header START -->
@@ -97,7 +98,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#!">
-                        <i class="bi bi-chat-fill pe-1"></i>Commentaires (<span class="comment-count" data-oeuvre-id="{{ oeuvre.id }}">{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>)</a>
+                        <i class="bi bi-chat-fill pe-1"></i>Commentaires (<span class="comment-count" data-oeuvre-id="{{ oeuvre.id }}">{{ oeuvreComments|length }}</span>)</a>
                 </li>
 				<!-- Card share action START -->
                 <li class="nav-item ms-sm-auto d-flex align-items-center">
@@ -138,9 +139,9 @@
             
             <!-- Comment wrap START -->
             <turbo-frame id="comments-{{ oeuvre.id }}">
-                {% if oeuvre.commentaires and oeuvre.commentaires|length > 0 %}
+                {% if oeuvreComments|length > 0 %}
                 <ul class="comment-wrap list-unstyled mb-0">
-                {% for commentaire in oeuvre.commentaires %}
+                {% for commentaire in oeuvreComments %}
                 <!-- Comment item START -->
                 <li class="comment-item{% if loop.index > 3 %} hidden-comment d-none{% endif %}">
                     <div class="d-flex">
@@ -227,7 +228,7 @@
         <!-- Card body END -->
         
         <!-- Card footer START -->
-        <div class="card-footer border-0 pt-0" style="display: {{ oeuvre.commentaires and oeuvre.commentaires|length > 3 ? '' : 'none' }};">
+        <div class="card-footer border-0 pt-0" style="display: {{ oeuvreComments|length > 3 ? '' : 'none' }};">
             <!-- Load more comments -->
                 <a href="#" role="button" data-turbo="false"
                     class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center comments-load-more">
@@ -255,6 +256,7 @@
     <!-- Hidden oeuvres for load more -->
     <div id="hidden-oeuvres" style="display: none;">
     {% for oeuvre in oeuvres|slice(initialDisplayCount) %}
+    {% set oeuvreComments = commentsByOeuvre[oeuvre.id]|default([]) %}
     <!-- Card feed item START -->
     <div class="card mb-4 hidden-oeuvre" id="oeuvre-{{ oeuvre.id }}">
         <!-- Card header START -->
@@ -348,7 +350,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#!">
-                        <i class="bi bi-chat-fill pe-1"></i>Commentaires (<span class="comment-count" data-oeuvre-id="{{ oeuvre.id }}">{{ oeuvre.commentaires ? oeuvre.commentaires|length : 0 }}</span>)</a>
+                        <i class="bi bi-chat-fill pe-1"></i>Commentaires (<span class="comment-count" data-oeuvre-id="{{ oeuvre.id }}">{{ oeuvreComments|length }}</span>)</a>
                 </li>
                 <!-- Card share action START -->
                 <li class="nav-item ms-sm-auto d-flex align-items-center">
@@ -385,9 +387,9 @@
             
             <!-- Comment wrap START -->
             <turbo-frame id="comments-{{ oeuvre.id }}">
-            {% if oeuvre.commentaires and oeuvre.commentaires|length > 0 %}
+            {% if oeuvreComments|length > 0 %}
             <ul class="comment-wrap list-unstyled mb-0">
-                {% for commentaire in oeuvre.commentaires %}
+                {% for commentaire in oeuvreComments %}
                 <!-- Comment item START -->
                 <li class="comment-item{% if loop.index > 3 %} hidden-comment d-none{% endif %}">
                     <div class="d-flex">
@@ -474,7 +476,7 @@
         <!-- Card body END -->
         
         <!-- Card footer START -->
-        <div class="card-footer border-0 pt-0" style="display: {{ oeuvre.commentaires and oeuvre.commentaires|length > 3 ? '' : 'none' }};">
+        <div class="card-footer border-0 pt-0" style="display: {{ oeuvreComments|length > 3 ? '' : 'none' }};">
             <!-- Load more comments -->
             <a href="#" role="button"
                class="btn btn-link btn-link-loader btn-sm text-secondary d-flex align-items-center comments-load-more">

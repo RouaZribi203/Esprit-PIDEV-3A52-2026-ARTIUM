@@ -45,9 +45,10 @@ class MusiqueRepository extends ServiceEntityRepository
      * Find all music IDs and basic info only, without BLOBs
      * Returns lightweight data for listing pages
      * Use find($id) to get full entity with blobs when needed
-     * 
-     * @return array Array of objects with id, titre, description, date_creation, genre, artiste_nom, artiste_prenom
+        *
+        * @return list<array<string, mixed>>
      */
+    
     public function findAllLightweight(): array
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -74,10 +75,10 @@ class MusiqueRepository extends ServiceEntityRepository
 
     /**
      * Search and filter music with optional sorting
-        * @param string|null $searchTerm Search in titre, description and artist name
+      * @param string|null $searchTerm Search in titre, description and artist name
      * @param string|null $sortBy Sort field: 'titre', 'date', 'genre'
      * @param string $sortOrder ASC or DESC
-     * @return array
+      * @return list<array<string, mixed>>
      */
     public function searchAndFilter(?string $searchTerm = null, ?string $sortBy = 'date', string $sortOrder = 'DESC', ?int $artistId = null): array
     {

@@ -38,7 +38,8 @@ class UserRepository extends ServiceEntityRepository
         }
         // Si nomPrenom est null ou vide, ne filtre pas
         $qb->orderBy('u.nom', $order)
-           ->addOrderBy('u.prenom', $order);
+              ->addOrderBy('u.prenom', $order)
+              ->setMaxResults(10);
         return $qb->getQuery();
     }
     public function __construct(ManagerRegistry $registry)

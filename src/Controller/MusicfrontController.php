@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Playlist;
+use App\Entity\User;
 use App\Repository\MusiqueRepository;
 use App\Repository\PlaylistRepository;
 use App\Repository\UserRepository;
@@ -64,8 +65,8 @@ final class MusicfrontController extends AbstractController
                     $result = strcasecmp($left, $right);
                     break;
                 case 'genre':
-                    $left = $a->getGenre()?->value ?? '';
-                    $right = $b->getGenre()?->value ?? '';
+                    $left = $a->getGenre()->value;
+                    $right = $b->getGenre()->value;
                     $result = strcasecmp($left, $right);
                     break;
                 case 'date':
@@ -117,10 +118,10 @@ final class MusicfrontController extends AbstractController
         \Symfony\Component\Validator\Validator\ValidatorInterface $validator
     ): Response {
         $user = $this->getUser();
-        if (!$user) {
+        if (!$user instanceof User) {
             $user = $userRepository->find(2);
         }
-        if (!$user) {
+        if (!$user instanceof User) {
             if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
                 return new JsonResponse(['error' => 'Utilisateur par defaut introuvable.'], 400);
             }
@@ -283,11 +284,11 @@ final class MusicfrontController extends AbstractController
         GroqPlaylistService $groqPlaylistService
     ): Response {
         $user = $this->getUser();
-        if (!$user) {
+        if (!$user instanceof User) {
             $user = $userRepository->find(2);
         }
 
-        if (!$user) {
+        if (!$user instanceof User) {
             return new JsonResponse(['success' => false, 'error' => 'Utilisateur par defaut introuvable.'], 400);
         }
 
@@ -314,7 +315,7 @@ final class MusicfrontController extends AbstractController
             $catalog[] = [
                 'id' => (int) $song->getId(),
                 'title' => (string) ($song->getTitre() ?? 'Titre inconnu'),
-                'genre' => (string) ($song->getGenre()?->value ?? ''),
+                'genre' => $song->getGenre()->value,
                 'artist' => trim((string) (($song->getCollection()?->getArtiste()?->getPrenom() ?? '') . ' ' . ($song->getCollection()?->getArtiste()?->getNom() ?? ''))),
                 'description' => mb_substr((string) ($song->getDescription() ?? ''), 0, 220),
             ];
@@ -399,7 +400,7 @@ final class MusicfrontController extends AbstractController
         $playlistArtists = [];
 
         foreach ($playlist->getMusique() as $musique) {
-            $genre = $musique->getGenre()?->value ?? '';
+            $genre = $musique->getGenre()->value;
             $artistName = trim((string) (($musique->getCollection()?->getArtiste()?->getPrenom() ?? '') . ' ' . ($musique->getCollection()?->getArtiste()?->getNom() ?? '')));
 
             $songs[] = [
@@ -411,9 +412,7 @@ final class MusicfrontController extends AbstractController
             ];
 
             $playlistSongIds[] = $musique->getId();
-            if ($genre !== '') {
-                $playlistGenres[] = mb_strtolower($genre);
-            }
+            $playlistGenres[] = mb_strtolower($genre);
             if ($artistName !== '') {
                 $playlistArtists[] = mb_strtolower($artistName);
             }
@@ -431,11 +430,11 @@ final class MusicfrontController extends AbstractController
                     continue;
                 }
 
-                $candidateGenre = mb_strtolower((string) ($candidate->getGenre()?->value ?? ''));
+                $candidateGenre = mb_strtolower($candidate->getGenre()->value);
                 $candidateArtist = trim((string) (($candidate->getCollection()?->getArtiste()?->getPrenom() ?? '') . ' ' . ($candidate->getCollection()?->getArtiste()?->getNom() ?? '')));
                 $candidateArtistLower = mb_strtolower($candidateArtist);
 
-                $genreMatch = $candidateGenre !== '' && in_array($candidateGenre, $playlistGenres, true);
+                $genreMatch = in_array($candidateGenre, $playlistGenres, true);
                 $artistMatch = $candidateArtistLower !== '' && in_array($candidateArtistLower, $playlistArtists, true);
 
                 if (!$genreMatch && !$artistMatch) {
@@ -446,7 +445,7 @@ final class MusicfrontController extends AbstractController
                     'id' => $candidateId,
                     'titre' => $candidate->getTitre() ?? 'Titre inconnu',
                     'audioSrc' => $this->generateUrl('app_musiqueartiste_audio', ['id' => $candidateId]),
-                    'genre' => $candidate->getGenre()?->value ?? '',
+                    'genre' => $candidate->getGenre()->value,
                     'artist' => $candidateArtist !== '' ? $candidateArtist : 'Artiste inconnu',
                 ];
             }

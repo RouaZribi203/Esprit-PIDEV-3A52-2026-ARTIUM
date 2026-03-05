@@ -50,7 +50,7 @@ class Reclamation
     /**
      * @var Collection<int, Reponse>
      */
-    #[ORM\OneToMany(targetEntity: Reponse::class, mappedBy: 'reclamation', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Reponse::class, mappedBy: 'reclamation', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $reponses;
 
     // Champ pour stocker le nom du fichier en base

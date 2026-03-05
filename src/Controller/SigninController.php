@@ -89,7 +89,7 @@ final class SigninController extends AbstractController
     }
 
     #[Route('/admin/user/{id}/connections', name: 'admin_user_connections')]
-    public function userConnections($id, EntityManagerInterface $em): Response
+    public function userConnections(int $id, EntityManagerInterface $em): Response
     {
         $user = $em->getRepository(\App\Entity\User::class)->find($id);
         if (!$user) {
@@ -104,7 +104,7 @@ final class SigninController extends AbstractController
     }
 
     #[Route('/admin/user/{id}/connections/popup', name: 'admin_user_connections_popup')]
-    public function userConnectionsPopup($id, EntityManagerInterface $em, \Symfony\Component\HttpFoundation\Request $request): Response
+    public function userConnectionsPopup(int $id, EntityManagerInterface $em, \Symfony\Component\HttpFoundation\Request $request): Response
     {
         $user = $em->getRepository(\App\Entity\User::class)->find($id);
         if (!$user) {

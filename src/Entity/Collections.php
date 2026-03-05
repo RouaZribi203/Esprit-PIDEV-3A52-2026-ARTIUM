@@ -33,7 +33,7 @@ class Collections
     /**
      * @var Collection<int, Oeuvre>
      */
-    #[ORM\OneToMany(targetEntity: Oeuvre::class, mappedBy: 'collection', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Oeuvre::class, mappedBy: 'collection', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Ignore]
     private Collection $oeuvres;
 

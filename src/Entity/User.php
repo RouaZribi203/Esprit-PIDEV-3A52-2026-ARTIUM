@@ -16,6 +16,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use SensitiveParameter;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[UniqueEntity(
@@ -44,12 +45,14 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
      * Jeton de réinitialisation du mot de passe
      */
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Ignore]
     private ?string $resetToken = null;
 
     /**
      * Date d'expiration du jeton de réinitialisation
      */
     #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Ignore]
     private ?\DateTimeInterface $resetTokenExpires = null;
 
     public function getResetToken(): ?string
@@ -57,7 +60,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->resetToken;
     }
 
-    public function setResetToken(?string $resetToken): self
+    public function setResetToken(#[SensitiveParameter] ?string $resetToken): self
     {
         $this->resetToken = $resetToken;
         return $this;
@@ -68,7 +71,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->resetTokenExpires;
     }
 
-    public function setResetTokenExpires(?\DateTimeInterface $resetTokenExpires): self
+    public function setResetTokenExpires(#[SensitiveParameter] ?\DateTimeInterface $resetTokenExpires): self
     {
         $this->resetTokenExpires = $resetTokenExpires;
         return $this;
@@ -221,21 +224,21 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
     /**
      * @var Collection<int, Collections>
      */
-    #[ORM\OneToMany(targetEntity: Collections::class, mappedBy: 'artiste', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Collections::class, mappedBy: 'artiste', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Ignore]
     private Collection $collections;
 
     /**
      * @var Collection<int, Commentaire>
      */
-    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'user', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'user', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Ignore]
     private Collection $commentaires;
 
     /**
      * @var Collection<int, Playlist>
      */
-    #[ORM\OneToMany(targetEntity: Playlist::class, mappedBy: 'user', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Playlist::class, mappedBy: 'user', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Ignore]
     private Collection $playlists;
 

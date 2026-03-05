@@ -84,7 +84,7 @@ foreach ($livres as $livre) {
     }
 
     $statusMap[$livre->getId()] = [
-        'isActive' => $isActive ?? false,
+        'isActive' => $isActive,
         'locationId' => $activeLocation?->getId() ?? null,
         'startDate' => $activeLocation?->getDateDebut()?->format('Y-m-d H:i:s') ?? null,
         'expirationDate' => isset($expiration) ? $expiration->format('Y-m-d H:i:s') : null
@@ -268,11 +268,6 @@ foreach ($livres as $livre) {
     #[Route('/bibliotheque/livre/{id}/delete', name: 'livre_delete', methods: ['POST'])]
     public function delete(Livre $livre, EntityManagerInterface $em): Response
     {
-        if (!$livre) {
-            $this->addFlash('error', 'Livre introuvable.');
-            return $this->redirectToRoute('livres');
-        }
-
         $em->remove($livre);
         $em->flush();
 
@@ -297,7 +292,7 @@ foreach ($livres as $livre) {
             $bytes = $data;
         }
 
-        $length = $bytes !== null ? mb_strlen($bytes, '8bit') : 0;
+        $length = mb_strlen((string) $bytes, '8bit');
         $download = $request->query->get('download');
         $disposition = $download ? 'attachment; filename="livre-' . $livre->getId() . '.pdf"' : 'inline; filename="livre-' . $livre->getId() . '.pdf"';
 

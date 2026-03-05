@@ -405,6 +405,9 @@ final class OeuvreController extends AbstractController
 
     /**
      * Sort an array of Oeuvre objects by given criteria
+        *
+        * @param list<Oeuvre> $oeuvres
+        * @return list<Oeuvre>
      */
     private function sortOeuvreArray(array $oeuvres, string $sortBy, string $sortOrder): array
     {
@@ -419,13 +422,13 @@ final class OeuvreController extends AbstractController
             $count = 0;
             switch ($sortBy) {
                 case 'likes':
-                    $count = $oeuvre->getLikes()?->filter(fn($like) => $like->isLiked())->count() ?? 0;
+                    $count = $oeuvre->getLikes()->filter(fn($like) => $like->isLiked())->count();
                     break;
                 case 'commentaires':
-                    $count = $oeuvre->getCommentaires()?->count() ?? 0;
+                    $count = $oeuvre->getCommentaires()->count();
                     break;
                 case 'favoris':
-                    $count = $oeuvre->getUserFav()?->count() ?? 0;
+                    $count = $oeuvre->getUserFav()->count();
                     break;
                 case 'titre':
                 default:

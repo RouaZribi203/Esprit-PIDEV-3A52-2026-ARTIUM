@@ -174,9 +174,9 @@ final class ReclamationController extends AbstractController
             'edit_forms' => $editForms,
             'responseCreateForms' => $responseCreateForms,
             'responseEditForms' => $responseEditForms,
-            'search_query' => $search ?? '',
-            'selected_statut' => $statut?->value ?? '',
-            'selected_type' => $type?->value ?? '',
+            'search_query' => $search,
+            'selected_statut' => $statut?->value,
+            'selected_type' => $type?->value,
             'date_from' => $dateFrom,
         ]);
     }

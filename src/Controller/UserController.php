@@ -73,7 +73,8 @@ final class UserController extends AbstractController
             $qb->andWhere('1=0');
         }
         $qb->orderBy('u.nom', $order)
-           ->addOrderBy('u.prenom', $order);
+              ->addOrderBy('u.prenom', $order)
+              ->setMaxResults(10);
         $page = $request->query->getInt('page', 1);
         $pagination = $paginator->paginate($qb, $page, 10);
         return $this->render('user/index.html.twig', [
@@ -104,7 +105,8 @@ final class UserController extends AbstractController
             $qb->andWhere('1=0');
         }
         $qb->orderBy('u.nom', $order)
-           ->addOrderBy('u.prenom', $order);
+              ->addOrderBy('u.prenom', $order)
+              ->setMaxResults(10);
         $page = $request->query->getInt('page', 1);
         $pagination = $paginator->paginate($qb, $page, 10);
         return $this->render('user/index.html.twig', [

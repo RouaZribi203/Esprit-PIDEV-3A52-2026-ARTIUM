@@ -5,7 +5,8 @@ namespace App\Controller;
 use App\Entity\Evenement;
 use App\Enum\StatutEvenement;
 use App\Enum\TypeEvenement;
-use App\Form\EvenementType;
+use App\Form\EvenementArtisteEditType;
+use App\Form\EvenementArtisteType;
 use App\Repository\EvenementRepository;
 use App\Repository\TicketRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -147,7 +148,7 @@ final class EvenementController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $evenement = new Evenement();
-        $form = $this->createForm(EvenementType::class, $evenement);
+        $form = $this->createForm(EvenementArtisteType::class, $evenement);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -192,7 +193,7 @@ final class EvenementController extends AbstractController
     #[Route('/{id}/edit', name: 'app_evenement_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Evenement $evenement, EntityManagerInterface $entityManager): Response
     {
-        $form = $this->createForm(EvenementType::class, $evenement);
+        $form = $this->createForm(EvenementArtisteEditType::class, $evenement);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

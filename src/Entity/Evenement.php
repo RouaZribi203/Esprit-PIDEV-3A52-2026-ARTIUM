@@ -59,8 +59,8 @@ class Evenement
     #[Assert\NotBlank(message: "Le type d'événement est obligatoire", groups: ['Default'])]
     private ?TypeEvenement $type = null;
 
-    #[ORM\Column(type: Types::BLOB)]
-    private mixed $image_couverture = null;
+    #[ORM\Column(length: 2048, nullable: false)]
+    private ?string $image_couverture = null;
 
     #[ORM\Column(enumType: StatutEvenement::class)]
     #[Assert\NotBlank(message: "Le statut est obligatoire", groups: ['admin'])]
@@ -186,12 +186,12 @@ class Evenement
         return $this;
     }
 
-    public function getImageCouverture(): mixed
+    public function getImageCouverture(): ?string
     {
         return $this->image_couverture;
     }
 
-    public function setImageCouverture(mixed $image_couverture): static
+    public function setImageCouverture(?string $image_couverture): static
     {
         $this->image_couverture = $image_couverture;
 

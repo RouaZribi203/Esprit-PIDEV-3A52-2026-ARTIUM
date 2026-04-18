@@ -43,9 +43,9 @@ class Oeuvre
     #[Assert\LessThanOrEqual('today', message: 'La date d\'ajout ne peut pas être dans le futur', groups: ['edit'])]
     private ?\DateTime $date_creation = null;
 
-    #[ORM\Column(type: Types::BLOB)]
+    #[ORM\Column(length: 2048, nullable: false)]
     #[Ignore]
-    private mixed $image = null;
+    private ?string $image = null;
 
     
     #[ORM\Column(type: 'string', enumType: TypeOeuvre::class)]
@@ -134,12 +134,12 @@ class Oeuvre
         return $this;
     }
 
-    public function getImage(): mixed
+    public function getImage(): ?string
     {
         return $this->image;
     }
 
-    public function setImage(mixed $image): static
+    public function setImage(?string $image): static
     {
         $this->image = $image;
 

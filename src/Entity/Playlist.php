@@ -29,8 +29,8 @@ class Playlist
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTime $date_creation = null;
 
-    #[ORM\Column(type: Types::BLOB, nullable: true)]
-    private mixed $image = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $image = null;
 
     /**
      * @var Collection<int, Musique>
@@ -88,12 +88,12 @@ class Playlist
         return $this;
     }
 
-    public function getImage(): mixed
+    public function getImage(): ?string
     {
         return $this->image;
     }
 
-    public function setImage(mixed $image): static
+    public function setImage(?string $image): static
     {
         $this->image = $image;
 

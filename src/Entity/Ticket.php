@@ -15,8 +15,8 @@ class Ticket
     // @phpstan-ignore property.unusedType
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::BLOB)]
-    private mixed $code_qr = null;
+    #[ORM\Column(length: 2048)]
+    private ?string $code_qr = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTime $date_achat = null;
@@ -34,12 +34,12 @@ class Ticket
         return $this->id;
     }
 
-    public function getCodeQr(): mixed
+    public function getCodeQr(): ?string
     {
         return $this->code_qr;
     }
 
-    public function setCodeQr(mixed $code_qr): static
+    public function setCodeQr(string $code_qr): static
     {
         $this->code_qr = $code_qr;
 

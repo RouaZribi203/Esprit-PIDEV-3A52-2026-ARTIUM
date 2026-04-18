@@ -5,7 +5,6 @@ namespace App\Entity;
 use App\Repository\LivreRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Ignore;
@@ -32,9 +31,9 @@ class Livre extends Oeuvre
     #[Assert\Positive(message: "Le prix doit être supérieur à 0.")]
     private ?float $prix_location = null;
 
-    #[ORM\Column(type: Types::BLOB)]
+    #[ORM\Column(length: 255)]
     #[Ignore]
-    private mixed $fichier_pdf = null;
+    private ?string $fichier_pdf = null;
 
     /**
      * @var Collection<int, LocationLivre>
@@ -73,12 +72,12 @@ class Livre extends Oeuvre
         return $this;
     }
 
-    public function getFichierPdf(): mixed
+    public function getFichierPdf(): ?string
     {
         return $this->fichier_pdf;
     }
 
-    public function setFichierPdf(mixed $fichier_pdf): static
+    public function setFichierPdf(string $fichier_pdf): static
     {
         $this->fichier_pdf = $fichier_pdf;
 

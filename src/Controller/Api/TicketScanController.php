@@ -32,7 +32,7 @@ public function scan(Request $request, TicketRepository $ticketRepository, Entit
     if (!$ticket) {
         return $this->json([
             'status' => 'invalid',
-            'message' => 'Ticket not found'
+            'message' => 'Ticket non valide'
         ], 404);
     }
 
@@ -41,7 +41,7 @@ public function scan(Request $request, TicketRepository $ticketRepository, Entit
         return $this->json([
             'status' => 'invalid',
             'reason' => 'already_used',
-            'message' => 'Ticket already scanned'
+            'message' => 'Ticket déjà utilisé'
         ], 409);
     }
 

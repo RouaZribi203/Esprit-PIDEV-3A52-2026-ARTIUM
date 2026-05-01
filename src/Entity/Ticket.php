@@ -12,14 +12,22 @@ class Ticket
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    // @phpstan-ignore property.unusedType
     private ?int $id = null;
 
-    #[ORM\Column(length: 2048)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $code_qr = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTime $date_achat = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $isUsed = false;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTime $usedAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $scanCount = 0;
 
     #[ORM\ManyToOne(inversedBy: 'tickets')]
     #[ORM\JoinColumn(nullable: false)]
@@ -34,7 +42,7 @@ class Ticket
         return $this->id;
     }
 
-    public function getCodeQr(): ?string
+    public function getCodeQr(): string
     {
         return $this->code_qr;
     }
@@ -54,6 +62,37 @@ class Ticket
     public function setDateAchat(\DateTime $date_achat): static
     {
         $this->date_achat = $date_achat;
+
+        return $this;
+    }
+
+    public function isIsUsed(): ?bool
+    {
+        return $this->isUsed;
+    }
+    public function setIsUsed(?bool $isUsed): static
+    {
+        $this->isUsed = $isUsed;
+
+        return $this;
+    }
+    public function getUsedAt(): ?\DateTime
+    {
+        return $this->usedAt;
+    }
+    public function setUsedAt(?\DateTime $usedAt): static
+    {
+        $this->usedAt = $usedAt;
+
+        return $this;
+    }
+    public function getScanCount(): ?int
+    {
+        return $this->scanCount;
+    }
+    public function setScanCount(?int $scanCount): static
+    {
+        $this->scanCount = $scanCount;
 
         return $this;
     }

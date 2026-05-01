@@ -10,7 +10,6 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Ignore;
-use Meilisearch\Bundle\Search\Attributes\Searchable;
 
 #[ORM\Entity(repositoryClass: OeuvreRepository::class)]
 #[ORM\InheritanceType("JOINED")]
@@ -20,7 +19,6 @@ use Meilisearch\Bundle\Search\Attributes\Searchable;
     "livre" => Livre::class,
     "musique" => Musique::class
 ])]
-#[Searchable(['titre', 'collection.titre', 'collection.artiste.nom', 'collection.artiste.prenom', 'description'])]
 class Oeuvre
 {
     #[ORM\Id]

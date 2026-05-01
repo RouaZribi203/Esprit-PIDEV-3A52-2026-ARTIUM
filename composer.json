@@ -17,7 +17,7 @@
         "knplabs/knp-snappy": "*",
         "knpuniversity/oauth2-client-bundle": "^2.20",
         "league/oauth2-google": "^4.1",
-        "meilisearch/search-bundle": "^0.16.1",
+        "meilisearch/search-bundle": "0.16.*",
         "openai-php/client": "^0.19.0",
         "php-http/client-common": "^2.7",
         "php-http/discovery": "^1.19",

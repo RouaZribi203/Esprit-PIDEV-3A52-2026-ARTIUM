@@ -9,7 +9,6 @@ enum TypeOeuvre: string
     case PHOTOGRAPHIE = 'Photographie';
     case MUSIQUE = 'Musique';
     case LIVRE = 'Livre';
-    case PRIVEE = 'Privee';
 
     public function getColor(): string
     {

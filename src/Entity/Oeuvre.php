@@ -45,6 +45,9 @@ class Oeuvre
     #[Ignore]
     private ?string $image = null;
 
+    #[ORM\Column(nullable: false)]
+    private ?bool $isPublic = false;
+
     
     #[ORM\Column(type: 'string', enumType: TypeOeuvre::class)]
     private ?TypeOeuvre $type = null;
@@ -140,6 +143,18 @@ class Oeuvre
     public function setImage(?string $image): static
     {
         $this->image = $image;
+
+        return $this;
+    }
+
+    public function isIsPublic(): ?bool
+    {
+        return $this->isPublic;
+    }
+
+    public function setIsPublic(?bool $isPublic): static
+    {
+        $this->isPublic = $isPublic;
 
         return $this;
     }

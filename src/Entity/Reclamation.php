@@ -64,6 +64,9 @@ class Reclamation
     #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
 
+    #[ORM\Column(nullable: false)]
+    private ?bool $isArchived = false;
+
     public function __construct()
     {
         $this->reponses = new ArrayCollection();
@@ -198,6 +201,18 @@ class Reclamation
     public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+    public function isIsArchived(): ?bool
+    {
+        return $this->isArchived;
+    }
+
+    public function setIsArchived(?bool $isArchived): self
+    {
+        $this->isArchived = $isArchived;
+
         return $this;
     }
 }

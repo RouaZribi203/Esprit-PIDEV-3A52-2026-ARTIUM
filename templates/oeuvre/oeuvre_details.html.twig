@@ -29,8 +29,8 @@
 
               <div class="oeuvre-card">
                 <div class="oeuvre-image">
-                  {% if imageBase64 is defined and imageBase64 %}
-                    <img src="data:{{ mimeType|default('image/jpeg') }};base64,{{ imageBase64 }}" alt="{{ oeuvre.titre }}">
+                  {% if oeuvre.image %}
+                    <img src="{{ path('oeuvre_image', {'id': oeuvre.id}) }}" alt="{{ oeuvre.titre }}">
                   {% else %}
                     <div class="text-center text-muted">Aucune image disponible</div>
                   {% endif %}

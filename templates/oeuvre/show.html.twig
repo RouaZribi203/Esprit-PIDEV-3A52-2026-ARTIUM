@@ -25,8 +25,8 @@
             </tr>
             <tr>
                 <th>Image</th>
-                <td>{% if imageBase64 %}
-                <img src="data:{{ mimeType }};base64,{{ imageBase64 }}" alt="Image de l'œuvre" style="max-width:300px;">
+                <td>{% if oeuvre.image %}
+                <img src="{{ path('oeuvre_image', {'id': oeuvre.id}) }}" alt="Image de l'œuvre" style="max-width:300px;">
                 {% else %}
                 <p>Aucune image disponible.</p>
                 {% endif %}</td>

@@ -50,19 +50,37 @@ final class EventsfrontController extends AbstractController
             return null;
         }
 
+        // Legacy: image stored as a resource/blob
         if (is_resource($image)) {
             $data = stream_get_contents($image);
-        } elseif (is_string($image)) {
-            $data = $image;
-        } else {
-            return null;
+            if ($data === false || $data === '') {
+                return null;
+            }
+            return 'data:image/jpeg;base64,' . base64_encode($data);
         }
 
-        if ($data === false || $data === '') {
-            return null;
+        // If image is a string, it is now expected to be a URL or a path
+        if (is_string($image)) {
+            if (str_starts_with($image, 'data:')) {
+                return $image;
+            }
+
+            if (preg_match('#^https?://#i', $image)) {
+                return $image;
+            }
+
+            if (str_starts_with($image, '/')) {
+                return $image;
+            }
+
+            if (strpos($image, '/') !== false) {
+                return '/' . ltrim($image, '/');
+            }
+
+            return '/uploads/' . ltrim($image, '/');
         }
 
-        return 'data:image/jpeg;base64,' . base64_encode($data);
+        return null;
     }
 
     #[Route('/search-events', name: 'app_eventsfrontkeyword', methods: ['GET'])]

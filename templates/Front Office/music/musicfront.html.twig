@@ -121,12 +121,15 @@
                             {% for musique in musiques %}
                                 <!-- Music item START -->
                                 <div class="col-sm-6 col-xl-4">
-                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}">
+                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}" data-artist-id="{{ musique.collection.artiste.id }}">
                                         <div class="position-relative">
                                             <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
                                             <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">
                                                 {{ musique.genre.value }}
                                             </div>
+                                            {% if musique.collection.artiste.photoProfil %}
+                                                <img class="img-fluid rounded-circle border border-white border-2 position-absolute bottom-0 start-2" src="{{ path('user_photo', {id: musique.collection.artiste.id}) }}" alt="{{ musique.collection.artiste.nom }}" style="width: 50px; height: 50px; object-fit: cover; margin-bottom: -10px;">
+                                            {% endif %}
                                         </div>
                                         <!-- Card body START -->
                                         <div class="card-body position-relative pt-0">
@@ -135,7 +138,7 @@
                                             <!-- Music title -->
                                             <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
                                             {% set artistFullName = ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim %}
-                                            <p class="mb-1 small text-secondary"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
+                                            <p class="mb-1 small text-secondary artist-link" style="cursor: pointer;" data-artist-id="{{ musique.collection.artiste.id }}"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
                                             <!-- Description -->
                                             <p class="mb-2 small text-muted">
                                                 {{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}
@@ -206,16 +209,19 @@
                         <div class="row g-4">
                             {% for musique in rockMusiques %}
                                 <div class="col-sm-6 col-xl-4">
-                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}">
+                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}" data-artist-id="{{ musique.collection.artiste.id }}">
                                         <div class="position-relative">
                                             <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
                                             <div class="badge bg-primary text-white mt-2 me-2 position-absolute top-0 end-0">Rock</div>
+                                            {% if musique.collection.artiste.photoProfil %}
+                                                <img class="img-fluid rounded-circle border border-white border-2 position-absolute bottom-0 start-2" src="{{ path('user_photo', {id: musique.collection.artiste.id}) }}" alt="{{ musique.collection.artiste.nom }}" style="width: 50px; height: 50px; object-fit: cover; margin-bottom: -10px;">
+                                            {% endif %}
                                         </div>
                                         <div class="card-body position-relative pt-0">
                                             <a class="btn btn-xs btn-primary mt-n2 mb-2" href="#">Rock</a>
                                             <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
                                             {% set artistFullName = ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim %}
-                                            <p class="mb-1 small text-secondary"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
+                                            <p class="mb-1 small text-secondary artist-link" style="cursor: pointer;" data-artist-id="{{ musique.collection.artiste.id }}"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
                                             <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
                                             <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
                                             <div class="d-flex mt-3 gap-2">
@@ -275,16 +281,19 @@
                         <div class="row g-4">
                             {% for musique in jazzMusiques %}
                                 <div class="col-sm-6 col-xl-4">
-                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}">
+                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}" data-artist-id="{{ musique.collection.artiste.id }}">
                                         <div class="position-relative">
                                             <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
                                             <div class="badge bg-danger text-white mt-2 me-2 position-absolute top-0 end-0">Jazz</div>
+                                            {% if musique.collection.artiste.photoProfil %}
+                                                <img class="img-fluid rounded-circle border border-white border-2 position-absolute bottom-0 start-2" src="{{ path('user_photo', {id: musique.collection.artiste.id}) }}" alt="{{ musique.collection.artiste.nom }}" style="width: 50px; height: 50px; object-fit: cover; margin-bottom: -10px;">
+                                            {% endif %}
                                         </div>
                                         <div class="card-body position-relative pt-0">
                                             <a class="btn btn-xs btn-danger mt-n2 mb-2" href="#">Jazz</a>
                                             <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
                                             {% set artistFullName = ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim %}
-                                            <p class="mb-1 small text-secondary"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
+                                            <p class="mb-1 small text-secondary artist-link" style="cursor: pointer;" data-artist-id="{{ musique.collection.artiste.id }}"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
                                             <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
                                             <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
                                             <div class="d-flex mt-3 gap-2">
@@ -341,16 +350,19 @@
                         <div class="row g-4">
                             {% for musique in classicalMusiques %}
                                 <div class="col-sm-6 col-xl-4">
-                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}">
+                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}" data-artist-id="{{ musique.collection.artiste.id }}">
                                         <div class="position-relative">
                                             <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
                                             <div class="badge bg-success text-white mt-2 me-2 position-absolute top-0 end-0">Classique</div>
+                                            {% if musique.collection.artiste.photoProfil %}
+                                                <img class="img-fluid rounded-circle border border-white border-2 position-absolute bottom-0 start-2" src="{{ path('user_photo', {id: musique.collection.artiste.id}) }}" alt="{{ musique.collection.artiste.nom }}" style="width: 50px; height: 50px; object-fit: cover; margin-bottom: -10px;">
+                                            {% endif %}
                                         </div>
                                         <div class="card-body position-relative pt-0">
                                             <a class="btn btn-xs btn-success mt-n2 mb-2" href="#">Classique</a>
                                             <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
                                             {% set artistFullName = ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim %}
-                                            <p class="mb-1 small text-secondary"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
+                                            <p class="mb-1 small text-secondary artist-link" style="cursor: pointer;" data-artist-id="{{ musique.collection.artiste.id }}"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
                                             <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
                                             <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
                                             <div class="d-flex mt-3 gap-2">
@@ -407,16 +419,19 @@
                         <div class="row g-4">
                             {% for musique in popMusiques %}
                                 <div class="col-sm-6 col-xl-4">
-                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}">
+                                    <div class="card h-100 music-card bg-dark text-white border-secondary" data-music-id="{{ musique.id }}" data-audio-src="{{ path('app_musiqueartiste_audio', {'id': musique.id}) }}" data-artist-name="{{ ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim }}" data-artist-id="{{ musique.collection.artiste.id }}">
                                         <div class="position-relative">
                                             <img class="img-fluid rounded-top" src="{{ path('app_musiqueartiste_image', {'id': musique.id}) }}" alt="{{ musique.titre }}" style="background-color: #f0f0f0; min-height: 200px; object-fit: cover;">
                                             <div class="badge bg-secondary text-white mt-2 me-2 position-absolute top-0 end-0">Pop</div>
+                                            {% if musique.collection.artiste.photoProfil %}
+                                                <img class="img-fluid rounded-circle border border-white border-2 position-absolute bottom-0 start-2" src="{{ path('user_photo', {id: musique.collection.artiste.id}) }}" alt="{{ musique.collection.artiste.nom }}" style="width: 50px; height: 50px; object-fit: cover; margin-bottom: -10px;">
+                                            {% endif %}
                                         </div>
                                         <div class="card-body position-relative pt-0">
                                             <a class="btn btn-xs btn-secondary mt-n2 mb-2" href="#">Pop</a>
                                             <h6 class="mt-2"> <a href="#"> {{ musique.titre }} </a> </h6>
                                             {% set artistFullName = ((musique.collection.artiste.prenom|default('')) ~ ' ' ~ (musique.collection.artiste.nom|default('')))|trim %}
-                                            <p class="mb-1 small text-secondary"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
+                                            <p class="mb-1 small text-secondary artist-link" style="cursor: pointer;" data-artist-id="{{ musique.collection.artiste.id }}"><i class="bi bi-person-fill pe-1"></i>{{ artistFullName != '' ? artistFullName : 'Artiste inconnu' }}</p>
                                             <p class="mb-2 small text-muted">{{ musique.description|length > 50 ? musique.description|slice(0, 50) ~ '...' : musique.description }}</p>
                                             <p class="small"> <i class="bi bi-calendar pe-1"></i> {{ musique.dateCreation|date('M d, Y') }} </p>
                                             <div class="d-flex mt-3 gap-2">

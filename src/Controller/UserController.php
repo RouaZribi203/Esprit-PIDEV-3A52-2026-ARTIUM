@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
+use App\Service\FileStorageService;
 use Knp\Component\Pager\PaginatorInterface;
 use App\Enum\Role;
 use Doctrine\ORM\EntityManagerInterface;
@@ -119,7 +120,7 @@ final class UserController extends AbstractController
     }
 
     #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, FileStorageService $fileStorageService): Response
     {
         $user = new User();
         // Initialiser la date d'inscription à aujourd'hui (00:00:00)
@@ -132,11 +133,7 @@ final class UserController extends AbstractController
             // Gestion de l'upload de la photo de profil
             $photoFile = $form->get('photoProfil')->getData();
             if ($photoFile) {
-                $newFilename = uniqid('user_') . '.' . $photoFile->guessExtension();
-                $photoFile->move(
-                    $this->getParameter('kernel.project_dir') . '/public/uploads',
-                    $newFilename
-                );
+                $newFilename = $fileStorageService->uploadImage($photoFile, 'profile_');
                 $user->setPhotoProfil($newFilename);
             }
             // Hash the password
@@ -180,7 +177,7 @@ final class UserController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, User $user, EntityManagerInterface $entityManager, FileStorageService $fileStorageService): Response
     {
         $form = $this->createForm(UserType::class, $user, ['is_edit' => true]);
         $form->handleRequest($request);
@@ -189,11 +186,7 @@ final class UserController extends AbstractController
             // Gestion de l'upload de la photo de profil (édition)
             $photoFile = $form->get('photoProfil')->getData();
             if ($photoFile) {
-                $newFilename = uniqid('user_') . '.' . $photoFile->guessExtension();
-                $photoFile->move(
-                    $this->getParameter('kernel.project_dir') . '/public/uploads',
-                    $newFilename
-                );
+                $newFilename = $fileStorageService->uploadImage($photoFile, 'profile_');
                 $user->setPhotoProfil($newFilename);
             }
 

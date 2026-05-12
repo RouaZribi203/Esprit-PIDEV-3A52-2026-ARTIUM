@@ -2,10 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\Commentaire;
-use App\Entity\Collections;
 use App\Entity\Oeuvre;
-use App\Entity\User;
 use App\Enum\TypeOeuvre;
 use App\Form\OeuvreType;
 use App\Repository\CollectionsRepository;
@@ -178,59 +175,17 @@ final class OeuvreController extends AbstractController
     #[Route('/test/{id}', name: 'app_oeuvre_show', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function show(Oeuvre $oeuvre): Response
     {
-    $imageBase64 = null;
-    $mimeType = null;
-
-    if ($oeuvre->getImage()) {
-        $imageData = $oeuvre->getImage();
-
-        // Si c'est un flux
-        if (is_resource($imageData)) {
-            $imageData = stream_get_contents($imageData);
-            fclose($oeuvre->getImage()); // fermer le flux
-        }
-
-        $imageBase64 = base64_encode($imageData);
-
-        // Détecter le type MIME avec finfo
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->buffer($imageData); // ex: image/jpeg, image/png
-    }
-
-    return $this->render('oeuvre/show.html.twig', [
-        'oeuvre' => $oeuvre,
-        'imageBase64' => $imageBase64,
-        'mimeType' => $mimeType,
-    ]);
+        return $this->render('oeuvre/show.html.twig', [
+            'oeuvre' => $oeuvre,
+        ]);
     }
 
     #[Route('/{id}', name: 'app_oeuvre_details', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function details(Oeuvre $oeuvre): Response
     {
-    $imageBase64 = null;
-    $mimeType = null;
-
-    if ($oeuvre->getImage()) {
-        $imageData = $oeuvre->getImage();
-
-        // Si c'est un flux
-        if (is_resource($imageData)) {
-            $imageData = stream_get_contents($imageData);
-            fclose($oeuvre->getImage()); // fermer le flux
-        }
-
-        $imageBase64 = base64_encode($imageData);
-
-        // Détecter le type MIME avec finfo
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->buffer($imageData); // ex: image/jpeg, image/png
-    }
-
-    return $this->render('oeuvre/oeuvre_details.html.twig', [
-        'oeuvre' => $oeuvre,
-        'imageBase64' => $imageBase64,
-        'mimeType' => $mimeType,
-    ]);
+        return $this->render('oeuvre/oeuvre_details.html.twig', [
+            'oeuvre' => $oeuvre,
+        ]);
     }
 
 

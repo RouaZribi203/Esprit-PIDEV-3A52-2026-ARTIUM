@@ -226,7 +226,13 @@ final class EventsartisteController extends AbstractController
     {
         $file = $form->get('imageFile')->getData();
         if ($file instanceof UploadedFile) {
-            $evenement->setImageCouverture(file_get_contents($file->getPathname()));
+            $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/events';
+            if (!is_dir($uploads)) {
+                @mkdir($uploads, 0777, true);
+            }
+            $newFilename = uniqid('event_') . '.' . $file->guessExtension();
+            $file->move($uploads, $newFilename);
+            $evenement->setImageCouverture('uploads/events/' . $newFilename);
         }
     }
 
@@ -250,16 +256,26 @@ final class EventsartisteController extends AbstractController
 
         if (is_resource($image)) {
             $data = stream_get_contents($image);
-        } elseif (is_string($image)) {
-            $data = $image;
-        } else {
-            return null;
+            if ($data === false || $data === '') {
+                return null;
+            }
+            return 'data:image/jpeg;base64,' . base64_encode($data);
         }
 
-        if ($data === false || $data === '') {
-            return null;
+        if (is_string($image)) {
+            if (str_starts_with($image, 'data:')) {
+                return $image;
+            }
+            if (preg_match('#^https?://#i', $image)) {
+                return $image;
+            }
+            if (str_starts_with($image, '/')) {
+                return $image;
+            }
+            return '/' . ltrim($image, '/');
         }
-        return 'data:image/jpeg;base64,' . base64_encode($data);
+
+        return null;
     }
 
 }

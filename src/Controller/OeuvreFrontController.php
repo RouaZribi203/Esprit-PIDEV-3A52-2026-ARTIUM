@@ -178,14 +178,19 @@ final class OeuvreFrontController extends AbstractController
     if ($form->isSubmitted() && $form->isValid()) {
         $tempPath = $tempImageName ? $tempDir . '/' . $tempImageName : null;
         if ($tempPath && is_file($tempPath)) {
-            $blobData = fopen($tempPath, 'rb');
-            $oeuvre->setImage($blobData);
-            unlink($tempPath);
+            $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/oeuvres';
+            if (!is_dir($uploads)) { @mkdir($uploads, 0777, true); }
+            $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
+            $newFilename = uniqid('oeuvre_') . ($ext ? '.' . $ext : '');
+            rename($tempPath, $uploads . '/' . $newFilename);
+            $oeuvre->setImage('uploads/oeuvres/' . $newFilename);
             $session->remove('oeuvre_temp_image');
-        } elseif ($imageFile) {
-            // Read the binary content of the file
-            $blobData = fopen($imageFile->getPathname(), 'rb');
-            $oeuvre->setImage($blobData);
+        } elseif ($imageFile instanceof UploadedFile) {
+            $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/oeuvres';
+            if (!is_dir($uploads)) { @mkdir($uploads, 0777, true); }
+            $newFilename = uniqid('oeuvre_') . '.' . $imageFile->guessExtension();
+            $imageFile->move($uploads, $newFilename);
+            $oeuvre->setImage('uploads/oeuvres/' . $newFilename);
         }
         $oeuvre->setDateCreation(new \DateTime());
         $entityManager->persist($oeuvre);
@@ -249,10 +254,12 @@ final class OeuvreFrontController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $imageFile = $form->get('image')->getData();
 
-            if ($imageFile) {
-                // Read the binary content of the file
-                $blobData = fopen($imageFile->getPathname(), 'rb');
-                $oeuvre->setImage($blobData);
+            if ($imageFile instanceof UploadedFile) {
+                $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/oeuvres';
+                if (!is_dir($uploads)) { @mkdir($uploads, 0777, true); }
+                $newFilename = uniqid('oeuvre_') . '.' . $imageFile->guessExtension();
+                $imageFile->move($uploads, $newFilename);
+                $oeuvre->setImage('uploads/oeuvres/' . $newFilename);
             }
 
             $entityManager->flush();

@@ -96,19 +96,17 @@ final class MusiqueartisteController extends AbstractController
             
             // Form is valid, proceed with file upload
             try {
-                // Handle image upload
+                // Handle image upload (save filename)
                 $imageFile = $form->get('imageFile')->getData();
                 if ($imageFile) {
-                    // Additional size check
                     if ($imageFile->getSize() > 5242880) { // 5MB
                         throw new \Exception('Image file exceeds maximum size of 5MB');
                     }
-                    
-                    $imageContent = file_get_contents($imageFile->getPathname());
-                    if ($imageContent === false) {
-                        throw new \Exception('Failed to read image file');
-                    }
-                    $musique->setImage($imageContent);
+                    $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/music';
+                    if (!is_dir($uploads)) {@mkdir($uploads, 0777, true);} 
+                    $newFilename = uniqid('music_') . '.' . $imageFile->guessExtension();
+                    $imageFile->move($uploads, $newFilename);
+                    $musique->setImage('uploads/music/' . $newFilename);
                 }
                 
                 // Handle audio upload
@@ -243,17 +241,29 @@ final class MusiqueartisteController extends AbstractController
             throw $this->createNotFoundException('Image not found');
         }
 
-        // Get image binary data from BLOB
         $imageData = $musique->getImage();
         if (is_resource($imageData)) {
+            try { rewind($imageData); } catch (\Throwable) {}
             $imageData = stream_get_contents($imageData);
+            return new Response($imageData, 200, ['Content-Type' => 'image/jpeg']);
         }
 
-        return new Response(
-            $imageData,
-            200,
-            ['Content-Type' => 'image/jpeg']
-        );
+        if (is_string($imageData)) {
+            if (preg_match('#^https?://#i', $imageData)) {
+                return $this->redirect($imageData);
+            }
+            $public = $this->getParameter('kernel.project_dir') . '/public/';
+            $path = $public . ltrim($imageData, '/');
+            if (file_exists($path)) {
+                $response = new BinaryFileResponse($path);
+                $response->headers->set('Content-Type', mime_content_type($path) ?: 'image/jpeg');
+                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($path));
+                return $response;
+            }
+            return $this->redirect('/' . ltrim($imageData, '/'));
+        }
+
+        throw $this->createNotFoundException('Image not found');
     }
 
     #[Route('/musiqueartiste/lyrics/{id}', name: 'app_musiqueartiste_lyrics', methods: ['GET'])]

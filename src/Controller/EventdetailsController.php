@@ -244,17 +244,29 @@ final class EventdetailsController extends AbstractController
 
         if (is_resource($image)) {
             $data = stream_get_contents($image);
-        } elseif (is_string($image)) {
-            $data = $image;
-        } else {
-            return null;
+            if ($data === false || $data === '') {
+                return null;
+            }
+            return 'data:image/jpeg;base64,' . base64_encode($data);
         }
 
-        if ($data === false || $data === '') {
-            return null;
+        if (is_string($image)) {
+            if (str_starts_with($image, 'data:')) {
+                return $image;
+            }
+            if (preg_match('#^https?://#i', $image)) {
+                return $image;
+            }
+            if (str_starts_with($image, '/')) {
+                return $image;
+            }
+            if (strpos($image, '/') !== false) {
+                return '/' . ltrim($image, '/');
+            }
+            return '/uploads/' . ltrim($image, '/');
         }
 
-        return 'data:image/jpeg;base64,' . base64_encode($data);
+        return null;
     }
 
     private function buildTicketPayload(Evenement $evenement, User $user): string

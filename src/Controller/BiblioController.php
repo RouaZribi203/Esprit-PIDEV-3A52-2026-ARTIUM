@@ -5,12 +5,14 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Livre;
 use App\Form\LivreType;
 use App\Repository\LivreRepository;
+use App\Service\FileStorageService;
 use App\Enum\TypeOeuvre;
 use Knp\Component\Pager\PaginatorInterface;
 use App\Repository\LocationLivreRepository;
@@ -103,7 +105,7 @@ foreach ($livres as $livre) {
     }
 
     #[Route('/bibliotheque/new', name: 'livre_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em): Response
+    public function create(Request $request, EntityManagerInterface $em, FileStorageService $fileStorageService): Response
     {
         $livre = new Livre();
         $form = $this->createForm(LivreType::class, $livre);
@@ -150,23 +152,19 @@ foreach ($livres as $livre) {
             try {
                 $imageFile = $form->get('image')->getData();
                 if ($imageFile) {
-                    $path = $imageFile->getPathname();
-                    if (is_readable($path)) {
-                       $livre->setImage(file_get_contents($path));
-                    }
+                    $newFilename = $fileStorageService->uploadImage($imageFile, 'livre_');
+                    $livre->setImage($newFilename);
                 }
             } catch (\Throwable $e) {
                 // swallow file errors to avoid blocking persistence; validation should catch size/type
             }
 
-            // handle uploaded pdf (store as blob) safely
+            // handle uploaded pdf safely
             try {
                 $pdfFile = $form->get('fichier_pdf')->getData();
                 if ($pdfFile) {
-                    $path = $pdfFile->getPathname();
-                    if (is_readable($path)) {
-                        $livre->setFichierPdf(file_get_contents($path));
-                    }
+                    $newFilename = $fileStorageService->uploadPdf($pdfFile, 'pdf_');
+                    $livre->setFichierPdf($newFilename);
                 }
             } catch (\Throwable $e) {
                 // swallow file errors
@@ -191,7 +189,7 @@ foreach ($livres as $livre) {
     }
 
     #[Route('/bibliotheque/livre/{id}/edit', name: 'livre_edit', methods: ['POST'])]
-    public function edit(Livre $livre, Request $request, EntityManagerInterface $em): Response
+    public function edit(Livre $livre, Request $request, EntityManagerInterface $em, FileStorageService $fileStorageService): Response
     {
         $form = $this->createForm(LivreType::class, $livre);
         $form->handleRequest($request);
@@ -229,10 +227,8 @@ foreach ($livres as $livre) {
             try {
                 $imageFile = $form->get('image')->getData();
                 if ($imageFile) {
-                    $path = $imageFile->getPathname();
-                    if (is_readable($path)) {
-                        $livre->setImage(file_get_contents($path));
-                    }
+                    $newFilename = $fileStorageService->uploadImage($imageFile, 'livre_');
+                    $livre->setImage($newFilename);
                 }
             } catch (\Throwable $e) {
                 // ignore image errors
@@ -242,10 +238,8 @@ foreach ($livres as $livre) {
             try {
                 $pdfFile = $form->get('fichier_pdf')->getData();
                 if ($pdfFile) {
-                    $path = $pdfFile->getPathname();
-                    if (is_readable($path)) {
-                        $livre->setFichierPdf(file_get_contents($path));
-                    }
+                    $newFilename = $fileStorageService->uploadPdf($pdfFile, 'pdf_');
+                    $livre->setFichierPdf($newFilename);
                 }
             } catch (\Throwable $e) {
                 // ignore pdf errors
@@ -277,92 +271,83 @@ foreach ($livres as $livre) {
     }
 
     #[Route('/bibliotheque/livre/{id}/pdf', name: 'livre_pdf', methods: ['GET'])]
-    public function pdf(Livre $livre, Request $request): Response
+    public function pdf(Livre $livre): Response
     {
-        $data = $livre->getFichierPdf();
-        if (!$data) {
+        $filename = $livre->getFichierPdf();
+        if (!$filename) {
             throw $this->createNotFoundException('PDF introuvable');
         }
 
-        // normalize blob/resource to bytes string so we can compute length and handle ranges
-        if (is_resource($data)) {
-            try { @rewind($data); } catch (\Throwable $e) {}
-            $bytes = stream_get_contents($data);
-        } else {
-            $bytes = $data;
+        // Serve PDF from external folder
+        $pdfPath = 'C:\\xampp\\htdocs\\pdf\\' . $filename;
+        if (!file_exists($pdfPath)) {
+            throw $this->createNotFoundException('Fichier PDF non trouvé');
         }
 
-        $length = mb_strlen((string) $bytes, '8bit');
-        $download = $request->query->get('download');
-        $disposition = $download ? 'attachment; filename="livre-' . $livre->getId() . '.pdf"' : 'inline; filename="livre-' . $livre->getId() . '.pdf"';
-
-        $range = $request->headers->get('range');
-        if ($range && $length > 0) {
-            // Example Range: bytes=0-499
-            if (preg_match('/bytes=(\d*)-(\d*)/', $range, $matches)) {
-                $start = ($matches[1] !== '') ? (int)$matches[1] : 0;
-                $end = ($matches[2] !== '') ? (int)$matches[2] : ($length - 1);
-                if ($end >= $length) {
-                    $end = $length - 1;
-                }
-                if ($start > $end) {
-                    // invalid range
-                    $response = new Response('', 416);
-                    $response->headers->set('Content-Range', 'bytes */' . $length);
-                    return $response;
-                }
-
-                $part = substr($bytes, $start, $end - $start + 1);
-                $response = new Response($part, 206);
-                $response->headers->set('Content-Type', 'application/pdf');
-                $response->headers->set('Content-Disposition', $disposition);
-                $response->headers->set('Accept-Ranges', 'bytes');
-                $response->headers->set('Content-Range', sprintf('bytes %d-%d/%d', $start, $end, $length));
-                $response->headers->set('Content-Length', (string)strlen($part));
-                return $response;
-            }
-        }
-
-        // full response
-        $response = new Response($bytes);
+        $response = new BinaryFileResponse($pdfPath);
         $response->headers->set('Content-Type', 'application/pdf');
-        $response->headers->set('Content-Disposition', $disposition);
-        $response->headers->set('Content-Length', (string)$length);
-        $response->headers->set('Accept-Ranges', 'bytes');
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $filename);
         return $response;
     }
 
     #[Route('/bibliotheque/livre/{id}/image', name: 'livre_image', methods: ['GET'])]
     public function image(Livre $livre): Response
     {
-        $data = $livre->getImage();
-        if (!$data) {
+        $imageData = $livre->getImage();
+        if (!$imageData) {
             throw $this->createNotFoundException('Image introuvable');
         }
 
-        // normalize resource to string
-        if (is_resource($data)) {
-            try {
-                rewind($data);
-            } catch (\Throwable $e) {}
-            $bytes = stream_get_contents($data);
-        } else {
-            $bytes = $data;
+        // Legacy BLOB/resource handling
+        if (is_resource($imageData)) {
+            try { rewind($imageData); } catch (\Throwable) {}
+            $imageData = stream_get_contents($imageData);
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($imageData) ?: 'image/jpeg';
+            return new Response($imageData, 200, ['Content-Type' => $mimeType]);
         }
 
-        $mime = 'application/octet-stream';
-        if (function_exists('finfo_buffer')) {
-            $f = new \finfo(FILEINFO_MIME_TYPE);
-            $detected = $f->buffer($bytes);
-            if ($detected) {
-                $mime = $detected;
+        // If image is a string: could be URL, absolute path or uploaded filename
+        if (is_string($imageData)) {
+            if (preg_match('#^https?://#i', $imageData)) {
+                return $this->redirect($imageData);
             }
+
+            // Try external img folder first (new storage)
+            $extImgPath = 'C:\\xampp\\htdocs\\img\\' . $imageData;
+            if (file_exists($extImgPath)) {
+                $response = new BinaryFileResponse($extImgPath);
+                $response->headers->set('Content-Type', mime_content_type($extImgPath) ?: 'image/jpeg');
+                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE);
+                return $response;
+            }
+
+            // Try public folder (legacy)
+            $publicDir = $this->getParameter('kernel.project_dir') . '/public/';
+            $candidate = $imageData;
+            if (!file_exists($candidate)) {
+                $candidate = $publicDir . ltrim($imageData, '/');
+            }
+            if (file_exists($candidate)) {
+                $response = new BinaryFileResponse($candidate);
+                $response->headers->set('Content-Type', mime_content_type($candidate) ?: 'image/jpeg');
+                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE);
+                return $response;
+            }
+
+            // Try uploads folder by filename (legacy)
+            $candidate = $publicDir . 'uploads/' . ltrim($imageData, '/');
+            if (file_exists($candidate)) {
+                $response = new BinaryFileResponse($candidate);
+                $response->headers->set('Content-Type', mime_content_type($candidate) ?: 'image/jpeg');
+                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE);
+                return $response;
+            }
+
+            // Fallback: redirect to uploads path (may be served by webserver)
+            return $this->redirect('/uploads/' . ltrim($imageData, '/'));
         }
 
-        $response = new Response($bytes);
-        $response->headers->set('Content-Type', $mime);
-        $response->headers->set('Content-Disposition', 'inline; filename="livre-' . $livre->getId() . '"');
-
-        return $response;
+        throw $this->createNotFoundException('Image introuvable');
     }
 }

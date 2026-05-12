@@ -8,6 +8,7 @@ use App\Repository\MusiqueRepository;
 use App\Repository\PlaylistRepository;
 use App\Repository\UserRepository;
 use App\Service\GroqPlaylistService;
+use App\Service\FileStorageService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -115,6 +116,7 @@ final class MusicfrontController extends AbstractController
         PlaylistRepository $playlistRepository,
         EntityManagerInterface $entityManager,
         UserRepository $userRepository,
+        FileStorageService $fileStorageService,
         \Symfony\Component\Validator\Validator\ValidatorInterface $validator
     ): Response {
         $user = $this->getUser();
@@ -172,11 +174,9 @@ final class MusicfrontController extends AbstractController
                     throw new \Exception('Invalid image format. Allowed formats: JPG, PNG, GIF, WebP');
                 }
                 
-                $imageContent = file_get_contents($imageFile->getPathname());
-                if ($imageContent === false) {
-                    throw new \Exception('Failed to read image file');
-                }
-                $playlist->setImage($imageContent);
+                // Upload file to C:\xampp\htdocs\img\
+                $filename = $fileStorageService->uploadImage($imageFile, 'playlist_');
+                $playlist->setImage($filename);
             } catch (\Exception $e) {
                 if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
                     return new JsonResponse(['error' => 'Image upload failed: ' . $e->getMessage()], 400);
@@ -638,17 +638,10 @@ final class MusicfrontController extends AbstractController
             throw $this->createNotFoundException('Playlist image not found');
         }
 
-        // Get image binary data from BLOB
-        $imageData = $playlist->getImage();
-        if (is_resource($imageData)) {
-            $imageData = stream_get_contents($imageData);
-        }
-
-        return new Response(
-            $imageData,
-            200,
-            ['Content-Type' => 'image/jpeg']
-        );
+        $filename = $playlist->getImage();
+        
+        // Redirect to the external img folder
+        return $this->redirect('http://127.0.0.1/img/' . $filename);
     }
 
     #[Route('/user-musiques/lyrics/{id}', name: 'app_musicfront_lyrics', methods: ['GET'])]

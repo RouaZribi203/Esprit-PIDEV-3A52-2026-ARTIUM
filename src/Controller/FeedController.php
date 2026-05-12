@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Entity\Commentaire;
 use App\Service\RecommendationServiceoeuvre;
+use App\Service\FileStorageService;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Collections;
@@ -89,7 +90,7 @@ final class FeedController extends AbstractController
     }
 
     #[Route('/feed', name: 'app_feed')]
-    public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, CommentaireRepository $commentaireRepository, Request $request, EntityManagerInterface $em): Response
+    public function index(OeuvreRepository $oeuvreRepository, CollectionsRepository $collectionsRepository, CommentaireRepository $commentaireRepository, Request $request, EntityManagerInterface $em, FileStorageService $fileStorageService): Response
     {
         $currentUser = $this->getUser();
 
@@ -102,8 +103,7 @@ final class FeedController extends AbstractController
             if ($form->isSubmitted() && $form->isValid()) {
                 $photoFile = $form->get('photoProfil')->getData();
                 if ($photoFile) {
-                    $newFilename = uniqid('user_') . '.' . $photoFile->guessExtension();
-                    $photoFile->move($this->getParameter('kernel.project_dir') . '/public/uploads', $newFilename);
+                    $newFilename = $fileStorageService->uploadImage($photoFile, 'profile_');
                     $currentUser->setPhotoProfil($newFilename);
                 }
                 $em->flush();
@@ -486,21 +486,59 @@ final class FeedController extends AbstractController
             throw $this->createNotFoundException('Image not found');
         }
 
+        // Legacy BLOB/resource handling
         if (is_resource($imageData)) {
-            rewind($imageData);
+            try { rewind($imageData); } catch (\Throwable) {}
             $imageData = stream_get_contents($imageData);
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($imageData) ?: 'image/jpeg';
+            return new Response($imageData, 200, ['Content-Type' => $mimeType]);
         }
 
-        // Detect MIME type
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->buffer($imageData) ?: 'image/jpeg';
+        // If image is a string: could be URL, absolute path or uploaded filename
+        if (is_string($imageData)) {
+            if (preg_match('#^https?://#i', $imageData)) {
+                return $this->redirect($imageData);
+            }
 
-        return new Response(
-            $imageData,
-            200,
-            ['Content-Type' => $mimeType]
-        );
+            $publicDir = $this->getParameter('kernel.project_dir') . '/public/';
+            $candidate = $imageData;
+            if (!file_exists($candidate)) {
+                $candidate = $publicDir . ltrim($imageData, '/');
+            }
+            if (file_exists($candidate)) {
+                $response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($candidate);
+                $response->headers->set('Content-Type', mime_content_type($candidate) ?: 'image/jpeg');
+                $response->setContentDisposition(\Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_INLINE);
+                return $response;
+            }
+
+            // Try uploads folder by filename
+            $candidate = $publicDir . 'uploads/' . ltrim($imageData, '/');
+            if (file_exists($candidate)) {
+                $response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($candidate);
+                $response->headers->set('Content-Type', mime_content_type($candidate) ?: 'image/jpeg');
+                $response->setContentDisposition(\Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_INLINE);
+                return $response;
+            }
+
+            // Fallback: redirect to uploads path (may be served by webserver)
+            return $this->redirect('/uploads/' . ltrim($imageData, '/'));
+        }
+
+        throw $this->createNotFoundException('Image not found');
     }
 
+    #[Route('/user/{id}/photo', name: 'user_photo', methods: ['GET'])]
+    public function userPhoto(User $user): Response
+    {
+        $filename = $user->getPhotoProfil();
+        if (!$filename) {
+            throw $this->createNotFoundException('Photo not found');
+        }
+
+        // Redirect to the external img folder
+        return $this->redirect('http://127.0.0.1/img/' . $filename);
+    }
 
     }

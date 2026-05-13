@@ -29,11 +29,11 @@
 							<!-- Avatar -->
 							<div class="avatar avatar-lg mt-n5 mb-3">
 								<a href="#!">
-									{% if app.user and app.user.photoProfil %}
-										<img class="avatar-img rounded border border-white border-3" src="{{ path('user_photo', {id: app.user.id}) }}" alt="">
+									{% if app.user and app.user.photoProfilUrl %}
+										<img class="avatar-img rounded border border-white border-3" src="{{ app.user.photoProfilUrl }}" alt="">
 									{% else %}
-										<span class="avatar-img rounded border border-white border-3 bg-light d-inline-block d-flex align-items-center justify-content-center" style="width:64px;height:64px;">
-											<i class="bi bi-person" style="font-size:2rem;color:#b0b7c3;"></i>
+										<span class="avatar-img rounded border border-white border-3 d-inline-block d-flex align-items-center justify-content-center bg-light text-secondary-emphasis" style="width:64px;height:64px;">
+											<i class="bi bi-person fs-3" style="opacity:0.5;"></i>
 										</span>
 									{% endif %}
 								</a>

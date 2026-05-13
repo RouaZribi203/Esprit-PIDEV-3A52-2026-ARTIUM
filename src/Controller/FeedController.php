@@ -21,6 +21,7 @@ use App\Repository\OeuvreRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use App\Security\Password\Pbkdf2Sha256PasswordHasher;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -104,7 +105,7 @@ final class FeedController extends AbstractController
                 $photoFile = $form->get('photoProfil')->getData();
                 if ($photoFile) {
                     $newFilename = $fileStorageService->uploadImage($photoFile, 'profile_');
-                    $currentUser->setPhotoProfil($newFilename);
+                    $currentUser->setPhotoProfil($fileStorageService->getImageUrl($newFilename));
                 }
                 $em->flush();
                 $this->addFlash('success', 'Profil mis à jour !');
@@ -133,7 +134,7 @@ final class FeedController extends AbstractController
     }
 
     #[Route('/profil/changer-mot-de-passe', name: 'app_changer_mot_de_passe', methods: ['POST'])]
-    public function changePassword(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $em): Response
+    public function changePassword(Request $request, Pbkdf2Sha256PasswordHasher $customHasher, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $em): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -170,7 +171,7 @@ final class FeedController extends AbstractController
             return $this->redirectToRoute('app_feed');
         }
 
-        $user->setMdp($passwordHasher->hashPassword($user, $newPassword));
+        $user->setMdp($customHasher->hash($newPassword));
         $em->flush();
 
         $this->addFlash('success', 'Mot de passe mis à jour avec succès.');

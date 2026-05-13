@@ -16,9 +16,15 @@
                     <!-- Avatar -->
                     <div class="avatar avatar-story me-2">
                         <a href="#!">
-                            <img class="avatar-img rounded-circle" 
-                                 src="{{ asset('assetsfront/images/avatar/default.jpg') }}" 
-                                 alt="">
+                            {% if oeuvre.collection and oeuvre.collection.artiste and oeuvre.collection.artiste.photoProfilUrl %}
+                                <img class="avatar-img rounded-circle" 
+                                     src="{{ oeuvre.collection.artiste.photoProfilUrl }}" 
+                                     alt="">
+                            {% else %}
+                                <span class="avatar-img rounded-circle d-inline-flex align-items-center justify-content-center bg-light text-secondary-emphasis" style="width:40px;height:40px;">
+                                    <i class="bi bi-person fs-5" style="opacity:0.5;"></i>
+                                </span>
+                            {% endif %}
                         </a>
                     </div>
                     <!-- Info -->
@@ -115,10 +121,12 @@
                 <!-- Avatar -->
                 <div class="avatar avatar-xs me-2">
                     <a href="#!">
-                        {% if app.user and app.user.photoProfil %}
-                            <img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="">
+                        {% if app.user and app.user.photoProfilUrl %}
+                            <img class="avatar-img rounded-circle" src="{{ app.user.photoProfilUrl }}" alt="">
                         {% else %}
-                            <span class="avatar-img rounded-circle bg-light d-inline-block" style="width:32px;height:32px;"></span>
+                            <span class="avatar-img rounded-circle d-inline-flex align-items-center justify-content-center bg-light text-secondary-emphasis" style="width:32px;height:32px;">
+                                <i class="bi bi-person" style="font-size:1rem;opacity:0.5;"></i>
+                            </span>
                         {% endif %}
                     </a>
                 </div>
@@ -147,8 +155,15 @@
                     <div class="d-flex">
                         <!-- Avatar -->
                         <div class="avatar avatar-xs">
-                            <a href="#!"><img class="avatar-img rounded-circle"
-                                    src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt=""></a>
+                            <a href="#!">
+                                {% if commentaire.user and commentaire.user.photoProfilUrl %}
+                                    <img class="avatar-img rounded-circle" src="{{ commentaire.user.photoProfilUrl }}" alt="">
+                                {% else %}
+                                    <span class="avatar-img rounded-circle d-inline-flex align-items-center justify-content-center bg-light text-secondary-emphasis" style="width:32px;height:32px;">
+                                        <i class="bi bi-person" style="font-size:1rem;opacity:0.5;"></i>
+                                    </span>
+                                {% endif %}
+                            </a>
                         </div>
                         <div class="ms-2 w-100">
                             <!-- Comment by -->
@@ -266,9 +281,15 @@
                     <!-- Avatar -->
                     <div class="avatar avatar-story me-2">
                         <a href="#!">
-                            <img class="avatar-img rounded-circle" 
-                                 src="{{ asset('assetsfront/images/avatar/default.jpg') }}" 
-                                 alt="">
+                            {% if oeuvre.collection and oeuvre.collection.artiste and oeuvre.collection.artiste.photoProfilUrl %}
+                                <img class="avatar-img rounded-circle" 
+                                     src="{{ oeuvre.collection.artiste.photoProfilUrl }}" 
+                                     alt="">
+                            {% else %}
+                                <span class="avatar-img rounded-circle d-inline-flex align-items-center justify-content-center bg-light text-secondary-emphasis" style="width:40px;height:40px;">
+                                    <i class="bi bi-person fs-5" style="opacity:0.5;"></i>
+                                </span>
+                            {% endif %}
                         </a>
                     </div>
                     <!-- Info -->
@@ -395,8 +416,15 @@
                     <div class="d-flex">
                         <!-- Avatar -->
                         <div class="avatar avatar-xs">
-                            <a href="#!"><img class="avatar-img rounded-circle"
-                                    src="{{ asset('assetsfront/images/avatar/default.jpg') }}" alt=""></a>
+                            <a href="#!">
+                                {% if commentaire.user and commentaire.user.photoProfilUrl %}
+                                    <img class="avatar-img rounded-circle" src="{{ commentaire.user.photoProfilUrl }}" alt="">
+                                {% else %}
+                                    <span class="avatar-img rounded-circle d-inline-flex align-items-center justify-content-center bg-light text-secondary-emphasis" style="width:32px;height:32px;">
+                                        <i class="bi bi-person" style="font-size:1rem;opacity:0.5;"></i>
+                                    </span>
+                                {% endif %}
+                            </a>
                         </div>
                         <div class="ms-2">
                             <!-- Comment by -->

@@ -49,6 +49,14 @@ services:
         arguments:
             $huggingFaceApiKey: '%env(HUGGING_FACE_API_KEY)%'
 
+    # Decorate Meilisearch manager to prevent indexing failures from breaking writes
+    App\Meili\SafeSearchManager:
+        decorates: 'meilisearch.manager'
+        arguments:
+            - '@App\Meili\SafeSearchManager.inner'
+            - '@logger'
+        public: false
+
     # Configuration Stripe pour le PaymentController
     App\Controller\PaymentController:
         arguments:

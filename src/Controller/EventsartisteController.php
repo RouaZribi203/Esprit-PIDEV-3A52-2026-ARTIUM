@@ -13,6 +13,7 @@ use App\Repository\ReclamationRepository;
 use App\Repository\CommentaireRepository;
 use App\Repository\LikeRepository;
 use App\Enum\StatutEvenement;
+use App\Service\FileStorageService;
 use App\Service\OllamaEstimateService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,6 +35,7 @@ final class EventsartisteController extends AbstractController
         FormFactoryInterface $formFactory,
         Request $request,
         EntityManagerInterface $entityManager,
+        FileStorageService $fileStorageService,
         ReclamationRepository $reclamationRepository,
         CommentaireRepository $commentaireRepository,
         LikeRepository $likeRepository
@@ -68,7 +70,7 @@ final class EventsartisteController extends AbstractController
 
         $showAddForm = false;
         if ($newForm->isSubmitted()) {
-            $this->handleImageUpload($newForm, $newEvenement);
+            $this->handleImageUpload($newForm, $newEvenement, $fileStorageService);
             
             if ($newForm->isValid()) {
                 $newEvenement->setArtiste($this->getUser());
@@ -109,7 +111,7 @@ final class EventsartisteController extends AbstractController
 
             $isFormSubmitted = $request->isMethod('POST') && $request->request->has($formName);
             if ($isFormSubmitted) {
-                $this->handleImageUpload($editForm, $evenement);
+                $this->handleImageUpload($editForm, $evenement, $fileStorageService);
                 
                 if ($editForm->isValid()) {
                     $evenement->setStatut($this->resolveStatut($evenement));
@@ -222,17 +224,12 @@ final class EventsartisteController extends AbstractController
         return $user;
     }
 
-    private function handleImageUpload(FormInterface $form, Evenement $evenement): void
+    private function handleImageUpload(FormInterface $form, Evenement $evenement, FileStorageService $fileStorageService): void
     {
         $file = $form->get('imageFile')->getData();
         if ($file instanceof UploadedFile) {
-            $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/events';
-            if (!is_dir($uploads)) {
-                @mkdir($uploads, 0777, true);
-            }
-            $newFilename = uniqid('event_') . '.' . $file->guessExtension();
-            $file->move($uploads, $newFilename);
-            $evenement->setImageCouverture('uploads/events/' . $newFilename);
+            $newFilename = $fileStorageService->uploadImage($file, 'event_');
+            $evenement->setImageCouverture($fileStorageService->getImageUrl($newFilename));
         }
     }
 
@@ -269,8 +266,15 @@ final class EventsartisteController extends AbstractController
             if (preg_match('#^https?://#i', $image)) {
                 return $image;
             }
+            if (str_starts_with($image, 'img/')) {
+                return 'http://127.0.0.1/' . ltrim($image, '/');
+            }
             if (str_starts_with($image, '/')) {
                 return $image;
+            }
+            // If only a filename is stored, treat it as XAMPP img storage
+            if (!str_contains($image, '/')) {
+                return 'http://127.0.0.1/img/' . ltrim($image, '/');
             }
             return '/' . ltrim($image, '/');
         }

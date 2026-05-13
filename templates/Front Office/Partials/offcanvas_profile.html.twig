@@ -20,11 +20,11 @@
 					   <div class="col-12">
 						   <div class="d-flex align-items-center gap-3">
 							   <div class="avatar avatar-xl">
-								{% if user and user.photoProfil %}
-								    <img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ user.photoProfil) }}" alt="">
+								{% if user and user.photoProfilUrl %}
+								    <img class="avatar-img rounded-circle" src="{{ user.photoProfilUrl }}" alt="">
 								{% else %}
-								    <span class="avatar-img rounded-circle bg-light d-inline-block border border-secondary" style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;">
-									    
+								    <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis border border-secondary" style="width:80px;height:80px;">
+									    <i class="bi bi-person fs-2" style="opacity:0.5;"></i>
 								    </span>
 								{% endif %}
 							   </div>

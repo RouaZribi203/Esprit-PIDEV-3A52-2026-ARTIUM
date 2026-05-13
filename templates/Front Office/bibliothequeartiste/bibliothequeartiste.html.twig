@@ -33,8 +33,8 @@
                                      data-titre="{{ livre.titre|e('html_attr') }}"
                                      data-date-creation="{{ livre.dateCreation ? livre.dateCreation|date('Y-m-d H:i:s') : '' }}"
                                      data-description="{{ livre.description|e('html_attr') }}"
-                                     data-pdf-url="{{ livre.id ? path('livre_pdf', {'id': livre.id})|e('html_attr') : '' }}"
-                                     data-image="{{ livre.id ? path('livre_image', {'id': livre.id})|e('html_attr') : '' }}"
+                                     data-pdf-url="{{ livre.fichierPdf and (livre.fichierPdf starts with 'http://') ? livre.fichierPdf|e('html_attr') : (livre.fichierPdf and (livre.fichierPdf starts with 'https://') ? livre.fichierPdf|e('html_attr') : (livre.id ? path('livre_pdf', {'id': livre.id})|e('html_attr') : '')) }}"
+                                     data-image="{{ livre.image and (livre.image starts with 'http://') ? livre.image|e('html_attr') : (livre.image and (livre.image starts with 'https://') ? livre.image|e('html_attr') : (livre.id ? path('livre_image', {'id': livre.id})|e('html_attr') : '')) }}"
                                      data-active-id="{{ stats.activeId is defined ? stats.activeId : '' }}"
                                      data-active-date="{{ stats.activeDate is defined ? stats.activeDate : '' }}"
                                      data-location-count="{{ stats.count is defined ? stats.count : 0 }}"
@@ -63,7 +63,7 @@
                           </div>
 
                           <div class="d-flex flex-column align-items-center text-center">
-                            <img src="{{ livre.id ? path('livre_image', {'id': livre.id}) : asset('assetsfront/images/post/3by2/01.jpg') }}" alt="Couverture {{ livre.titre }}" class="rounded mb-3" style="width:140px;height:200px;object-fit:cover;">
+                            <img src="{{ livre.image and (livre.image starts with 'http://') ? livre.image : (livre.image and (livre.image starts with 'https://') ? livre.image : (livre.id ? path('livre_image', {'id': livre.id}) : asset('assetsfront/images/post/3by2/01.jpg'))) }}" alt="Couverture {{ livre.titre }}" class="rounded mb-3" style="width:140px;height:200px;object-fit:cover;">
                             <h5 class="mb-1 fw-semibold">{{ livre.titre }}</h5>
                             <div class="mb-2 text-muted">Catégorie: <span class="fw-medium text-dark">{{ livre.categorie }}</span></div>
                             <div class="mb-2"><strong class="text-primary">{{ livre.prixLocation is not null ? livre.prixLocation ~ ' €' : '-' }}</strong> <small class="text-muted">/ jour</small></div>

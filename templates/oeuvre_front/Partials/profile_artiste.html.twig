@@ -8,8 +8,8 @@
 			<div>
 				<!-- Avatar -->
 				   <div class="avatar avatar-xxl mt-n5 mb-3">
-					   {% if app.user and app.user.photoProfil %}
-						   <img class="avatar-img rounded-circle border border-white border-3" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="Avatar">
+					   {% if app.user and app.user.photoProfilUrl %}
+						   <img class="avatar-img rounded-circle border border-white border-3" src="{{ app.user.photoProfilUrl }}" alt="Avatar">
 					   {% else %}
 						   <span class="avatar-img rounded-circle border border-white border-3 d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:120px;height:120px;">
 							   <i class="bi bi-person fs-1 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>

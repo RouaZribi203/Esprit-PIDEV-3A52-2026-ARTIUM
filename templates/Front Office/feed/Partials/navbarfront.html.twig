@@ -122,14 +122,11 @@
 
 				<li class="nav-item ms-2 dropdown">
 					<a class="nav-link btn icon-md p-0" href="#" id="profileDropdown" role="button" data-bs-auto-close="outside" data-bs-display="static" data-bs-toggle="dropdown" aria-expanded="false">
-						{% if app.user and app.user.photoProfil %}
-							<img class="avatar-img rounded-2" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="">
+						{% if app.user and app.user.photoProfilUrl %}
+							<img class="avatar-img rounded-2" src="{{ app.user.photoProfilUrl }}" alt="">
 						{% else %}
-							<span class="avatar-img rounded-2 d-inline-block d-flex align-items-center justify-content-center" style="width:40px;height:40px;background:#f3f6f9;">
-								<svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-									<circle cx="16" cy="16" r="16" fill="#f3f6f9"/>
-									<path d="M16 17.5c2.485 0 4.5-2.015 4.5-4.5s-2.015-4.5-4.5-4.5-4.5 2.015-4.5 4.5 2.015 4.5 4.5 4.5zm0 1.5c-3.038 0-9 1.523-9 4.5v2c0 .276.224.5.5.5h17c.276 0 .5-.224.5-.5v-2c0-2.977-5.962-4.5-9-4.5z" fill="#b0b7c3"/>
-								</svg>
+							<span class="avatar-img rounded-2 d-inline-block d-flex align-items-center justify-content-center bg-light text-secondary-emphasis" style="width:40px;height:40px;">
+								<i class="bi bi-person fs-4" style="opacity:0.5;"></i>
 							</span>
 						{% endif %}
 					</a>
@@ -141,14 +138,11 @@
 								class="d-flex align-items-center position-relative">
 								<!-- Avatar -->
 								<div class="avatar me-3">
-									{% if app.user and app.user.photoProfil %}
-										<img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="avatar">
+									{% if app.user and app.user.photoProfilUrl %}
+										<img class="avatar-img rounded-circle" src="{{ app.user.photoProfilUrl }}" alt="avatar">
 									{% else %}
-										<span class="avatar-img rounded-circle d-inline-block d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:#f3f6f9;">
-											<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-												<circle cx="16" cy="16" r="16" fill="#f3f6f9"/>
-												<path d="M16 17.5c2.485 0 4.5-2.015 4.5-4.5s-2.015-4.5-4.5-4.5-4.5 2.015-4.5 4.5 2.015 4.5 4.5 4.5zm0 1.5c-3.038 0-9 1.523-9 4.5v2c0 .276.224.5.5.5h17c.276 0 .5-.224.5-.5v-2c0-2.977-5.962-4.5-9-4.5z" fill="#b0b7c3"/>
-											</svg>
+										<span class="avatar-img rounded-circle d-inline-block d-flex align-items-center justify-content-center bg-light text-secondary-emphasis" style="width:48px;height:48px;">
+											<i class="bi bi-person fs-4" style="opacity:0.5;"></i>
 										</span>
 									{% endif %}
 								</div>

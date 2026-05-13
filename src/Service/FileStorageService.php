@@ -91,10 +91,15 @@ class FileStorageService
             }
         }
 
-        // Move file
-        $fullPath = $uploadDir . $filename;
-        if (!@move_uploaded_file($file->getPathname(), $fullPath)) {
-            throw new \Exception('Failed to move uploaded file to: ' . $fullPath);
+        // Move file using UploadedFile->move which handles "test" files and
+        // various wrappers more reliably than move_uploaded_file().
+        try {
+            $moved = $file->move($uploadDir, $filename);
+            if (!is_file($moved->getPathname())) {
+                throw new \Exception('Move did not produce expected file: ' . $uploadDir . $filename);
+            }
+        } catch (\Throwable $e) {
+            throw new \Exception('Failed to move uploaded file to: ' . $uploadDir . $filename . ' - ' . $e->getMessage());
         }
 
         return $filename;

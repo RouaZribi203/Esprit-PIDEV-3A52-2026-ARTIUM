@@ -13,7 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Security\Password\Pbkdf2Sha256PasswordHasher;
 
 
 #[Route('/user')]
@@ -120,7 +120,7 @@ final class UserController extends AbstractController
     }
 
     #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, FileStorageService $fileStorageService): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, Pbkdf2Sha256PasswordHasher $passwordHasher, FileStorageService $fileStorageService): Response
     {
         $user = new User();
         // Initialiser la date d'inscription à aujourd'hui (00:00:00)
@@ -139,7 +139,7 @@ final class UserController extends AbstractController
             // Hash the password
             $plainPassword = $user->getPlainPassword();
             if ($plainPassword) {
-                $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
+                $hashedPassword = $passwordHasher->hash($plainPassword);
                 $user->setMdp($hashedPassword);
             }
 

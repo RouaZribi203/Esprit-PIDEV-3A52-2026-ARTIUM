@@ -39,34 +39,45 @@ final class OeuvreController extends AbstractController
 
         // If search query exists, find matching oeuvres with sorting
         if ($query) {
-            $hits = $searchManager->search(Oeuvre::class, $query, ['limit' => 100])->getHits();
             $shouldNotifySearch = !$session || $session->get($searchNoticeSessionKey) !== $query;
-            
-            if (count($hits) === 0) {
-                if ($shouldNotifySearch) {
-                    $this->addFlash('info', 'Aucune œuvre trouvée avec ce titre.');
-                }
-                $searchResults = [];
-            } else {
-                // Extract IDs in Meilisearch relevance order
-                $ids = array_map(fn($oeuvre) => $oeuvre->getId(), $hits);
-                
-                // Fetch results - apply sorting if selected, else keep Meilisearch relevance order
-                if ($sortBy && in_array($sortBy, ['likes', 'commentaires', 'favoris', 'titre'])) {
-                    $searchResults = $oeuvreRepository->findByIdsWithSort($ids, $sortBy, $sortOrder);
+
+            try {
+                $hits = $searchManager->search(Oeuvre::class, $query, ['limit' => 100])->getHits();
+
+                if (count($hits) === 0) {
+                    if ($shouldNotifySearch) {
+                        $this->addFlash('info', 'Aucune œuvre trouvée avec ce titre.');
+                    }
+                    $searchResults = [];
                 } else {
-                    // Keep Meilisearch relevance order
-                    $searchResults = $oeuvreRepository->findByIdsWithSort($ids, '', 'ASC');
+                    // Extract IDs in Meilisearch relevance order
+                    $ids = array_map(fn($oeuvre) => $oeuvre->getId(), $hits);
+
+                    // Fetch results - apply sorting if selected, else keep Meilisearch relevance order
+                    if ($sortBy && in_array($sortBy, ['likes', 'commentaires', 'favoris', 'titre'])) {
+                        $searchResults = $oeuvreRepository->findByIdsWithSort($ids, $sortBy, $sortOrder);
+                    } else {
+                        // Keep Meilisearch relevance order
+                        $searchResults = $oeuvreRepository->findByIdsWithSort($ids, '', 'ASC');
+                    }
+
+                    $searchResults = array_values(array_filter(
+                        $searchResults,
+                        static fn (Oeuvre $oeuvre): bool => in_array($oeuvre->getType(), [TypeOeuvre::PEINTURE, TypeOeuvre::SCULPTURE, TypeOeuvre::PHOTOGRAPHIE], true)
+                    ));
+
+                    if ($shouldNotifySearch) {
+                        $this->addFlash('info', count($searchResults) . ' résultat(s) trouvé(s)');
+                    }
                 }
-                
+            } catch (\Throwable) {
                 $searchResults = array_values(array_filter(
-                    $searchResults,
+                    $oeuvreRepository->findByTitreWithSort($query, $sortBy ?: 'titre', $sortOrder),
                     static fn (Oeuvre $oeuvre): bool => in_array($oeuvre->getType(), [TypeOeuvre::PEINTURE, TypeOeuvre::SCULPTURE, TypeOeuvre::PHOTOGRAPHIE], true)
                 ));
 
-                // Show flash message with count
                 if ($shouldNotifySearch) {
-                    $this->addFlash('info', count($searchResults) . ' résultat(s) trouvé(s)');
+                    $this->addFlash('warning', 'Recherche Meilisearch indisponible, résultats affichés depuis la base de données.');
                 }
             }
 

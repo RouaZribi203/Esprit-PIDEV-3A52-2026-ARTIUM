@@ -35,8 +35,8 @@
     <div class="col-lg-4">
         <div class="card mb-4">
             <div class="card-body text-center">
-                {% if user.photoProfil %}
-                    <img src="{{ asset('uploads/' ~ user.photoProfil) }}" alt="Photo de profil" class="rounded-circle mb-3" style="width:120px;height:120px;object-fit:cover;" />
+                {% if user.photoProfilUrl %}
+                    <img src="{{ user.photoProfilUrl }}" alt="Photo de profil" class="rounded-circle mb-3" style="width:120px;height:120px;object-fit:cover;" />
                 {% else %}
                     <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis mx-auto mb-3" style="width:120px;height:120px;">
                         <i class="bi bi-person fs-1" style="opacity:0.5;"></i>

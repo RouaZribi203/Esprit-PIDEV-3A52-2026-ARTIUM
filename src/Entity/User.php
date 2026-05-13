@@ -36,6 +36,27 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this->photoProfil;
     }
 
+    public function getPhotoProfilUrl(): ?string
+    {
+        if (!$this->photoProfil) {
+            return null;
+        }
+
+        if (filter_var($this->photoProfil, FILTER_VALIDATE_URL)) {
+            return $this->photoProfil;
+        }
+
+        if (str_starts_with($this->photoProfil, '/')) {
+            return $this->photoProfil;
+        }
+
+        if (str_starts_with($this->photoProfil, 'uploads/')) {
+            return '/' . $this->photoProfil;
+        }
+
+        return '/uploads/' . $this->photoProfil;
+    }
+
     public function setPhotoProfil(?string $photoProfil): self
     {
         $this->photoProfil = $photoProfil;

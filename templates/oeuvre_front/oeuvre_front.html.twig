@@ -10,8 +10,8 @@
               <!-- Avatar -->
               <div class="avatar avatar-xs me-2">
                 <a href="#">
-                  {% if app.user.photoProfil %}
-                    <img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="">
+                  {% if app.user.photoProfilUrl %}
+                    <img class="avatar-img rounded-circle" src="{{ app.user.photoProfilUrl }}" alt="">
                   {% else %}
                     <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:32px;height:32px;">
                       <i class="bi bi-person fs-5 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
@@ -57,9 +57,13 @@
         <!-- Avatar -->
         <div class="avatar avatar-story me-2">
           <a href="#">
-            <img class="avatar-img rounded-circle"
-                 src="{{ oeuvre.collection.artiste.photoProfil ? asset('uploads/' ~ oeuvre.collection.artiste.photoProfil) : asset('assetsfront/images/avatar/07.jpg') }}"
-                 alt="">
+            {% if oeuvre.collection and oeuvre.collection.artiste and oeuvre.collection.artiste.photoProfilUrl %}
+              <img class="avatar-img rounded-circle" src="{{ oeuvre.collection.artiste.photoProfilUrl }}" alt="">
+            {% else %}
+              <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:48px;height:48px;">
+                <i class="bi bi-person fs-5 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+              </span>
+            {% endif %}
           </a>
         </div>
 

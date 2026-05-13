@@ -8,6 +8,7 @@ use App\Enum\TypeOeuvre;
 use App\Form\MusiqueType;
 use App\Repository\CollectionsRepository;
 use App\Repository\MusiqueRepository;
+use App\Service\FileStorageService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -25,7 +26,8 @@ final class MusiqueartisteController extends AbstractController
         Request $request, 
         MusiqueRepository $musiqueRepository, 
         CollectionsRepository $collectionsRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        FileStorageService $fileStorageService
     ): Response
     {
         $currentUser = $this->getUser();
@@ -96,17 +98,14 @@ final class MusiqueartisteController extends AbstractController
             
             // Form is valid, proceed with file upload
             try {
-                // Handle image upload (save filename)
+                // Handle image upload using FileStorageService
                 $imageFile = $form->get('imageFile')->getData();
                 if ($imageFile) {
                     if ($imageFile->getSize() > 5242880) { // 5MB
                         throw new \Exception('Image file exceeds maximum size of 5MB');
                     }
-                    $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/music';
-                    if (!is_dir($uploads)) {@mkdir($uploads, 0777, true);} 
-                    $newFilename = uniqid('music_') . '.' . $imageFile->guessExtension();
-                    $imageFile->move($uploads, $newFilename);
-                    $musique->setImage('uploads/music/' . $newFilename);
+                    $newFilename = $fileStorageService->uploadImage($imageFile, 'music_');
+                    $musique->setImage($fileStorageService->getImageUrl($newFilename));
                 }
                 
                 // Handle audio upload
@@ -385,7 +384,8 @@ final class MusiqueartisteController extends AbstractController
         int $id,
         Request $request,
         MusiqueRepository $musiqueRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        FileStorageService $fileStorageService
     ): Response
     {
         $currentUser = $this->getUser();
@@ -475,37 +475,9 @@ final class MusiqueartisteController extends AbstractController
                     throw new \Exception('Invalid image format. Please upload JPEG or PNG.');
                 }
                 
-                // Validate image dimensions
-                $imageInfo = @getimagesize($imageFile->getRealPath());
-                if ($imageInfo === false) {
-                    throw new \Exception('Unable to read image dimensions. File may be corrupted.');
-                }
-                
-                $width = $imageInfo[0];
-                $height = $imageInfo[1];
-                
-                if ($width < 300 || $height < 300) {
-                    throw new \Exception(sprintf(
-                        'Image dimensions (%dx%dpx) are too small. Minimum: 300x300px',
-                        $width,
-                        $height
-                    ));
-                }
-                
-                if ($width > 5000 || $height > 5000) {
-                    throw new \Exception(sprintf(
-                        'Image dimensions (%dx%dpx) are too large. Maximum: 5000x5000px',
-                        $width,
-                        $height
-                    ));
-                }
-                
-                $imageContent = file_get_contents($imageFile->getPathname());
-                if ($imageContent === false) {
-                    throw new \Exception('Failed to read image file');
-                }
-                
-                $musique->setImage($imageContent);
+                // Upload to XAMPP using FileStorageService
+                $newFilename = $fileStorageService->uploadImage($imageFile, 'music_');
+                $musique->setImage($fileStorageService->getImageUrl($newFilename));
             } catch (\Exception $e) {
                 $this->addFlash('error', 'Error uploading image: ' . $e->getMessage());
                 return $this->redirectToRoute('app_musiqueartiste');

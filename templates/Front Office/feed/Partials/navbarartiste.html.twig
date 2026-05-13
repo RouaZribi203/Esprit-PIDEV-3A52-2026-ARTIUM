@@ -141,8 +141,8 @@
 
 				   <li class="nav-item ms-2 dropdown d-flex align-items-center">
 					   <a class="nav-link btn p-0 d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-auto-close="outside" data-bs-display="static" data-bs-toggle="dropdown" aria-expanded="false" style="height:40px;width:40px;">
-						{% if app.user and app.user.photoProfil %}
-							<img class="avatar-img rounded-circle border border-2" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="Profil" style="object-fit:cover;width:38px;height:38px;">
+						{% if app.user and app.user.photoProfilUrl %}
+							<img class="avatar-img rounded-circle border border-2" src="{{ app.user.photoProfilUrl }}" alt="Profil" style="object-fit:cover;width:38px;height:38px;">
 						{% else %}
 							<span class="avatar-img rounded-circle border border-2 d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:38px;height:38px;">
 								<i class="bi bi-person fs-4 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
@@ -157,11 +157,11 @@
 								class="d-flex align-items-center position-relative">
 								<!-- Avatar -->
 								<div class="avatar me-3">
-									{% if app.user and app.user.photoProfil %}
-										<img class="avatar-img rounded-circle" src="{{ asset('uploads/' ~ app.user.photoProfil) }}" alt="avatar">
+									{% if app.user and app.user.photoProfilUrl %}
+										<img class="avatar-img rounded-circle" src="{{ app.user.photoProfilUrl }}" alt="avatar">
 									{% else %}
-										<span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:38px;height:38px;">
-											<i class="bi bi-person fs-4 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>
+										<span class="avatar-img rounded-circle d-inline-block d-flex align-items-center justify-content-center bg-light text-secondary-emphasis" style="width:38px;height:38px;">
+											<i class="bi bi-person fs-4" style="opacity:0.5;"></i>
 										</span>
 									{% endif %}
 								</div>

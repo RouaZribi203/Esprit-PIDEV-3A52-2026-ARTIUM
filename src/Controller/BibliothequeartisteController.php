@@ -15,6 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Enum\TypeOeuvre;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Service\BookAiService;
+use App\Service\FileStorageService;
 
 
 final class BibliothequeartisteController extends AbstractController
@@ -72,7 +73,7 @@ final class BibliothequeartisteController extends AbstractController
     }
 
     #[Route('/artiste-bibliotheque/new', name: 'artiste_livre_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em, CollectionsRepository $collectionsRepository, UserRepository $userRepository,): Response
+    public function create(Request $request, EntityManagerInterface $em, CollectionsRepository $collectionsRepository, UserRepository $userRepository, FileStorageService $fileStorageService): Response
     {
         // TODO: Replace test artist with $this->getUser() when authentication module is merged
         /** @var \App\Entity\User|null $artist */
@@ -135,27 +136,23 @@ final class BibliothequeartisteController extends AbstractController
             $livre->setType(TypeOeuvre::LIVRE);
         }
 
-        // handle uploaded image
+        // handle uploaded image (stored in C:\xampp\htdocs\img as public URL)
         try {
             $imageFile = $request->files->get('image');
             if ($imageFile) {
-                $path = $imageFile->getPathname();
-                if (is_readable($path)) {
-                    $livre->setImage(file_get_contents($path));
-                }
+                $newFilename = $fileStorageService->uploadImage($imageFile, 'livre_');
+                $livre->setImage($fileStorageService->getImageUrl($newFilename));
             }
         } catch (\Throwable $e) {
             // ignore image errors
         }
 
-        // handle uploaded pdf
+        // handle uploaded pdf (stored in C:\xampp\htdocs\pdf as public URL)
         try {
             $pdfFile = $request->files->get('fichier_pdf');
             if ($pdfFile) {
-                $path = $pdfFile->getPathname();
-                if (is_readable($path)) {
-                    $livre->setFichierPdf(file_get_contents($path));
-                }
+                $newFilename = $fileStorageService->uploadPdf($pdfFile, 'pdf_');
+                $livre->setFichierPdf($fileStorageService->getPdfUrl($newFilename));
             }
         } catch (\Throwable $e) {
             // ignore pdf errors
@@ -175,7 +172,8 @@ public function edit(
     Request $request,
     EntityManagerInterface $em,
     CollectionsRepository $collectionsRepository,
-    LocationLivreRepository $locationLivreRepository
+    LocationLivreRepository $locationLivreRepository,
+    FileStorageService $fileStorageService
 ): Response {
 
     /** @var \App\Entity\User|null $artist */
@@ -292,10 +290,8 @@ public function edit(
         $imageFile = $files['image'] ?? null;
 
         if ($imageFile) {
-            $path = $imageFile->getPathname();
-            if (is_readable($path)) {
-                $livre->setImage(file_get_contents($path));
-            }
+            $newFilename = $fileStorageService->uploadImage($imageFile, 'livre_');
+            $livre->setImage($fileStorageService->getImageUrl($newFilename));
         }
     } catch (\Throwable $e) {
         // ignore
@@ -310,10 +306,8 @@ public function edit(
         $pdfFile = $files['fichier_pdf'] ?? null;
 
         if ($pdfFile) {
-            $path = $pdfFile->getPathname();
-            if (is_readable($path)) {
-                $livre->setFichierPdf(file_get_contents($path));
-            }
+            $newFilename = $fileStorageService->uploadPdf($pdfFile, 'pdf_');
+            $livre->setFichierPdf($fileStorageService->getPdfUrl($newFilename));
         }
     } catch (\Throwable $e) {
         // ignore

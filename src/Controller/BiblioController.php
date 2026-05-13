@@ -278,6 +278,14 @@ foreach ($livres as $livre) {
             throw $this->createNotFoundException('PDF introuvable');
         }
 
+        if (preg_match('#^https?://#i', $filename)) {
+            return $this->redirect($filename);
+        }
+
+        if (str_starts_with($filename, '/pdf/')) {
+            return $this->redirect('http://127.0.0.1' . $filename);
+        }
+
         // Serve PDF from external folder
         $pdfPath = 'C:\\xampp\\htdocs\\pdf\\' . $filename;
         if (!file_exists($pdfPath)) {

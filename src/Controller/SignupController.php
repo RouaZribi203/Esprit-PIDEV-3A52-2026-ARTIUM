@@ -10,13 +10,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Form\SignupType;
 use App\Entity\User;
 use App\Enum\Statut;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Security\Password\Pbkdf2Sha256PasswordHasher;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final class SignupController extends AbstractController
 {
     #[Route('/signup', name: 'app_signup')]
-    public function index(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): Response
+    public function index(Request $request, EntityManagerInterface $em, Pbkdf2Sha256PasswordHasher $passwordHasher): Response
     {
         $user = new User();
         $form = $this->createForm(SignupType::class, $user);
@@ -37,7 +37,7 @@ final class SignupController extends AbstractController
             } else {
                 // Gestion du mot de passe
                 $plainPassword = $user->getPlainPassword();
-                $user->setMdp($passwordHasher->hashPassword($user, (string) $plainPassword));
+                $user->setMdp($passwordHasher->hash((string) $plainPassword));
 
                 // Date inscription
                 $user->setDateInscription(new \DateTime());

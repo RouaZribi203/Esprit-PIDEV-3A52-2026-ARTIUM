@@ -272,7 +272,7 @@ class Oeuvre
 
     public function isIndexableInSearch(): bool
     {
-        return !$this instanceof Livre;
+        return !($this instanceof Livre || $this instanceof Musique);
     }
 
     public function getEmbedding(): ?array

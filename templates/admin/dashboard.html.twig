@@ -218,8 +218,8 @@
                     <ul class="list-group list-group-flush">
                         {% for t in top_artistes|default([]) %}
                         <li class="list-group-item d-flex align-items-center gap-3">
-                            {% if t.photoProfil %}
-                                <img src="{{ asset('uploads/' ~ t.photoProfil) }}" class="rounded-circle" style="width:32px;height:32px;" alt="avatar">
+                            {% if t.photoProfilUrl %}
+                                <img src="{{ t.photoProfilUrl }}" class="rounded-circle" style="width:32px;height:32px;" alt="avatar">
                             {% else %}
                                 <span class="avatar-img rounded-circle d-flex align-items-center justify-content-center bg-light text-secondary-emphasis position-relative" style="width:32px;height:32px;">
                                     <i class="bi bi-person fs-6 position-absolute top-50 start-50 translate-middle" style="opacity:0.5;"></i>

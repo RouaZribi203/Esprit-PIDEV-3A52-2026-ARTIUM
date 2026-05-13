@@ -12,14 +12,14 @@ use App\Repository\UserRepository;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Security\Password\Pbkdf2Sha256PasswordHasher;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 final class ForgotPWDController extends AbstractController
 {
     #[Route('/forgotpwd', name: 'app_forgot_pwd', methods: ['GET', 'POST'])]
     #[Route('/forgotpwd/{token}', name: 'app_forgot_pwd_reset', methods: ['GET', 'POST'])]
-    public function index(Request $request, UserRepository $userRepository, EntityManagerInterface $em, MailerInterface $mailer, UserPasswordHasherInterface $passwordHasher): Response
+    public function index(Request $request, UserRepository $userRepository, EntityManagerInterface $em, MailerInterface $mailer, Pbkdf2Sha256PasswordHasher $passwordHasher): Response
     {
         $error = null;
         $success = null;
@@ -42,7 +42,7 @@ final class ForgotPWDController extends AbstractController
                         $error = "Le mot de passe doit contenir au moins 6 caractères.";
                     } else {
                         // Hashage du mot de passe
-                        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+                        $hashedPassword = $passwordHasher->hash($newPassword);
                         $user->setMdp($hashedPassword);
                         $user->setResetToken(null);
                         $user->setResetTokenExpires(null);

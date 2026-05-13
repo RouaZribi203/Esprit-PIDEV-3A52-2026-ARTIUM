@@ -10,12 +10,14 @@ use App\Form\OeuvreType;
 use App\Form\UserType;
 use App\Service\EmbeddingService;
 use App\Service\ImageEmbeddingService;
+use App\Service\FileStorageService;
 use App\Repository\OeuvreRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -57,7 +59,7 @@ final class OeuvreFrontController extends AbstractController
     }
 
     #[Route('/artiste/profil/modifier', name: 'app_artiste_profile_update', methods: ['POST'])]
-    public function updateProfile(Request $request, EntityManagerInterface $entityManager): Response
+    public function updateProfile(Request $request, EntityManagerInterface $entityManager, FileStorageService $fileStorageService): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -70,9 +72,8 @@ final class OeuvreFrontController extends AbstractController
         if ($profileForm->isSubmitted() && $profileForm->isValid()) {
             $photoFile = $profileForm->get('photoProfil')->getData();
             if ($photoFile instanceof UploadedFile) {
-                $newFilename = uniqid('user_').'.'.$photoFile->guessExtension();
-                $photoFile->move($this->getParameter('kernel.project_dir').'/public/uploads', $newFilename);
-                $user->setPhotoProfil($newFilename);
+                $newFilename = $fileStorageService->uploadImage($photoFile, 'profile_');
+                $user->setPhotoProfil($fileStorageService->getImageUrl($newFilename));
             }
 
             $request->getSession()->remove('artist_profile_form_data');
@@ -109,7 +110,7 @@ final class OeuvreFrontController extends AbstractController
         ]);
     }
     #[Route('/new_oeuvre', name: 'app_oeuvre_new', methods: ['GET','POST'])]
-    public function new(Request $request,EntityManagerInterface $entityManager,EmbeddingService $embeddingService,ImageEmbeddingService $imageEmbeddingService,MessageBusInterface $bus): Response {
+    public function new(Request $request,EntityManagerInterface $entityManager,EmbeddingService $embeddingService,ImageEmbeddingService $imageEmbeddingService,MessageBusInterface $bus,FileStorageService $fileStorageService): Response {
         
         $oeuvre = new Oeuvre();
         $user = $this->getUser();
@@ -178,19 +179,15 @@ final class OeuvreFrontController extends AbstractController
     if ($form->isSubmitted() && $form->isValid()) {
         $tempPath = $tempImageName ? $tempDir . '/' . $tempImageName : null;
         if ($tempPath && is_file($tempPath)) {
-            $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/oeuvres';
-            if (!is_dir($uploads)) { @mkdir($uploads, 0777, true); }
-            $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
-            $newFilename = uniqid('oeuvre_') . ($ext ? '.' . $ext : '');
-            rename($tempPath, $uploads . '/' . $newFilename);
-            $oeuvre->setImage('uploads/oeuvres/' . $newFilename);
+            // Use FileStorageService for the temp image
+            $uploadedFile = new UploadedFile($tempPath, basename($tempPath), null, null, true);
+            $newFilename = $fileStorageService->uploadImage($uploadedFile, 'oeuvre_');
+            $oeuvre->setImage($fileStorageService->getImageUrl($newFilename));
             $session->remove('oeuvre_temp_image');
         } elseif ($imageFile instanceof UploadedFile) {
-            $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/oeuvres';
-            if (!is_dir($uploads)) { @mkdir($uploads, 0777, true); }
-            $newFilename = uniqid('oeuvre_') . '.' . $imageFile->guessExtension();
-            $imageFile->move($uploads, $newFilename);
-            $oeuvre->setImage('uploads/oeuvres/' . $newFilename);
+            // Use FileStorageService for direct upload
+            $newFilename = $fileStorageService->uploadImage($imageFile, 'oeuvre_');
+            $oeuvre->setImage($fileStorageService->getImageUrl($newFilename));
         }
         $oeuvre->setDateCreation(new \DateTime());
         $entityManager->persist($oeuvre);
@@ -240,7 +237,7 @@ final class OeuvreFrontController extends AbstractController
 
 
     #[Route('/{id}/edit_oeuvre', name: 'oeuvre_edit', methods: ['GET','POST'])]
-    public function edit(Request $request, Oeuvre $oeuvre, EntityManagerInterface $entityManager): Response {
+    public function edit(Request $request, Oeuvre $oeuvre, EntityManagerInterface $entityManager, FileStorageService $fileStorageService): Response {
         
         $user = $this->getUser();
         $form = $this->createForm(OeuvreType::class, $oeuvre, [
@@ -255,11 +252,8 @@ final class OeuvreFrontController extends AbstractController
             $imageFile = $form->get('image')->getData();
 
             if ($imageFile instanceof UploadedFile) {
-                $uploads = $this->getParameter('kernel.project_dir') . '/public/uploads/oeuvres';
-                if (!is_dir($uploads)) { @mkdir($uploads, 0777, true); }
-                $newFilename = uniqid('oeuvre_') . '.' . $imageFile->guessExtension();
-                $imageFile->move($uploads, $newFilename);
-                $oeuvre->setImage('uploads/oeuvres/' . $newFilename);
+                $newFilename = $fileStorageService->uploadImage($imageFile, 'oeuvre_');
+                $oeuvre->setImage($fileStorageService->getImageUrl($newFilename));
             }
 
             $entityManager->flush();
@@ -292,6 +286,22 @@ final class OeuvreFrontController extends AbstractController
         $imageData = $oeuvre->getImage();
 
         if (!$imageData) {
+            throw $this->createNotFoundException('Image not found');
+        }
+
+        // If a URL string was stored (e.g. http://127.0.0.1/img/...), redirect to it
+        if (is_string($imageData)) {
+            if (preg_match('/^https?:\/\//i', $imageData)) {
+                return $this->redirect($imageData);
+            }
+
+            // Try to serve a local public file if the string looks like a path
+            $projectDir = $this->getParameter('kernel.project_dir');
+            $publicPath = $projectDir . '/public' . (str_starts_with($imageData, '/') ? $imageData : '/' . $imageData);
+            if (is_file($publicPath)) {
+                return new BinaryFileResponse($publicPath);
+            }
+
             throw $this->createNotFoundException('Image not found');
         }
 

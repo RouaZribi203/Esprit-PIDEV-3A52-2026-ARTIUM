@@ -219,8 +219,14 @@ final class MusiqueartisteController extends AbstractController
             throw $this->createNotFoundException('Audio not found');
         }
 
-        $audioPath = $this->getParameter('kernel.project_dir') . '/public/uploads/music/' . $musique->getAudio();
-        if (!is_file($audioPath)) {
+        $audioReference = trim((string) $musique->getAudio());
+        if (preg_match('#^https?://#i', $audioReference)) {
+            return $this->redirect($audioReference);
+        }
+
+        $audioPath = $this->resolveAudioPath($musique);
+
+        if ($audioPath === null) {
             throw $this->createNotFoundException('Audio file not found on disk');
         }
 
@@ -229,6 +235,72 @@ final class MusiqueartisteController extends AbstractController
         $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($audioPath));
 
         return $response;
+    }
+
+    private function resolveAudioPath(Musique $musique): ?string
+    {
+        $audioReference = trim((string) $musique->getAudio());
+        $projectDir = $this->getParameter('kernel.project_dir');
+
+        if ($audioReference === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $audioReference)) {
+            return null;
+        }
+
+        $relativePath = ltrim($audioReference, '/\\');
+        $candidatePaths = [
+            $projectDir . '/public/uploads/music/' . basename($relativePath),
+            $projectDir . '/public/' . $relativePath,
+        ];
+
+        foreach ($candidatePaths as $candidatePath) {
+            if (is_file($candidatePath)) {
+                return $candidatePath;
+            }
+        }
+
+        $searchTerms = array_filter([
+            $musique->getTitre(),
+            $musique->getCollection()?->getArtiste()?->getPrenom(),
+            $musique->getCollection()?->getArtiste()?->getNom(),
+        ]);
+
+        $normalizedTerms = array_values(array_filter(array_map(static function (string $term): string {
+            $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $term);
+            if ($ascii === false) {
+                $ascii = $term;
+            }
+
+            $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $ascii) ?? '');
+            return trim($slug, '-');
+        }, $searchTerms)));
+
+        $musicDir = $projectDir . '/public/uploads/music';
+        if (!is_dir($musicDir) || $normalizedTerms === []) {
+            return null;
+        }
+
+        $matches = [];
+        foreach ($normalizedTerms as $term) {
+            foreach (glob($musicDir . '/*' . $term . '*') ?: [] as $file) {
+                if (is_file($file)) {
+                    $matches[] = $file;
+                }
+            }
+        }
+
+        if ($matches === []) {
+            return null;
+        }
+
+        usort($matches, static function (string $left, string $right): int {
+            return filemtime($right) <=> filemtime($left);
+        });
+
+        return $matches[0] ?? null;
     }
 
     #[Route('/musiqueartiste/image/{id}', name: 'app_musiqueartiste_image')]

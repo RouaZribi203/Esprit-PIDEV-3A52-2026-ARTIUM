@@ -225,6 +225,13 @@ final class ReclamationController extends AbstractController
             $entityManager->persist($reclamation);
             $entityManager->flush();
 
+            // If a file has been uploaded, convert stored filename to full XAMPP URL
+            $fileName = $reclamation->getFileName();
+            if ($fileName && !str_starts_with($fileName, 'http')) {
+                $reclamation->setFileName('http://127.0.0.1/img/' . $fileName);
+                $entityManager->flush();
+            }
+
             return $this->redirectToRoute('app_reclamationfront', [], Response::HTTP_SEE_OTHER);
         }
 
@@ -278,6 +285,13 @@ final class ReclamationController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
+
+            // If a file has been uploaded during edit, convert stored filename to full XAMPP URL
+            $fileName = $reclamation->getFileName();
+            if ($fileName && !str_starts_with($fileName, 'http')) {
+                $reclamation->setFileName('http://127.0.0.1/img/' . $fileName);
+                $entityManager->flush();
+            }
 
             return $this->redirectToRoute('app_reclamationfront', [], Response::HTTP_SEE_OTHER);
         }

@@ -394,7 +394,8 @@
                                       <div class="fw-medium">{{ reclamation.fileName }}</div>
                                       <div class="text-muted small">Document attaché</div>
                                     </div>
-                                    <a href="{{ asset('uploads/reclamations/' ~ reclamation.fileName) }}" 
+                                    {% set fileUrl = reclamation.fileName starts with 'http' ? reclamation.fileName : 'http://127.0.0.1/img/' ~ reclamation.fileName %}
+                                    <a href="{{ fileUrl }}" 
                                        target="_blank" 
                                        class="btn btn-sm btn-primary">
                                         <i class="fe fe-eye me-1"></i>

@@ -465,24 +465,61 @@ public function read(Livre $livre, LocationLivreRepository $locationRepo): Respo
 #[Route('/livre/pdf/{id}', name: 'livre_pdf')]
 public function livrePdf(Livre $livre): Response
 {
-    $pdf = $livre->getFichierPdf();
+        $pdf = $livre->getFichierPdf();
 
-    if (!$pdf) {
-        throw $this->createNotFoundException('PDF not found');
-    }
+        if (!$pdf) {
+            throw $this->createNotFoundException('PDF not found');
+        }
 
-    if (is_resource($pdf)) {
-        $pdf = stream_get_contents($pdf);
-    }
+        // If stored as a stream resource, read it
+        if (is_resource($pdf)) {
+            $pdf = stream_get_contents($pdf);
+        }
 
-    return new Response(
-        $pdf,
-        200,
-        [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="livre_'.$livre->getId().'.pdf"',
-        ]
-    );
+        // If stored as a URL (e.g. http://127.0.0.1/pdf/foo.pdf), fetch its contents
+        if (is_string($pdf)) {
+            $pdfContent = false;
+
+            // data URI (base64) handling
+            if (str_starts_with($pdf, 'data:application/pdf;base64,')) {
+                $pdfContent = base64_decode(substr($pdf, strlen('data:application/pdf;base64,')));
+            }
+
+            // absolute URL
+            if ($pdfContent === false && filter_var($pdf, FILTER_VALIDATE_URL)) {
+                $pdfContent = @file_get_contents($pdf);
+            }
+
+            // path under public/ (e.g. /pdf/foo.pdf or pdf/foo.pdf)
+            if ($pdfContent === false && preg_match('#^/?pdf/#', $pdf)) {
+                $projectDir = $this->getParameter('kernel.project_dir');
+                $path = $projectDir . '/public' . (str_starts_with($pdf, '/') ? $pdf : '/' . $pdf);
+                if (is_file($path) && is_readable($path)) {
+                    $pdfContent = @file_get_contents($path);
+                }
+            }
+
+            // If none of the above matched, assume the string contains raw PDF bytes
+            if ($pdfContent === false) {
+                // treat original string as binary content
+                $pdfContent = $pdf;
+            }
+
+            $pdf = $pdfContent;
+        }
+
+        if ($pdf === false || $pdf === null || $pdf === '') {
+            throw $this->createNotFoundException('PDF not found or could not be read');
+        }
+
+        return new Response(
+            $pdf,
+            200,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="livre_' . $livre->getId() . '.pdf"',
+            ]
+        );
 }
 }  
 

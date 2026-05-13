@@ -234,8 +234,9 @@
                                                                 <p class="mb-2 small text-muted">Type: <strong>{{ reclamation.type ? reclamation.type.value : '-' }}</strong></p>
                                                                 <p class="mb-0 small">{{ reclamation.texte }}</p>
                                                                 {% if reclamation.fileName %}
+                                                                    {% set fileUrl = reclamation.fileName starts with 'http' ? reclamation.fileName : 'http://127.0.0.1/img/' ~ reclamation.fileName %}
                                                                     <div class="mt-2">
-                                                                        <a href="{{ asset('uploads/reclamations/' ~ reclamation.fileName) }}" 
+                                                                        <a href="{{ fileUrl }}" 
                                                                            target="_blank" 
                                                                            class="btn btn-sm btn-outline-primary">
                                                                             <i class="bi bi-file-earmark"></i> Fichier joint

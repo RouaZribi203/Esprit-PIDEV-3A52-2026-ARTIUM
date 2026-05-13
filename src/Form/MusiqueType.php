@@ -125,11 +125,10 @@ class MusiqueType extends AbstractType
                     'placeholder' => 'Glissez-déposez votre fichier audio ici ou cliquez pour parcourir',
                     'data-controller' => 'dropzone',
                 ],
-                'help' => !$isEdit ? 'Requis. Max 20MB (MP3, WAV, AAC, etc.)' : 'Optionnel. Laissez vide pour conserver l\'actuel. Max 20MB',
+                'help' => !$isEdit ? 'Requis. MP3, WAV, AAC, etc.' : 'Optionnel. Laissez vide pour conserver l\'actuel.',
                 'constraints' => array_filter([
                     !$isEdit ? new Assert\NotBlank(['message' => 'Le fichier audio est requis']) : null,
                     new Assert\File([
-                        'maxSize' => '20971520', // 20MB in bytes
                         'mimeTypes' => [
                             'audio/mpeg',
                             'audio/mp3',
@@ -145,7 +144,6 @@ class MusiqueType extends AbstractType
                             'audio/mp4',
                         ],
                         'mimeTypesMessage' => 'Veuillez télécharger un fichier audio valide',
-                        'maxSizeMessage' => 'Le fichier audio est trop volumineux (max 20MB)',
                     ])
                 ])
             ]);

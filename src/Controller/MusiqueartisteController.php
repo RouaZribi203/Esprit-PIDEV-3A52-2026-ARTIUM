@@ -111,11 +111,6 @@ final class MusiqueartisteController extends AbstractController
                 // Handle audio upload
                 $audioFile = $form->get('audioFile')->getData();
                 if ($audioFile) {
-                    // Additional size check
-                    if ($audioFile->getSize() > 20971520) { // 20MB
-                        throw new \Exception('Audio file exceeds maximum size of 20MB');
-                    }
-
                     $musique->setAudioFile($audioFile);
                 }
                 
@@ -169,11 +164,9 @@ final class MusiqueartisteController extends AbstractController
                 
                 if (strpos($e->getMessage(), 'server has gone away') !== false ||
                     strpos($e->getMessage(), 'max_allowed_packet') !== false) {
-                    $errorMsg = 'The audio file is too large. Maximum allowed: 20MB';
+                    $errorMsg = 'The audio file is too large or the server upload limit was reached.';
                 } elseif (strpos($e->getMessage(), 'Failed to read') !== false) {
                     $errorMsg = 'Failed to read file. Please try again.';
-                } elseif (strpos($e->getMessage(), 'exceeds maximum') !== false) {
-                    $errorMsg = $e->getMessage();
                 } else {
                     $errorMsg = $e->getMessage();
                 }
@@ -244,6 +237,10 @@ final class MusiqueartisteController extends AbstractController
 
         if ($audioReference === '') {
             return null;
+        }
+
+        if (preg_match('#^file:#i', $audioReference)) {
+            $audioReference = urldecode(preg_replace('#^file:/{0,3}#i', '', $audioReference));
         }
 
         if (preg_match('#^https?://#i', $audioReference)) {
@@ -328,6 +325,11 @@ final class MusiqueartisteController extends AbstractController
             if (preg_match('#^https?://#i', $imageData)) {
                 return $this->redirect($imageData);
             }
+            
+            if (preg_match('#^file:#i', $imageData)) {
+                $imageData = urldecode(preg_replace('#^file:/{0,3}#i', '', $imageData));
+            }
+
             $public = $this->getParameter('kernel.project_dir') . '/public/';
             
             $candidatePaths = [

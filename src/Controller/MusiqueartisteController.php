@@ -254,6 +254,11 @@ final class MusiqueartisteController extends AbstractController
         $candidatePaths = [
             $projectDir . '/public/uploads/music/' . basename($relativePath),
             $projectDir . '/public/' . $relativePath,
+            $audioReference,
+            'C:/xampp/htdocs/audio/' . basename($relativePath),
+            'C:/xampp/htdocs/music/' . basename($relativePath),
+            'C:/xampp/htdocs/uploads/music/' . basename($relativePath),
+            'C:/xampp/htdocs/img/' . basename($relativePath)
         ];
 
         foreach ($candidatePaths as $candidatePath) {
@@ -324,12 +329,20 @@ final class MusiqueartisteController extends AbstractController
                 return $this->redirect($imageData);
             }
             $public = $this->getParameter('kernel.project_dir') . '/public/';
-            $path = $public . ltrim($imageData, '/');
-            if (file_exists($path)) {
-                $response = new BinaryFileResponse($path);
-                $response->headers->set('Content-Type', mime_content_type($path) ?: 'image/jpeg');
-                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($path));
-                return $response;
+            
+            $candidatePaths = [
+                $public . ltrim($imageData, '/'),
+                $imageData,
+                'C:/xampp/htdocs/img/' . basename($imageData),
+            ];
+
+            foreach ($candidatePaths as $path) {
+                if (file_exists($path) && is_file($path)) {
+                    $response = new BinaryFileResponse($path);
+                    $response->headers->set('Content-Type', mime_content_type($path) ?: 'image/jpeg');
+                    $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($path));
+                    return $response;
+                }
             }
             return $this->redirect('/' . ltrim($imageData, '/'));
         }

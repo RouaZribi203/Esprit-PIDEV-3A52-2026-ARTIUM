@@ -320,42 +320,64 @@ final class FeedController extends AbstractController
         if (!$user) {
             return $this->json(['success' => false, 'message' => 'User not logged in'], 401);
         }
+        // Use repository lookup to find an existing Like for this user+oeuvre
+        $likeRepo = $em->getRepository(\App\Entity\Like::class);
+        $existingLike = $likeRepo->findOneBy(['oeuvre' => $oeuvre, 'user' => $user]);
 
-        // Check if user has already liked this oeuvre
-        $existingLike = null;
-        foreach ($oeuvre->getLikes() as $like) {
-            if ($like->getUser() === $user) {
-                $existingLike = $like;
-                break;
+        try {
+            // Debug logging for troubleshooting persistent like issues
+            try {
+                $uid = method_exists($user, 'getId') ? $user->getId() : 'unknown';
+                $eid = method_exists($oeuvre, 'getId') ? $oeuvre->getId() : 'unknown';
+                $logLine = sprintf("[%s] likeAjax start: user=%s, oeuvre=%s, existingLike=%s\n", (new \DateTime())->format('c'), $uid, $eid, $existingLike ? 'yes' : 'no');
+                @file_put_contents($this->getParameter('kernel.project_dir') . '/var/log/likes_debug.log', $logLine, FILE_APPEND | LOCK_EX);
+            } catch (\Throwable $inner) {
+                // ignore logging failures
             }
+
+            if ($existingLike) {
+                // Unlike - remove the like
+                $oeuvre->removeLike($existingLike);
+                $em->remove($existingLike);
+                $isLiked = false;
+            } else {
+                // Like - create new like
+                $like = new \App\Entity\Like();
+                $like->setUser($user);
+                $like->setOeuvre($oeuvre);
+                $like->setLiked(true);
+                $oeuvre->addLike($like);  // keep inverse side in sync
+                $em->persist($like);
+                $isLiked = true;
+            }
+
+            $em->flush();
+
+            try {
+                $logLine2 = sprintf("[%s] likeAjax flush succeeded: user=%s, oeuvre=%s, liked=%s\n", (new \DateTime())->format('c'), $uid, $eid, $isLiked ? 'true' : 'false');
+                @file_put_contents($this->getParameter('kernel.project_dir') . '/var/log/likes_debug.log', $logLine2, FILE_APPEND | LOCK_EX);
+            } catch (\Throwable) {}
+
+            // Refresh the oeuvre to reflect the latest likes count
+            try {
+                $em->refresh($oeuvre);
+            } catch (\Throwable $e) {
+                // refresh may fail for detached entities; ignore safely
+            }
+
+            return $this->json([
+                'success' => true,
+                'liked' => $isLiked,
+                'likeCount' => $oeuvre->getLikes()->count()
+            ]);
+        } catch (\Throwable $e) {
+            // Log and return error so client doesn't assume success
+            try {
+                $errLine = sprintf("[%s] likeAjax error: %s\n", (new \DateTime())->format('c'), $e->getMessage());
+                @file_put_contents($this->getParameter('kernel.project_dir') . '/var/log/likes_debug.log', $errLine, FILE_APPEND | LOCK_EX);
+            } catch (\Throwable) {}
+            return $this->json(['success' => false, 'message' => 'Could not toggle like'], 500);
         }
-
-        if ($existingLike) {
-            // Unlike - remove the like
-            $oeuvre->removeLike($existingLike);
-            $em->remove($existingLike);
-            $isLiked = false;
-        } else {
-            // Like - create new like
-            $like = new \App\Entity\Like();
-            $like->setUser($user);
-            $like->setOeuvre($oeuvre);
-            $like->setLiked(true);
-            $oeuvre->addLike($like);  // Add to collection
-            $em->persist($like);
-            $isLiked = true;
-        }
-
-        $em->flush();
-        
-        // Refresh the entity to get updated collection count
-        $em->refresh($oeuvre);
-
-        return $this->json([
-            'success' => true,
-            'liked' => $isLiked,
-            'likeCount' => $oeuvre->getLikes()->count()
-        ]);
     }
 
     #[Route('/oeuvre/{id}/commentaire', name: 'oeuvre_commentaire', methods: ['POST'])]

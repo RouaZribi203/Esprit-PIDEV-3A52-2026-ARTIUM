@@ -8,6 +8,7 @@ use App\Repository\CommentaireRepository;
 use App\Repository\OeuvreRepository;
 use App\Enum\TypeOeuvre;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -65,19 +66,47 @@ final class FavorisController extends AbstractController
             throw $this->createNotFoundException('Image not found');
         }
 
-        if (is_resource($imageData)) {
-            rewind($imageData);
-            $imageData = stream_get_contents($imageData);
+        // If image is a string: could be URL, absolute path or uploaded filename
+        if (is_string($imageData)) {
+            if (preg_match('#^https?://#i', $imageData)) {
+                return $this->redirect($imageData);
+            }
+
+            $publicDir = $this->getParameter('kernel.project_dir') . '/public/';
+            $candidate = $imageData;
+            if (!file_exists($candidate)) {
+                $candidate = $publicDir . ltrim($imageData, '/');
+            }
+            if (file_exists($candidate)) {
+                $response = new BinaryFileResponse($candidate);
+                $response->headers->set('Content-Type', mime_content_type($candidate) ?: 'image/jpeg');
+                $response->setContentDisposition(\Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_INLINE);
+                return $response;
+            }
+
+            // Try uploads folder by filename
+            $candidate = $publicDir . 'uploads/' . ltrim($imageData, '/');
+            if (file_exists($candidate)) {
+                $response = new BinaryFileResponse($candidate);
+                $response->headers->set('Content-Type', mime_content_type($candidate) ?: 'image/jpeg');
+                $response->setContentDisposition(\Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_INLINE);
+                return $response;
+            }
+
+            // Fallback: redirect to uploads path (may be served by webserver)
+            return $this->redirect('/uploads/' . ltrim($imageData, '/'));
         }
 
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->buffer($imageData) ?: 'image/jpeg';
+        // Legacy BLOB/resource handling
+        if (is_resource($imageData)) {
+            try { rewind($imageData); } catch (\Throwable) {}
+            $imageData = stream_get_contents($imageData);
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($imageData) ?: 'image/jpeg';
+            return new Response($imageData, 200, ['Content-Type' => $mimeType]);
+        }
 
-        return new Response(
-            $imageData,
-            200,
-            ['Content-Type' => $mimeType]
-        );
+        throw $this->createNotFoundException('Image not found');
     }
 
     #[Route('/favoris/oeuvre/{id}/commentaire', name: 'favoris_commentaire', methods: ['POST'])]

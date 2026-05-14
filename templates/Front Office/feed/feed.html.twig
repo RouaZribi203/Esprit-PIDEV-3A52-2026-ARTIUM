@@ -97,7 +97,7 @@
                             {% set userLiked = true %}
                         {% endif %}
                     {% endfor %}
-                    <a class="nav-link like-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
+                    <a class="nav-link like-toggle" data-turbo="false" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
                         <i class="bi bi-heart{{ userLiked ? '-fill text-danger' : '' }} pe-1"></i>
                         <span class="like-count">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
                     </a>
@@ -364,7 +364,7 @@
                             {% set userLiked = true %}
                         {% endif %}
                     {% endfor %}
-                    <a class="nav-link like-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
+                    <a class="nav-link like-toggle" data-turbo="false" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
                         <i class="bi bi-heart{{ userLiked ? '-fill text-danger' : '' }} pe-1"></i>
                         <span class="like-count">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
                     </a>
@@ -883,6 +883,9 @@
             if (e.target.closest('.favorite-toggle')) {
                 e.preventDefault();
                 const link = e.target.closest('.favorite-toggle');
+                // Prevent duplicate clicks
+                if (link.dataset.processing === 'true') return;
+                link.dataset.processing = 'true';
                 const oeuvreId = link.dataset.oeuvreId;
 
                 // Send AJAX request
@@ -900,6 +903,9 @@
                 })
                 .catch(error => {
                     console.error('Error toggling favorite:', error);
+                })
+                .finally(() => {
+                    link.dataset.processing = 'false';
                 });
             }
         });
@@ -907,41 +913,47 @@
         // Like toggle functionality
         document.addEventListener('click', function(e) {
             if (e.target.closest('.like-toggle')) {
-                e.preventDefault();
-                const link = e.target.closest('.like-toggle');
-                const oeuvreId = link.dataset.oeuvreId;
-                const isLiked = link.dataset.liked === 'true';
-                const icon = link.querySelector('i');
-                const countSpan = link.querySelector('.like-count');
+                    e.preventDefault();
+                    const link = e.target.closest('.like-toggle');
+                    // Prevent duplicate processing (double click / multiple handlers)
+                    if (link.dataset.processing === 'true') return;
+                    link.dataset.processing = 'true';
+                    const oeuvreId = link.dataset.oeuvreId;
+                    const isLiked = link.dataset.liked === 'true';
+                    const icon = link.querySelector('i');
+                    const countSpan = link.querySelector('.like-count');
 
-                // Send AJAX request
-                fetch(`/oeuvre/${oeuvreId}/like-ajax`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Toggle visual state
-                        if (data.liked) {
-                            icon.classList.add('bi-heart-fill', 'text-danger');
-                            icon.classList.remove('bi-heart');
-                            link.dataset.liked = 'true';
-                        } else {
-                            icon.classList.remove('bi-heart-fill', 'text-danger');
-                            icon.classList.add('bi-heart');
-                            link.dataset.liked = 'false';
+                    // Send AJAX request
+                    fetch(`/oeuvre/${oeuvreId}/like-ajax`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
-                        // Update count
-                        countSpan.textContent = data.likeCount;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error toggling like:', error);
-                });
-            }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Toggle visual state
+                            if (data.liked) {
+                                icon.classList.add('bi-heart-fill', 'text-danger');
+                                icon.classList.remove('bi-heart');
+                                link.dataset.liked = 'true';
+                            } else {
+                                icon.classList.remove('bi-heart-fill', 'text-danger');
+                                icon.classList.add('bi-heart');
+                                link.dataset.liked = 'false';
+                            }
+                            // Update count
+                            countSpan.textContent = data.likeCount;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error toggling like:', error);
+                    })
+                    .finally(() => {
+                        link.dataset.processing = 'false';
+                    });
+                }
         });
     });
     </script>

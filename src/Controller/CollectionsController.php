@@ -10,6 +10,7 @@ use App\Repository\CollectionsRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -166,6 +167,23 @@ final class CollectionsController extends AbstractController
             throw $this->createNotFoundException('Image not found');
         }
 
+        // If a URL string was stored (e.g. http://127.0.0.1/img/...), redirect to it
+        if (is_string($imageData)) {
+            if (preg_match('/^https?:\/\//i', $imageData)) {
+                return $this->redirect($imageData);
+            }
+
+            // Try to serve a local public file if the string looks like a path
+            $projectDir = $this->getParameter('kernel.project_dir');
+            $publicPath = $projectDir . '/public' . (str_starts_with($imageData, '/') ? $imageData : '/' . $imageData);
+            if (is_file($publicPath)) {
+                return new BinaryFileResponse($publicPath);
+            }
+
+            throw $this->createNotFoundException('Image not found');
+        }
+
+        // Legacy BLOB/resource handling
         if (is_resource($imageData)) {
             rewind($imageData);
             $imageData = stream_get_contents($imageData);

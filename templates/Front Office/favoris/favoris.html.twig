@@ -308,6 +308,9 @@ document.addEventListener('click', function (event) {
 	const likeLink = event.target.closest('.like-toggle');
 	if (likeLink) {
 		event.preventDefault();
+		// Prevent duplicate processing
+		if (likeLink.dataset.processing === 'true') return;
+		likeLink.dataset.processing = 'true';
 		const oeuvreId = likeLink.dataset.oeuvreId;
 		const icon = likeLink.querySelector('i');
 		const countSpan = likeLink.querySelector('.like-count');
@@ -354,6 +357,9 @@ document.addEventListener('click', function (event) {
 		})
 		.catch(error => {
 			console.error('Error toggling like:', error);
+		})
+		.finally(() => {
+			likeLink.dataset.processing = 'false';
 		});
 		return;
 	}
@@ -376,12 +382,6 @@ document.addEventListener('click', function (event) {
 		method: 'POST',
 		headers: {
 			'X-Requested-With': 'XMLHttpRequest'
-		}
-	})
-	fetch(`/oeuvre/${oeuvreId}/favorite-ajax`, {
-		method: 'POST',
-		headers: {
-			'X-Requested-With': 'XMLHttpRequest'
 		},
 		credentials: 'same-origin'
 	})
@@ -395,6 +395,29 @@ document.addEventListener('click', function (event) {
 			document.querySelectorAll(`[data-favorite-card][data-oeuvre-id="${oeuvreId}"]`).forEach((card) => {
 				card.remove();
 			});
+
+			// If a modal for this oeuvre is open, hide it
+			try {
+				const modalElement = document.getElementById(`favorisPostModal${oeuvreId}`);
+				if (modalElement && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+					bootstrap.Modal.getOrCreateInstance(modalElement).hide();
+				}
+			} catch (err) {}
+
+			// Close GLightbox if open and avoid the automatic reload handler
+			try {
+				window._skipGlightboxReload = true;
+				const gClose = document.querySelector('.gclose');
+				if (gClose) {
+					gClose.click();
+				} else {
+					const active = document.querySelector('.glightbox-container:not(.inactive)');
+					if (active) {
+						// try to remove the container
+						active.classList.add('inactive');
+					}
+				}
+			} catch (err) {}
 
 			const emptyMessages = {
 				'tab-0': "L'utilisateur n'a pas encore de favoris.",
@@ -434,6 +457,8 @@ document.addEventListener('click', function (event) {
 // Reload page when GLightbox closes
 document.addEventListener('keydown', function(e) {
 	if (e.key === 'Escape' && document.querySelector('.glightbox-container:not(.inactive)')) {
+		// Don't reload if skip flag is set (we closed programmatically)
+		if (window._skipGlightboxReload) { window._skipGlightboxReload = false; return; }
 		setTimeout(() => {
 			location.reload();
 		}, 100);
@@ -447,6 +472,7 @@ document.addEventListener('click', function(e) {
 
 	const overlay = e.target.closest('.goverlay');
 	if (overlay) {
+		if (window._skipGlightboxReload) { window._skipGlightboxReload = false; return; }
 		setTimeout(() => {
 			location.reload();
 		}, 100);
@@ -454,6 +480,7 @@ document.addEventListener('click', function(e) {
 
 	const closeBtn = e.target.closest('.gclose');
 	if (closeBtn) {
+		if (window._skipGlightboxReload) { window._skipGlightboxReload = false; return; }
 		setTimeout(() => {
 			location.reload();
 		}, 100);

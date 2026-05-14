@@ -27,7 +27,7 @@
 					{% set userLiked = true %}
 				{% endif %}
 			{% endfor %}
-			<a class="nav-link like-toggle" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
+			<a class="nav-link like-toggle" data-turbo="false" href="#" data-oeuvre-id="{{ oeuvre.id }}" data-liked="{{ userLiked ? 'true' : 'false' }}">
 				<i class="bi bi-heart{{ userLiked ? '-fill text-danger' : '' }} pe-1"></i>
 				<span class="like-count">{{ oeuvre.likes ? oeuvre.likes|length : 0 }}</span>
 			</a>
